@@ -1,0 +1,56 @@
+[
+{
+  "directory": "/home/deanwilson/development/projects/amanuensis/build",
+  "command": "/usr/bin/c++  -I/home/deanwilson/development/projects/amanuensis/include -std=c++20 -Wall -Wextra -Wpedantic -o CMakeFiles/amanuensis.dir/src/value.cpp.o -c /home/deanwilson/development/projects/amanuensis/src/value.cpp",
+  "file": "/home/deanwilson/development/projects/amanuensis/src/value.cpp",
+  "output": "CMakeFiles/amanuensis.dir/src/value.cpp.o"
+},
+{
+  "directory": "/home/deanwilson/development/projects/amanuensis/build",
+  "command": "/usr/bin/c++  -I/home/deanwilson/development/projects/amanuensis/include -std=c++20 -Wall -Wextra -Wpedantic -o CMakeFiles/amanuensis.dir/src/reader.cpp.o -c /home/deanwilson/development/projects/amanuensis/src/reader.cpp",
+  "file": "/home/deanwilson/development/projects/amanuensis/src/reader.cpp",
+  "output": "CMakeFiles/amanuensis.dir/src/reader.cpp.o"
+},
+{
+  "directory": "/home/deanwilson/development/projects/amanuensis/build",
+  "command": "/usr/bin/c++  -I/home/deanwilson/development/projects/amanuensis/include -std=c++20 -Wall -Wextra -Wpedantic -o CMakeFiles/amanuensis.dir/src/writer.cpp.o -c /home/deanwilson/development/projects/amanuensis/src/writer.cpp",
+  "file": "/home/deanwilson/development/projects/amanuensis/src/writer.cpp",
+  "output": "CMakeFiles/amanuensis.dir/src/writer.cpp.o"
+},
+{
+  "directory": "/home/deanwilson/development/projects/amanuensis/build",
+  "command": "/usr/bin/c++  -I/home/deanwilson/development/projects/amanuensis/include -std=c++20 -Wall -Wextra -Wpedantic -o CMakeFiles/amanuensis.dir/src/serialisation.cpp.o -c /home/deanwilson/development/projects/amanuensis/src/serialisation.cpp",
+  "file": "/home/deanwilson/development/projects/amanuensis/src/serialisation.cpp",
+  "output": "CMakeFiles/amanuensis.dir/src/serialisation.cpp.o"
+},
+{
+  "directory": "/home/deanwilson/development/projects/amanuensis/build",
+  "command": "/usr/bin/c++  -I/home/deanwilson/development/projects/amanuensis/include -isystem /home/deanwilson/.local/include -std=c++20 -Wall -Wextra -Wpedantic -o CMakeFiles/test_amanuensis.dir/test/main.cpp.o -c /home/deanwilson/development/projects/amanuensis/test/main.cpp",
+  "file": "/home/deanwilson/development/projects/amanuensis/test/main.cpp",
+  "output": "CMakeFiles/test_amanuensis.dir/test/main.cpp.o"
+},
+{
+  "directory": "/home/deanwilson/development/projects/amanuensis/build/_deps/firefly-build",
+  "command": "/usr/bin/c++  -I/home/deanwilson/development/projects/amanuensis/build/_deps/firefly-src/include -std=c++20 -Wall -Wextra -Wpedantic -Winvalid-pch -x c++-header -include /home/deanwilson/development/projects/amanuensis/build/_deps/firefly-build/CMakeFiles/firefly.dir/cmake_pch.hxx -o CMakeFiles/firefly.dir/cmake_pch.hxx.gch -c /home/deanwilson/development/projects/amanuensis/build/_deps/firefly-build/CMakeFiles/firefly.dir/cmake_pch.hxx.cxx",
+  "file": "/home/deanwilson/development/projects/amanuensis/build/_deps/firefly-build/CMakeFiles/firefly.dir/cmake_pch.hxx.cxx",
+  "output": "_deps/firefly-build/CMakeFiles/firefly.dir/cmake_pch.hxx.gch"
+},
+{
+  "directory": "/home/deanwilson/development/projects/amanuensis/build/_deps/firefly-build",
+  "command": "/usr/bin/c++  -I/home/deanwilson/development/projects/amanuensis/build/_deps/firefly-src/include -std=c++20 -Wall -Wextra -Wpedantic -Winvalid-pch -include /home/deanwilson/development/projects/amanuensis/build/_deps/firefly-build/CMakeFiles/firefly.dir/cmake_pch.hxx -o CMakeFiles/firefly.dir/src/logger.cpp.o -c /home/deanwilson/development/projects/amanuensis/build/_deps/firefly-src/src/logger.cpp",
+  "file": "/home/deanwilson/development/projects/amanuensis/build/_deps/firefly-src/src/logger.cpp",
+  "output": "_deps/firefly-build/CMakeFiles/firefly.dir/src/logger.cpp.o"
+},
+{
+  "directory": "/home/deanwilson/development/projects/amanuensis/build/_deps/firefly-build",
+  "command": "/usr/bin/c++  -I/home/deanwilson/development/projects/amanuensis/build/_deps/firefly-src/include -std=c++20 -Wall -Wextra -Wpedantic -Winvalid-pch -include /home/deanwilson/development/projects/amanuensis/build/_deps/firefly-build/CMakeFiles/firefly.dir/cmake_pch.hxx -o CMakeFiles/firefly.dir/src/log-registry.cpp.o -c /home/deanwilson/development/projects/amanuensis/build/_deps/firefly-src/src/log-registry.cpp",
+  "file": "/home/deanwilson/development/projects/amanuensis/build/_deps/firefly-src/src/log-registry.cpp",
+  "output": "_deps/firefly-build/CMakeFiles/firefly.dir/src/log-registry.cpp.o"
+},
+{
+  "directory": "/home/deanwilson/development/projects/amanuensis/build/_deps/firefly-build",
+  "command": "/usr/bin/c++  -I/home/deanwilson/development/projects/amanuensis/build/_deps/firefly-src/include -std=c++20 -Wall -Wextra -Wpedantic -o CMakeFiles/test_firefly.dir/test/test_main.cpp.o -c /home/deanwilson/development/projects/amanuensis/build/_deps/firefly-src/test/test_main.cpp",
+  "file": "/home/deanwilson/development/projects/amanuensis/build/_deps/firefly-src/test/test_main.cpp",
+  "output": "_deps/firefly-build/CMakeFiles/test_firefly.dir/test/test_main.cpp.o"
+}
+]
