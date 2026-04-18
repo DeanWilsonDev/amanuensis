@@ -1,27 +1,20 @@
 #pragma once
 
-#include "value.hpp"
+#include "amanuensis/parser.hpp"
 #include <filesystem>
-#include <string>
 
 namespace Amanuensis {
 
-struct ParseError {
-  std::string message;
-  int line;
-  int column;
-};
-
-struct ParseResult {
-  bool succeeded;
-  Value value;
-  ParseError error;
-};
+struct ParseResult;
 
 class Reader {
 public:
-  static ParseResult ParseString(std::string_view text);
-  static ParseResult ParseFile(const std::filesystem::path& path);
+  Reader();
+  ParseResult ParseString(std::string_view text);
+  ParseResult ParseFile(const std::filesystem::path& path);
+
+private:
+  Parser parser;
 };
 
 } // namespace Amanuensis
