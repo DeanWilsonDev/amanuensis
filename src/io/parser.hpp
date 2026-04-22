@@ -1,26 +1,17 @@
 #pragma once
 
-#include "value.hpp"
+#include <amanuensis/io/parser-result.hpp>
+#include "amanuensis/value.hpp"
 #include <string>
 
 namespace Amanuensis {
 
-struct ParseError {
-  std::string message;
-  int line;
-  int column;
-};
-
-struct ParseResult {
-  bool succeeded;
-  Value value;
-  ParseError error;
-};
-
 class Parser {
 public:
-  Parser();
+  Parser(std::string_view input);
   ~Parser();
+
+  ParseResult Parse();
   bool IsAtEnd() const;
   char Peek() const;
   char Advance();
@@ -42,7 +33,7 @@ private:
   bool ParseFourHexDigits(uint16_t& outCodeUnit);
 
   std::string_view input;
-  std::size_t position = 0;
+  std::size_t cursor = 0;
   int line = 1;
   int column = 1;
 };

@@ -1,4 +1,4 @@
-#include "amanuensis/writer.hpp"
+#include <amanuensis/io/writer.hpp>
 
 #include <charconv>
 #include <cmath>
@@ -14,7 +14,8 @@ namespace Amanuensis {
 
 namespace {
 
-void WriteIndent(std::string& output, int depth, const WriterOptions& options) {
+void WriteIndent(std::string& output, int depth, const WriterOptions& options)
+{
   if (!options.pretty) {
     return;
   }
@@ -22,7 +23,8 @@ void WriteIndent(std::string& output, int depth, const WriterOptions& options) {
   output.append(static_cast<std::size_t>(totalSpaces), options.indentChar);
 }
 
-void WriteEscapedString(std::string& output, const std::string& text) {
+void WriteEscapedString(std::string& output, const std::string& text)
+{
   output.push_back('"');
   for (char character : text) {
     switch (character) {
@@ -51,8 +53,9 @@ void WriteEscapedString(std::string& output, const std::string& text) {
       if (static_cast<unsigned char>(character) < 0x20) {
         // Control characters — emit as \u00XX
         char hexBuffer[8];
-        std::snprintf(hexBuffer, sizeof(hexBuffer), "\\u%04x",
-                      static_cast<unsigned char>(character));
+        std::snprintf(
+            hexBuffer, sizeof(hexBuffer), "\\u%04x", static_cast<unsigned char>(character)
+        );
         output.append(hexBuffer);
       }
       else {
@@ -71,7 +74,8 @@ void WriteArray(
     const Value& arrayValue,
     int depth,
     const WriterOptions& options
-) {
+)
+{
   const auto& elements = arrayValue.AsArray();
   if (elements.empty()) {
     output.append("[]");
@@ -103,7 +107,8 @@ void WriteObject(
     const Value& objectValue,
     int depth,
     const WriterOptions& options
-) {
+)
+{
   if (objectValue.Size() == 0) {
     output.append("{}");
     return;
@@ -117,8 +122,7 @@ void WriteObject(
   std::size_t entryIndex = 0;
   std::size_t totalEntries = objectValue.Size();
 
-  for (auto iterator = objectValue.BeginObject(); iterator != objectValue.EndObject();
-       ++iterator) {
+  for (auto iterator = objectValue.BeginObject(); iterator != objectValue.EndObject(); ++iterator) {
     WriteIndent(output, depth + 1, options);
     WriteEscapedString(output, iterator->first);
     output.push_back(':');
@@ -139,12 +143,8 @@ void WriteObject(
   output.push_back('}');
 }
 
-void WriteValue(
-    std::string& output,
-    const Value& value,
-    int depth,
-    const WriterOptions& options
-) {
+void WriteValue(std::string& output, const Value& value, int depth, const WriterOptions& options)
+{
   switch (value.GetType()) {
   case ValueType::Null:
     output.append("null");
@@ -211,7 +211,8 @@ void WriteValue(
 // Public API
 // -----------------------------------------------------------------------
 
-std::string Writer::WriteToString(const Value& value, const WriterOptions& options) {
+std::string Writer::WriteToString(const Value& value, const WriterOptions& options)
+{
   std::string output;
   WriteValue(output, value, 0, options);
   if (options.trailingNewline) {
@@ -224,7 +225,8 @@ bool Writer::WriteToFile(
     const Value& value,
     const std::filesystem::path& path,
     const WriterOptions& options
-) {
+)
+{
   std::string jsonText = WriteToString(value, options);
   std::ofstream outputFile(path, std::ios::binary);
   if (!outputFile.is_open()) {

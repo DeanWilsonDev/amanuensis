@@ -1,6 +1,6 @@
 #pragma once
 
-#include "value.hpp"
+#include <amanuensis/value.hpp>
 
 #include <optional>
 #include <string>

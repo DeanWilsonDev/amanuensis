@@ -1,19 +1,38 @@
-#include "amanuensis/parser.hpp"
+#include "parser.hpp"
 
 #include <charconv>
+#include <string_view>
 #include <cstdlib>
 
 namespace Amanuensis {
 
-Parser::Parser() {}
+Parser::Parser(std::string_view input)
+    : input(input)
+    , cursor(0)
+    , line(1)
+    , column(1)
+{
+}
 
-void Parser::SetInput(std::string_view input){
-  this->input = input;
+Parser::~Parser() = default;
+
+ParseResult Parser::Parse()
+{
+  this->SkipWhitespace();
+  auto result = ParseValue();
+  if (!result.succeeded)
+    return result;
+  this->SkipWhitespace();
+  if (!this->IsAtEnd())
+    return this->MakeError(
+        std::string("Unexpected content after JSON value: '") + this->Peek() + "'"
+    );
+  return result;
 }
 
 bool Parser::IsAtEnd() const
 {
-  return position >= input.size();
+  return this->cursor >= input.size();
 }
 
 char Parser::Peek() const
@@ -21,13 +40,13 @@ char Parser::Peek() const
   if (IsAtEnd()) {
     return '\0';
   }
-  return input[position];
+  return input[this->cursor];
 }
 
 char Parser::Advance()
 {
-  char current = input[position];
-  ++position;
+  char current = input[this->cursor];
+  ++this->cursor;
   if (current == '\n') {
     ++line;
     column = 1;
@@ -110,7 +129,7 @@ ParseResult Parser::ParseFalse()
 
 ParseResult Parser::ParseNumber()
 {
-  std::size_t startPosition = this->position;
+  std::size_t startPosition = this->cursor;
   int startLine = this->line;
   int startColumn = this->column;
 
@@ -166,7 +185,7 @@ ParseResult Parser::ParseNumber()
     }
   }
 
-  std::string_view numberText = this->input.substr(startPosition, this->position - startPosition);
+  std::string_view numberText = this->input.substr(startPosition, this->cursor - startPosition);
 
   if (isFloatingPoint) {
     // Parse as double

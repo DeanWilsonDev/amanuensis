@@ -13,8 +13,9 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # -------------------------
 # Library target
 # -------------------------
-add_library(amanuensis STATIC src/value.cpp src/reader.cpp src/writer.cpp
-                              src/serialisation.cpp)
+add_library(
+  amanuensis STATIC src/value.cpp src/io/reader.cpp src/io/writer.cpp
+                    src/io/parser.cpp src/serialisation/serialisation.cpp)
 
 target_include_directories(
   amanuensis PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

@@ -1,12 +1,12 @@
 #include "cimmerian/test.hpp"
-#include "amanuensis/writer.hpp"
-#include "amanuensis/reader.hpp"
+#include <amanuensis/io/parser-result.hpp>
+#include <amanuensis/io/writer.hpp>
+#include <amanuensis/io/reader.hpp>
 
 #include <cmath>
 #include <string>
 
 DESCRIBE("Writer", {
-
   DESCRIBE("Null output", {
     IT("writes null", {
       Amanuensis::Value nullValue;
@@ -23,7 +23,8 @@ DESCRIBE("Writer", {
       Amanuensis::WriterOptions minifiedOptions;
       minifiedOptions.pretty = false;
       minifiedOptions.trailingNewline = false;
-      std::string output = Amanuensis::Writer::WriteToString(Amanuensis::Value(true), minifiedOptions);
+      std::string output =
+          Amanuensis::Writer::WriteToString(Amanuensis::Value(true), minifiedOptions);
       ASSERT_EQUAL(output, std::string("true"));
     });
 
@@ -31,7 +32,8 @@ DESCRIBE("Writer", {
       Amanuensis::WriterOptions minifiedOptions;
       minifiedOptions.pretty = false;
       minifiedOptions.trailingNewline = false;
-      std::string output = Amanuensis::Writer::WriteToString(Amanuensis::Value(false), minifiedOptions);
+      std::string output =
+          Amanuensis::Writer::WriteToString(Amanuensis::Value(false), minifiedOptions);
       ASSERT_EQUAL(output, std::string("false"));
     });
   });
@@ -41,7 +43,8 @@ DESCRIBE("Writer", {
       Amanuensis::WriterOptions minifiedOptions;
       minifiedOptions.pretty = false;
       minifiedOptions.trailingNewline = false;
-      std::string output = Amanuensis::Writer::WriteToString(Amanuensis::Value(42), minifiedOptions);
+      std::string output =
+          Amanuensis::Writer::WriteToString(Amanuensis::Value(42), minifiedOptions);
       ASSERT_EQUAL(output, std::string("42"));
     });
 
@@ -49,7 +52,8 @@ DESCRIBE("Writer", {
       Amanuensis::WriterOptions minifiedOptions;
       minifiedOptions.pretty = false;
       minifiedOptions.trailingNewline = false;
-      std::string output = Amanuensis::Writer::WriteToString(Amanuensis::Value(-99), minifiedOptions);
+      std::string output =
+          Amanuensis::Writer::WriteToString(Amanuensis::Value(-99), minifiedOptions);
       ASSERT_EQUAL(output, std::string("-99"));
     });
 
@@ -67,7 +71,8 @@ DESCRIBE("Writer", {
       Amanuensis::WriterOptions minifiedOptions;
       minifiedOptions.pretty = false;
       minifiedOptions.trailingNewline = false;
-      std::string output = Amanuensis::Writer::WriteToString(Amanuensis::Value(3.14), minifiedOptions);
+      std::string output =
+          Amanuensis::Writer::WriteToString(Amanuensis::Value(3.14), minifiedOptions);
       // Must contain a decimal point to distinguish from integer
       ASSERT_TRUE(output.find('.') != std::string::npos || output.find('e') != std::string::npos);
     });
@@ -77,7 +82,8 @@ DESCRIBE("Writer", {
       Amanuensis::WriterOptions minifiedOptions;
       minifiedOptions.pretty = false;
       minifiedOptions.trailingNewline = false;
-      std::string text = Amanuensis::Writer::WriteToString(Amanuensis::Value(originalValue), minifiedOptions);
+      std::string text =
+          Amanuensis::Writer::WriteToString(Amanuensis::Value(originalValue), minifiedOptions);
 
       auto parseResult = Amanuensis::Reader::ParseString(text);
       ASSERT_TRUE(parseResult.succeeded);
@@ -89,7 +95,8 @@ DESCRIBE("Writer", {
       Amanuensis::WriterOptions minifiedOptions;
       minifiedOptions.pretty = false;
       minifiedOptions.trailingNewline = false;
-      std::string output = Amanuensis::Writer::WriteToString(Amanuensis::Value(1.0), minifiedOptions);
+      std::string output =
+          Amanuensis::Writer::WriteToString(Amanuensis::Value(1.0), minifiedOptions);
       // Must not emit just "1" — that would parse as integer
       ASSERT_TRUE(output.find('.') != std::string::npos || output.find('e') != std::string::npos);
     });
@@ -100,7 +107,8 @@ DESCRIBE("Writer", {
       Amanuensis::WriterOptions minifiedOptions;
       minifiedOptions.pretty = false;
       minifiedOptions.trailingNewline = false;
-      std::string output = Amanuensis::Writer::WriteToString(Amanuensis::Value("hello"), minifiedOptions);
+      std::string output =
+          Amanuensis::Writer::WriteToString(Amanuensis::Value("hello"), minifiedOptions);
       ASSERT_EQUAL(output, std::string("\"hello\""));
     });
 
@@ -118,7 +126,8 @@ DESCRIBE("Writer", {
       minifiedOptions.pretty = false;
       minifiedOptions.trailingNewline = false;
       std::string input(1, '\x01');
-      std::string output = Amanuensis::Writer::WriteToString(Amanuensis::Value(input), minifiedOptions);
+      std::string output =
+          Amanuensis::Writer::WriteToString(Amanuensis::Value(input), minifiedOptions);
       ASSERT_EQUAL(output, std::string("\"\\u0001\""));
     });
   });
@@ -156,7 +165,8 @@ DESCRIBE("Writer", {
     IT("omits trailing newline when configured", {
       Amanuensis::WriterOptions noNewlineOptions;
       noNewlineOptions.trailingNewline = false;
-      std::string output = Amanuensis::Writer::WriteToString(Amanuensis::Value(42), noNewlineOptions);
+      std::string output =
+          Amanuensis::Writer::WriteToString(Amanuensis::Value(42), noNewlineOptions);
       ASSERT_TRUE(output.back() != '\n');
     });
   });
@@ -185,15 +195,15 @@ DESCRIBE("Writer", {
     IT("writes to a file and returns true on success", {
       Amanuensis::Value objectValue = Amanuensis::Value::MakeObject();
       objectValue.Insert("test", Amanuensis::Value(true));
-      bool result = Amanuensis::Writer::WriteToFile(objectValue, "/tmp/amanuensis_writer_test.json");
+      bool result =
+          Amanuensis::Writer::WriteToFile(objectValue, "/tmp/amanuensis_writer_test.json");
       ASSERT_TRUE(result);
     });
 
     IT("returns false for an invalid file path", {
       Amanuensis::Value objectValue = Amanuensis::Value::MakeObject();
-      bool result = Amanuensis::Writer::WriteToFile(
-          objectValue, "/nonexistent_directory/file.json"
-      );
+      bool result =
+          Amanuensis::Writer::WriteToFile(objectValue, "/nonexistent_directory/file.json");
       ASSERT_FALSE(result);
     });
   });
