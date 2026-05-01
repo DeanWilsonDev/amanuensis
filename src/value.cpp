@@ -1,63 +1,9 @@
 #include "amanuensis/value.hpp"
+#include "ordered-map.hpp"
 
-#include <unordered_map>
 #include <utility>
-#include <variant>
 
 namespace Amanuensis {
-
-// -----------------------------------------------------------------------
-// OrderedMap — insertion-order-preserving object backing store.
-//
-// A vector of (key, value) pairs preserves insertion order.
-// A parallel unordered_map from key → vector index gives O(1) lookup.
-// -----------------------------------------------------------------------
-
-struct OrderedMap {
-  std::vector<std::pair<std::string, Value>> entries;
-  std::unordered_map<std::string, std::size_t> keyToIndex;
-
-  void Insert(std::string key, Value value) {
-    auto existingEntry = keyToIndex.find(key);
-    if (existingEntry != keyToIndex.end()) {
-      entries[existingEntry->second].second = std::move(value);
-    }
-    else {
-      keyToIndex[key] = entries.size();
-      entries.emplace_back(std::move(key), std::move(value));
-    }
-  }
-
-  bool Contains(const std::string& key) const {
-    return keyToIndex.count(key) > 0;
-  }
-
-  const Value& Get(const std::string& key) const {
-    auto foundEntry = keyToIndex.find(key);
-    if (foundEntry == keyToIndex.end()) {
-      throw KeyNotFoundError("Key not found: \"" + key + "\"");
-    }
-    return entries[foundEntry->second].second;
-  }
-
-  Value& Get(const std::string& key) {
-    auto foundEntry = keyToIndex.find(key);
-    if (foundEntry == keyToIndex.end()) {
-      throw KeyNotFoundError("Key not found: \"" + key + "\"");
-    }
-    return entries[foundEntry->second].second;
-  }
-
-  const Value* Find(const std::string& key) const {
-    auto foundEntry = keyToIndex.find(key);
-    if (foundEntry == keyToIndex.end()) {
-      return nullptr;
-    }
-    return &entries[foundEntry->second].second;
-  }
-
-  std::size_t Size() const { return entries.size(); }
-};
 
 // -----------------------------------------------------------------------
 // Value::Impl — the variant-based storage hidden behind the PIMPL.
@@ -76,8 +22,14 @@ struct Value::Impl {
 
   Storage storage;
 
-  Impl() : storage(nullptr) {}
-  explicit Impl(Storage s) : storage(std::move(s)) {}
+  Impl()
+      : storage(nullptr)
+  {
+  }
+  explicit Impl(Storage s)
+      : storage(std::move(s))
+  {
+  }
 };
 
 // -----------------------------------------------------------------------
@@ -96,33 +48,50 @@ static constexpr std::size_t kObjectIndex = 6;
 // Construction
 // -----------------------------------------------------------------------
 
-Value::Value() : impl_(std::make_shared<Impl>()) {}
+Value::Value()
+    : impl_(std::make_shared<Impl>())
+{
+}
 
 Value::Value(bool booleanValue)
-    : impl_(std::make_shared<Impl>(Impl::Storage{booleanValue})) {}
+    : impl_(std::make_shared<Impl>(Impl::Storage{booleanValue}))
+{
+}
 
 Value::Value(int integerValue)
-    : impl_(std::make_shared<Impl>(Impl::Storage{static_cast<long long>(integerValue)})) {}
+    : impl_(std::make_shared<Impl>(Impl::Storage{static_cast<long long>(integerValue)}))
+{
+}
 
 Value::Value(long long integerValue)
-    : impl_(std::make_shared<Impl>(Impl::Storage{integerValue})) {}
+    : impl_(std::make_shared<Impl>(Impl::Storage{integerValue}))
+{
+}
 
 Value::Value(double doubleValue)
-    : impl_(std::make_shared<Impl>(Impl::Storage{doubleValue})) {}
+    : impl_(std::make_shared<Impl>(Impl::Storage{doubleValue}))
+{
+}
 
 Value::Value(const char* stringValue)
-    : impl_(std::make_shared<Impl>(Impl::Storage{std::string(stringValue)})) {}
+    : impl_(std::make_shared<Impl>(Impl::Storage{std::string(stringValue)}))
+{
+}
 
 Value::Value(std::string stringValue)
-    : impl_(std::make_shared<Impl>(Impl::Storage{std::move(stringValue)})) {}
+    : impl_(std::make_shared<Impl>(Impl::Storage{std::move(stringValue)}))
+{
+}
 
-Value Value::MakeArray() {
+Value Value::MakeArray()
+{
   Value arrayValue;
   arrayValue.impl_ = std::make_shared<Impl>(Impl::Storage{std::vector<Value>{}});
   return arrayValue;
 }
 
-Value Value::MakeObject() {
+Value Value::MakeObject()
+{
   Value objectValue;
   objectValue.impl_ = std::make_shared<Impl>(Impl::Storage{OrderedMap{}});
   return objectValue;
@@ -132,7 +101,8 @@ Value Value::MakeObject() {
 // Type inspection
 // -----------------------------------------------------------------------
 
-ValueType Value::GetType() const {
+ValueType Value::GetType() const
+{
   switch (impl_->storage.index()) {
   case kNullIndex:
     return ValueType::Null;
@@ -153,43 +123,69 @@ ValueType Value::GetType() const {
   }
 }
 
-bool Value::IsNull() const { return impl_->storage.index() == kNullIndex; }
-bool Value::IsBoolean() const { return impl_->storage.index() == kBoolIndex; }
-bool Value::IsInteger() const { return impl_->storage.index() == kIntegerIndex; }
-bool Value::IsDouble() const { return impl_->storage.index() == kDoubleIndex; }
-bool Value::IsNumber() const { return IsInteger() || IsDouble(); }
-bool Value::IsString() const { return impl_->storage.index() == kStringIndex; }
-bool Value::IsArray() const { return impl_->storage.index() == kArrayIndex; }
-bool Value::IsObject() const { return impl_->storage.index() == kObjectIndex; }
+bool Value::IsNull() const
+{
+  return impl_->storage.index() == kNullIndex;
+}
+bool Value::IsBoolean() const
+{
+  return impl_->storage.index() == kBoolIndex;
+}
+bool Value::IsInteger() const
+{
+  return impl_->storage.index() == kIntegerIndex;
+}
+bool Value::IsDouble() const
+{
+  return impl_->storage.index() == kDoubleIndex;
+}
+bool Value::IsNumber() const
+{
+  return IsInteger() || IsDouble();
+}
+bool Value::IsString() const
+{
+  return impl_->storage.index() == kStringIndex;
+}
+bool Value::IsArray() const
+{
+  return impl_->storage.index() == kArrayIndex;
+}
+bool Value::IsObject() const
+{
+  return impl_->storage.index() == kObjectIndex;
+}
 
 // -----------------------------------------------------------------------
 // Typed accessors — throw TypeMismatchError on wrong type
 // -----------------------------------------------------------------------
 
-bool Value::AsBoolean() const {
+bool Value::AsBoolean() const
+{
   if (!IsBoolean()) {
     throw TypeMismatchError("Expected Boolean, got " + std::to_string(static_cast<int>(GetType())));
   }
   return std::get<bool>(impl_->storage);
 }
 
-long long Value::AsInteger() const {
+long long Value::AsInteger() const
+{
   if (!IsInteger()) {
-    throw TypeMismatchError(
-        "Expected Integer, got " + std::to_string(static_cast<int>(GetType()))
-    );
+    throw TypeMismatchError("Expected Integer, got " + std::to_string(static_cast<int>(GetType())));
   }
   return std::get<long long>(impl_->storage);
 }
 
-double Value::AsDouble() const {
+double Value::AsDouble() const
+{
   if (!IsDouble()) {
     throw TypeMismatchError("Expected Double, got " + std::to_string(static_cast<int>(GetType())));
   }
   return std::get<double>(impl_->storage);
 }
 
-const std::string& Value::AsString() const {
+const std::string& Value::AsString() const
+{
   if (!IsString()) {
     throw TypeMismatchError("Expected String, got " + std::to_string(static_cast<int>(GetType())));
   }
@@ -200,14 +196,16 @@ const std::string& Value::AsString() const {
 // Array operations
 // -----------------------------------------------------------------------
 
-void Value::PushBack(Value value) {
+void Value::PushBack(Value value)
+{
   if (!IsArray()) {
     throw TypeMismatchError("PushBack called on non-Array Value");
   }
   std::get<std::vector<Value>>(impl_->storage).push_back(std::move(value));
 }
 
-std::size_t Value::Size() const {
+std::size_t Value::Size() const
+{
   if (IsArray()) {
     return std::get<std::vector<Value>>(impl_->storage).size();
   }
@@ -217,7 +215,8 @@ std::size_t Value::Size() const {
   throw TypeMismatchError("Size called on non-Array, non-Object Value");
 }
 
-const Value& Value::At(std::size_t index) const {
+const Value& Value::At(std::size_t index) const
+{
   if (!IsArray()) {
     throw TypeMismatchError("At(index) called on non-Array Value");
   }
@@ -231,7 +230,8 @@ const Value& Value::At(std::size_t index) const {
   return elements[index];
 }
 
-Value& Value::At(std::size_t index) {
+Value& Value::At(std::size_t index)
+{
   if (!IsArray()) {
     throw TypeMismatchError("At(index) called on non-Array Value");
   }
@@ -245,7 +245,8 @@ Value& Value::At(std::size_t index) {
   return elements[index];
 }
 
-const std::vector<Value>& Value::AsArray() const {
+const std::vector<Value>& Value::AsArray() const
+{
   if (!IsArray()) {
     throw TypeMismatchError("AsArray called on non-Array Value");
   }
@@ -256,60 +257,62 @@ const std::vector<Value>& Value::AsArray() const {
 // Object operations
 // -----------------------------------------------------------------------
 
-void Value::Insert(std::string key, Value value) {
+void Value::Insert(std::string key, Value value)
+{
   if (!IsObject()) {
     throw TypeMismatchError("Insert called on non-Object Value");
   }
   std::get<OrderedMap>(impl_->storage).Insert(std::move(key), std::move(value));
 }
 
-bool Value::Contains(const std::string& key) const {
+bool Value::Contains(const std::string& key) const
+{
   if (!IsObject()) {
     throw TypeMismatchError("Contains called on non-Object Value");
   }
   return std::get<OrderedMap>(impl_->storage).Contains(key);
 }
 
-const Value& Value::Get(const std::string& key) const {
+const Value& Value::Get(const std::string& key) const
+{
   if (!IsObject()) {
     throw TypeMismatchError("Get called on non-Object Value");
   }
   return std::get<OrderedMap>(impl_->storage).Get(key);
 }
 
-Value& Value::Get(const std::string& key) {
+Value& Value::Get(const std::string& key)
+{
   if (!IsObject()) {
     throw TypeMismatchError("Get called on non-Object Value");
   }
   return std::get<OrderedMap>(impl_->storage).Get(key);
 }
 
-const Value* Value::Find(const std::string& key) const {
+const Value* Value::Find(const std::string& key) const
+{
   if (!IsObject()) {
     throw TypeMismatchError("Find called on non-Object Value");
   }
   return std::get<OrderedMap>(impl_->storage).Find(key);
 }
 
-// -----------------------------------------------------------------------
-// ObjectIterator — BeginObject / EndObject implementations
-// (class definition is in value.hpp)
-// -----------------------------------------------------------------------
-
-Value::ObjectIterator Value::BeginObject() const {
+Value::ObjectIterator Value::BeginObject() const
+{
   if (!IsObject()) {
     throw TypeMismatchError("BeginObject called on non-Object Value");
   }
   const auto& objectMap = std::get<OrderedMap>(impl_->storage);
-  return ObjectIterator(objectMap.entries.begin());
+  return ObjectIterator(objectMap.GetEntries().begin());
 }
 
-Value::ObjectIterator Value::EndObject() const {
+Value::ObjectIterator Value::EndObject() const
+{
   if (!IsObject()) {
     throw TypeMismatchError("EndObject called on non-Object Value");
   }
   const auto& objectMap = std::get<OrderedMap>(impl_->storage);
-  return ObjectIterator(objectMap.entries.end());
+  return ObjectIterator(objectMap.GetEntries().end());
 }
 
 } // namespace Amanuensis

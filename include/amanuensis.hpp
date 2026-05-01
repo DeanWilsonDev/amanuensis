@@ -5,4 +5,4 @@
 #include "amanuensis/io/parser-result.hpp"
 #include "amanuensis/io/parser-error.hpp"
 #include "amanuensis/io/writer.hpp"
-#include "amanuensis/serialisation.hpp"
+#include "amanuensis/serialisation/serialization.hpp"

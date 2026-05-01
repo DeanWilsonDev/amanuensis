@@ -1,4 +1,4 @@
-#include "amanuensis/serialisation.hpp"
+#include "amanuensis/serialisation/serialization.hpp"
 
 // Serialisation is almost entirely header-based (templates must be visible
 // at the point of instantiation).  This translation unit exists so that

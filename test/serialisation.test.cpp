@@ -1,5 +1,5 @@
 #include <cimmerian/test.hpp>
-#include <amanuensis/serialisation.hpp>
+#include <amanuensis/serialisation/serialization.hpp>
 #include <amanuensis/io/reader.hpp>
 #include <amanuensis/io/writer.hpp>
 #include <amanuensis/io/parser-result.hpp>
