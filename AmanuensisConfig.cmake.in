@@ -1,0 +1,7 @@
+# AmanuensisConfig.cmake.in
+@PACKAGE_INIT@
+
+include(CMakeFindDependencyMacro)
+include("${CMAKE_CURRENT_LIST_DIR}/AmanuensisTargets.cmake")
+
+check_required_components(amanuensis)
