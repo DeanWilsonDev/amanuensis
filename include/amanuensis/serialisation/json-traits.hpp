@@ -1,6 +1,7 @@
 #pragma once
 #include <amanuensis/value.hpp>
 
+#include <optional>
 #include <string>
 #include <vector>
 #include <map>

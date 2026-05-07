@@ -1,5 +1,6 @@
 #include "writer-context.hpp"
 #include <charconv>
+#include <cmath>
 
 namespace Amanuensis {
 

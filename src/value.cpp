@@ -2,6 +2,7 @@
 #include "ordered-map.hpp"
 
 #include <utility>
+#include <variant>
 
 namespace Amanuensis {
 

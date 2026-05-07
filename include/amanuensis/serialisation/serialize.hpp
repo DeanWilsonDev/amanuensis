@@ -5,6 +5,7 @@
 #include <amanuensis/serialisation/write-archive.hpp>
 #include <amanuensis/serialisation/read-archive.hpp>
 
+#include <optional>
 #include <string>
 
 namespace Amanuensis {
