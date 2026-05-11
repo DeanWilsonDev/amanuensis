@@ -10,6 +10,12 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
+  set(IS_ROOT_PROJECT ON)
+else()
+  set(IS_ROOT_PROJECT OFF)
+endif()
+
 # ------------------------
 # Library target
 # -------------------------
@@ -80,21 +86,12 @@ endif()
 # -------------------------
 # Test executable
 # -------------------------
-option(AMANUENSIS_BUILD_TESTS "Build amanuensis tests" ON)
-if(AMANUENSIS_BUILD_TESTS)
-  add_subdirectory(external/cimmerian)
-  add_executable(
-    test_amanuensis
-    test/test-main.cpp test/reader.test.cpp test/writer.test.cpp
-    test/round-trip.test.cpp test/value.test.cpp test/serialisation.test.cpp)
-  target_link_libraries(test_amanuensis PRIVATE amanuensis cimmerian)
-  target_compile_features(test_amanuensis PRIVATE cxx_std_20)
 
-  if(MSVC)
-    target_compile_options(test_amanuensis PRIVATE /W4 /EHsc)
-  else()
-    target_compile_options(test_amanuensis PRIVATE -Wall -Wextra -Wpedantic)
-  endif()
+if(IS_ROOT_PROJECT)
+
+  message(STATUS "IS_ROOT_PROJECT is ON, adding tests")
+  add_subdirectory(external/cimmerian)
+  add_subdirectory(test)
 endif()
 
 # ------------------------
