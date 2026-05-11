@@ -1,0 +1,3 @@
+[submodule "external/cimmerian"]
+	path = external/cimmerian
+	url = https://github.com/DeanWilsonDev/cimmerian.git
