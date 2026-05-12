@@ -1,4 +1,4 @@
-![Amanuensis logo](assets/amanuensis-logo.png)
+![Amanuensis logo](assets/amanuensis-logo.jpg)
 
 # Amanuensis
 
