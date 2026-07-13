@@ -11,6 +11,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
+  message(STATUS "IS_ROOT_PROJECT is ON")
   set(IS_ROOT_PROJECT ON)
 else()
   set(IS_ROOT_PROJECT OFF)
@@ -102,6 +103,7 @@ if(AMANUENSIS_BUILD_TESTS)
     test/round-trip.test.cpp test/value.test.cpp test/serialisation.test.cpp)
   target_link_libraries(test_amanuensis PRIVATE amanuensis cimmerian)
   target_compile_features(test_amanuensis PRIVATE cxx_std_20)
+endif()
 
 # ------------------------
 # Installation
