@@ -88,6 +88,7 @@ endif()
 # -------------------------
 
 if(IS_ROOT_PROJECT)
+  message(STATUS "IS_ROOT_PROJECT is ON, adding tests")
   option(AMANUENSIS_BUILD_TESTS "Build amanuensis tests" ON)
 else()
   option(AMANUENSIS_BUILD_TESTS "Build amanuensis tests" OFF)
@@ -101,13 +102,6 @@ if(AMANUENSIS_BUILD_TESTS)
     test/round-trip.test.cpp test/value.test.cpp test/serialisation.test.cpp)
   target_link_libraries(test_amanuensis PRIVATE amanuensis cimmerian)
   target_compile_features(test_amanuensis PRIVATE cxx_std_20)
-
-  if(MSVC)
-    target_compile_options(test_amanuensis PRIVATE /W4 /EHsc)
-  else()
-    target_compile_options(test_amanuensis PRIVATE -Wall -Wextra -Wpedantic)
-  endif()
-endif()
 
 # ------------------------
 # Installation

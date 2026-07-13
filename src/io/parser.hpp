@@ -3,6 +3,7 @@
 #include <amanuensis/io/parser-result.hpp>
 #include "amanuensis/value.hpp"
 #include <string>
+#include <cstdint>
 
 namespace Amanuensis {
 
