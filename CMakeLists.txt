@@ -1,5 +1,9 @@
 cmake_minimum_required(VERSION 3.25)
 
+if(TARGET amanuensis)
+  return()
+endif()
+
 project(
   amanuensis
   VERSION 1.0.0
