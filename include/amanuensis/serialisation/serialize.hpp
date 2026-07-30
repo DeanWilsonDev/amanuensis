@@ -4,6 +4,7 @@
 #include <amanuensis/serialisation/json-traits.hpp>
 #include <amanuensis/serialisation/write-archive.hpp>
 #include <amanuensis/serialisation/read-archive.hpp>
+#include <amanuensis/errors.hpp>
 
 #include <optional>
 #include <string>
@@ -119,7 +120,6 @@ template <typename T> FromJsonResult<T> TryFromJson(const Value& jsonValue)
   }
 }
 
-
 // -----------------------------------------------------------------------
 // ReadArchive::Field — deserialise a single field from the source object
 // -----------------------------------------------------------------------
@@ -128,22 +128,21 @@ template <typename FieldType> void ReadArchive::Field(const char* jsonKey, Field
 {
   // std::optional fields: missing or null key → leave empty
   if constexpr (Detail::IsOptional<FieldType>::value) {
-    const Value* found = source_.Find(jsonKey);
-    if (found == nullptr || found->IsNull()) {
+    const Value* found = Json::Find(source_, jsonKey);
+    if (found == nullptr || Json::IsNull(*found)) {
       fieldValue = std::nullopt;
       return;
     }
     fieldValue = FromJson<typename FieldType::value_type>(*found);
   }
   else {
-    const Value* found = source_.Find(jsonKey);
+    const Value* found = Json::Find(source_, jsonKey);
     if (found == nullptr) {
       throw KeyNotFoundError(std::string("Missing required field: \"") + jsonKey + "\"");
     }
     fieldValue = FromJson<FieldType>(*found);
   }
 }
-
 
 // -----------------------------------------------------------------------
 // WriteArchive::Field — serialise a single field into the object
@@ -152,7 +151,7 @@ template <typename FieldType> void ReadArchive::Field(const char* jsonKey, Field
 template <typename FieldType>
 void WriteArchive::Field(const char* jsonKey, const FieldType& fieldValue)
 {
-  object_.Insert(std::string(jsonKey), ToJson<FieldType>(fieldValue));
+  Json::Insert(object_, std::string(jsonKey), ToJson<FieldType>(fieldValue));
 }
 
 } // namespace Amanuensis

@@ -1,4 +1,5 @@
 #include "parser.hpp"
+#include "amanuensis/json.hpp"
 
 #include <charconv>
 #include <string_view>
@@ -389,7 +390,7 @@ ParseResult Parser::ParseArray()
   this->Advance(); // consume '['
   SkipWhitespace();
 
-  Value arrayValue = Value::MakeArray();
+  Value arrayValue = Json::MakeArray();
 
   if (!this->IsAtEnd() && this->Peek() == ']') {
     this->Advance();
@@ -403,7 +404,7 @@ ParseResult Parser::ParseArray()
     if (!elementResult.succeeded) {
       return elementResult;
     }
-    arrayValue.PushBack(std::move(elementResult.value));
+    Json::PushBack(arrayValue, std::move(elementResult.value));
 
     this->SkipWhitespace();
 
@@ -436,7 +437,7 @@ ParseResult Parser::ParseObject()
   this->Advance(); // consume '{'
   this->SkipWhitespace();
 
-  Value objectValue = Value::MakeObject();
+  Value objectValue = Json::MakeObject();
 
   if (!this->IsAtEnd() && this->Peek() == '}') {
     this->Advance();
@@ -454,7 +455,7 @@ ParseResult Parser::ParseObject()
     if (!keyResult.succeeded) {
       return keyResult;
     }
-    std::string key = keyResult.value.AsString();
+    std::string key = Json::AsString(keyResult.value);
 
     this->SkipWhitespace();
 
@@ -470,7 +471,7 @@ ParseResult Parser::ParseObject()
       return valueResult;
     }
 
-    objectValue.Insert(std::move(key), std::move(valueResult.value));
+    Json::Insert(objectValue, std::move(key), std::move(valueResult.value));
 
     this->SkipWhitespace();
 

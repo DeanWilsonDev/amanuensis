@@ -1,10 +1,11 @@
 #pragma once
 
-#include "amanuensis/value.hpp"
 #include <unordered_map>
 #include <vector>
 
 namespace Amanuensis {
+
+struct Value;
 
 // NOTE: OrderedMap maintains insertion order.
 // This means the JSON output is always the same, making it easier to read and version control

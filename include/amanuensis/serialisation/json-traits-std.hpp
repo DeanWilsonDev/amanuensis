@@ -13,9 +13,9 @@ namespace Amanuensis {
 template <typename ElementType>
 Value JsonTraits<std::vector<ElementType>>::ToJson(const std::vector<ElementType>& elements)
 {
-  Value arrayValue = Value::MakeArray();
+  Value arrayValue = Json::MakeArray();
   for (const auto& element : elements) {
-    arrayValue.PushBack(Amanuensis::ToJson<ElementType>(element));
+    Json::PushBack(arrayValue, Amanuensis::ToJson<ElementType>(element));
   }
   return arrayValue;
 }
@@ -23,7 +23,7 @@ Value JsonTraits<std::vector<ElementType>>::ToJson(const std::vector<ElementType
 template <typename ElementType>
 std::vector<ElementType> JsonTraits<std::vector<ElementType>>::FromJson(const Value& value)
 {
-  const auto& rawArray = value.AsArray();
+  const auto& rawArray = Json::AsArray(value);
   std::vector<ElementType> result;
   result.reserve(rawArray.size());
   for (const auto& element : rawArray) {
@@ -46,7 +46,7 @@ Value JsonTraits<std::optional<WrappedType>>::ToJson(
 template <typename WrappedType>
 std::optional<WrappedType> JsonTraits<std::optional<WrappedType>>::FromJson(const Value& value)
 {
-  if (value.IsNull()) {
+  if (Json::IsNull(value)) {
     return std::nullopt;
   }
   return Amanuensis::FromJson<WrappedType>(value);
@@ -57,9 +57,9 @@ Value JsonTraits<std::map<std::string, MappedType>>::ToJson(
     const std::map<std::string, MappedType>& entries
 )
 {
-  Value objectValue = Value::MakeObject();
+  Value objectValue = Json::MakeObject();
   for (const auto& [key, mappedValue] : entries) {
-    objectValue.Insert(key, Amanuensis::ToJson<MappedType>(mappedValue));
+    Json::Insert(objectValue, key, Amanuensis::ToJson<MappedType>(mappedValue));
   }
   return objectValue;
 }
@@ -69,7 +69,7 @@ std::map<std::string, MappedType>
 JsonTraits<std::map<std::string, MappedType>>::FromJson(const Value& value)
 {
   std::map<std::string, MappedType> result;
-  for (auto iterator = value.BeginObject(); iterator != value.EndObject(); ++iterator) {
+  for (auto iterator = Json::BeginObject(value); iterator != Json::EndObject(value); ++iterator) {
     result[iterator->first] = Amanuensis::FromJson<MappedType>(iterator->second);
   }
   return result;

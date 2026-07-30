@@ -1,4 +1,5 @@
 #include "writer-context.hpp"
+#include "amanuensis/json.hpp"
 #include <charconv>
 #include <cmath>
 
@@ -64,7 +65,7 @@ void WriterContext::WriteArray(
     const WriterOptions& options
 )
 {
-  const auto& elements = arrayValue.AsArray();
+  const auto& elements = Json::AsArray(arrayValue);
   if (elements.empty()) {
     output.append("[]");
     return;
@@ -97,7 +98,7 @@ void WriterContext::WriteObject(
     const WriterOptions& options
 )
 {
-  if (objectValue.Size() == 0) {
+  if (Json::Size(objectValue) == 0) {
     output.append("{}");
     return;
   }
@@ -108,9 +109,10 @@ void WriterContext::WriteObject(
   }
 
   std::size_t entryIndex = 0;
-  std::size_t totalEntries = objectValue.Size();
+  std::size_t totalEntries = Json::Size(objectValue);
 
-  for (auto iterator = objectValue.BeginObject(); iterator != objectValue.EndObject(); ++iterator) {
+  for (auto iterator = Json::BeginObject(objectValue); iterator != Json::EndObject(objectValue);
+       ++iterator) {
     WriteIndent(output, depth + 1, options);
     WriteEscapedString(output, iterator->first);
     output.push_back(':');
@@ -138,25 +140,25 @@ void WriterContext::WriteValue(
     const WriterOptions& options
 )
 {
-  switch (value.GetType()) {
+  switch (Json::GetType(value)) {
   case ValueType::Null:
     output.append("null");
     break;
 
   case ValueType::Boolean:
-    output.append(value.AsBoolean() ? "true" : "false");
+    output.append(Json::AsBoolean(value) ? "true" : "false");
     break;
 
   case ValueType::Integer: {
     // std::to_string is fine for integers
-    output.append(std::to_string(value.AsInteger()));
+    output.append(std::to_string(Json::AsInteger(value)));
     break;
   }
 
   case ValueType::Double: {
     // Use enough precision for lossless round-trip.
     // 17 significant digits is sufficient for IEEE 754 double.
-    double doubleValue = value.AsDouble();
+    double doubleValue = Json::AsDouble(value);
     if (std::isnan(doubleValue) || std::isinf(doubleValue)) {
       // JSON has no NaN/Inf — emit null as a safe fallback.
       output.append("null");
@@ -185,7 +187,7 @@ void WriterContext::WriteValue(
   }
 
   case ValueType::String:
-    WriteEscapedString(output, value.AsString());
+    WriteEscapedString(output, Json::AsString(value));
     break;
 
   case ValueType::Array:

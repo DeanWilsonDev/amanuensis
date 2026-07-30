@@ -1,4 +1,6 @@
-#include "ordered-map.hpp"
+#include <amanuensis/ordered-map.hpp>
+#include <amanuensis/value.hpp>
+#include <amanuensis/errors.hpp>
 
 namespace Amanuensis {
 

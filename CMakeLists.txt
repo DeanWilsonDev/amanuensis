@@ -22,7 +22,7 @@ endif()
 # -------------------------
 add_library(
   amanuensis STATIC
-  src/value.cpp
+  src/json.cpp
   src/io/reader.cpp
   src/io/writer.cpp
   src/io/writer-context.cpp

@@ -3,6 +3,7 @@
 #include <amanuensis/io/reader.hpp>
 #include <amanuensis/io/writer.hpp>
 #include <amanuensis/io/parser-result.hpp>
+#include <amanuensis/json.hpp>
 
 #include <cmath>
 #include <map>
@@ -52,15 +53,19 @@ namespace Amanuensis {
 template <> struct JsonTraits<Vec3> {
   static Value ToJson(const Vec3& vector)
   {
-    auto arrayValue = Value::MakeArray();
-    arrayValue.PushBack(vector.x);
-    arrayValue.PushBack(vector.y);
-    arrayValue.PushBack(vector.z);
-    return arrayValue;
+    Value array_value = Json::MakeArray();
+    Json::PushBack(array_value, Value{ vector.x });
+    Json::PushBack(array_value, Value{ vector.y });
+    Json::PushBack(array_value, Value{ vector.z });
+    return array_value;
   }
   static Vec3 FromJson(const Value& value)
   {
-    return {value.At(0).AsDouble(), value.At(1).AsDouble(), value.At(2).AsDouble()};
+    return {
+      Json::AsDouble(Json::At(value, 0)),
+      Json::AsDouble(Json::At(value, 1)),
+      Json::AsDouble(Json::At(value, 2))
+    };
   }
 };
 } // namespace Amanuensis
@@ -74,8 +79,7 @@ struct ConfigEntry {
 AMANUENSIS_SERIALISABLE(ConfigEntry, key, value, description);
 
 // -----------------------------------------------------------------------
-// Helper functions that construct test data outside of macro bodies
-// to avoid bare commas confusing the preprocessor.
+// Helper functions
 // -----------------------------------------------------------------------
 
 static PerFunctionCoverage MakeTestCoverage()
@@ -183,161 +187,161 @@ DESCRIBE("Serialisation", {
   DESCRIBE("Mechanism 1: AMANUENSIS_SERIALISABLE macro", {
     IT("serialises a struct to JSON", {
       auto original = MakeTestCoverage();
-      Amanuensis::Value jsonValue = Amanuensis::ToJson(original);
+      Amanuensis::Value json_value = Amanuensis::ToJson(original);
 
-      ASSERT_TRUE(jsonValue.IsObject());
-      ASSERT_EQUAL(jsonValue.Get("qualifiedName").AsString(), std::string("math::Add"));
-      ASSERT_EQUAL(jsonValue.Get("startLine").AsInteger(), 10LL);
-      ASSERT_EQUAL(jsonValue.Get("endLine").AsInteger(), 14LL);
-      ASSERT_EQUAL(jsonValue.Get("linesTotal").AsInteger(), 5LL);
-      ASSERT_EQUAL(jsonValue.Get("linesCovered").AsInteger(), 5LL);
-      ASSERT_EQUAL(jsonValue.Get("executionCount").AsInteger(), 3LL);
+      ASSERT_TRUE(Amanuensis::Json::IsObject(json_value));
+      ASSERT_EQUAL(Amanuensis::Json::AsString(Amanuensis::Json::Get(json_value, "qualifiedName")), std::string("math::Add"));
+      ASSERT_EQUAL(Amanuensis::Json::AsInteger(Amanuensis::Json::Get(json_value, "startLine")), 10LL);
+      ASSERT_EQUAL(Amanuensis::Json::AsInteger(Amanuensis::Json::Get(json_value, "endLine")), 14LL);
+      ASSERT_EQUAL(Amanuensis::Json::AsInteger(Amanuensis::Json::Get(json_value, "linesTotal")), 5LL);
+      ASSERT_EQUAL(Amanuensis::Json::AsInteger(Amanuensis::Json::Get(json_value, "linesCovered")), 5LL);
+      ASSERT_EQUAL(Amanuensis::Json::AsInteger(Amanuensis::Json::Get(json_value, "executionCount")), 3LL);
     });
 
     IT("deserialises JSON back to a struct", {
       auto original = MakeTestCoverage();
-      Amanuensis::Value jsonValue = Amanuensis::ToJson(original);
-      PerFunctionCoverage roundTripped = Amanuensis::FromJson<PerFunctionCoverage>(jsonValue);
+      Amanuensis::Value json_value = Amanuensis::ToJson(original);
+      PerFunctionCoverage round_tripped = Amanuensis::FromJson<PerFunctionCoverage>(json_value);
 
-      ASSERT_EQUAL(roundTripped.qualifiedName, std::string("math::Add"));
-      ASSERT_EQUAL(roundTripped.startLine, 10);
-      ASSERT_EQUAL(roundTripped.endLine, 14);
-      ASSERT_EQUAL(roundTripped.linesTotal, 5);
-      ASSERT_EQUAL(roundTripped.linesCovered, 5);
-      ASSERT_EQUAL(roundTripped.executionCount, 3);
+      ASSERT_EQUAL(round_tripped.qualifiedName, std::string("math::Add"));
+      ASSERT_EQUAL(round_tripped.startLine, 10);
+      ASSERT_EQUAL(round_tripped.endLine, 14);
+      ASSERT_EQUAL(round_tripped.linesTotal, 5);
+      ASSERT_EQUAL(round_tripped.linesCovered, 5);
+      ASSERT_EQUAL(round_tripped.executionCount, 3);
     });
 
     IT("uses C++ field names as JSON keys", {
       auto original = MakeMinimalCoverage();
-      Amanuensis::Value jsonValue = Amanuensis::ToJson(original);
-      ASSERT_TRUE(jsonValue.Contains("qualifiedName"));
-      ASSERT_TRUE(jsonValue.Contains("startLine"));
-      ASSERT_TRUE(jsonValue.Contains("endLine"));
+      Amanuensis::Value json_value = Amanuensis::ToJson(original);
+      ASSERT_TRUE(Amanuensis::Json::Contains(json_value, "qualifiedName"));
+      ASSERT_TRUE(Amanuensis::Json::Contains(json_value, "startLine"));
+      ASSERT_TRUE(Amanuensis::Json::Contains(json_value, "endLine"));
     });
   });
 
   DESCRIBE("Mechanism 2: intrusive Serialise member", {
     IT("uses custom JSON key names", {
       auto original = MakeRenamedFields();
-      Amanuensis::Value jsonValue = Amanuensis::ToJson(original);
+      Amanuensis::Value json_value = Amanuensis::ToJson(original);
 
-      ASSERT_TRUE(jsonValue.Contains("display_name"));
-      ASSERT_TRUE(jsonValue.Contains("item_count"));
-      ASSERT_FALSE(jsonValue.Contains("name"));
-      ASSERT_FALSE(jsonValue.Contains("count"));
+      ASSERT_TRUE(Amanuensis::Json::Contains(json_value, "display_name"));
+      ASSERT_TRUE(Amanuensis::Json::Contains(json_value, "item_count"));
+      ASSERT_FALSE(Amanuensis::Json::Contains(json_value, "name"));
+      ASSERT_FALSE(Amanuensis::Json::Contains(json_value, "count"));
     });
 
     IT("serialises with renamed keys", {
       auto original = MakeRenamedFields();
-      Amanuensis::Value jsonValue = Amanuensis::ToJson(original);
-      ASSERT_EQUAL(jsonValue.Get("display_name").AsString(), std::string("Widget"));
-      ASSERT_EQUAL(jsonValue.Get("item_count").AsInteger(), 42LL);
+      Amanuensis::Value json_value = Amanuensis::ToJson(original);
+      ASSERT_EQUAL(Amanuensis::Json::AsString(Amanuensis::Json::Get(json_value, "display_name")), std::string("Widget"));
+      ASSERT_EQUAL(Amanuensis::Json::AsInteger(Amanuensis::Json::Get(json_value, "item_count")), 42LL);
     });
 
     IT("deserialises with renamed keys", {
       auto original = MakeRenamedFields();
-      Amanuensis::Value jsonValue = Amanuensis::ToJson(original);
-      RenamedFields roundTripped = Amanuensis::FromJson<RenamedFields>(jsonValue);
+      Amanuensis::Value json_value = Amanuensis::ToJson(original);
+      RenamedFields round_tripped = Amanuensis::FromJson<RenamedFields>(json_value);
 
-      ASSERT_EQUAL(roundTripped.name, std::string("Widget"));
-      ASSERT_EQUAL(roundTripped.count, 42);
+      ASSERT_EQUAL(round_tripped.name, std::string("Widget"));
+      ASSERT_EQUAL(round_tripped.count, 42);
     });
   });
 
   DESCRIBE("Mechanism 3: JsonTraits specialisation", {
     IT("serialises to an array", {
       auto original = MakeSimpleVec3();
-      Amanuensis::Value jsonValue = Amanuensis::ToJson(original);
-      ASSERT_TRUE(jsonValue.IsArray());
-      ASSERT_EQUAL(jsonValue.Size(), 3u);
+      Amanuensis::Value json_value = Amanuensis::ToJson(original);
+      ASSERT_TRUE(Amanuensis::Json::IsArray(json_value));
+      ASSERT_EQUAL(Amanuensis::Json::Size(json_value), 3u);
     });
 
     IT("round-trips through ToJson and FromJson", {
       auto original = MakeVec3();
-      Amanuensis::Value jsonValue = Amanuensis::ToJson(original);
-      Vec3 roundTripped = Amanuensis::FromJson<Vec3>(jsonValue);
+      Amanuensis::Value json_value = Amanuensis::ToJson(original);
+      Vec3 round_tripped = Amanuensis::FromJson<Vec3>(json_value);
 
-      ASSERT_TRUE(std::abs(roundTripped.x - 1.5) < 1e-15);
-      ASSERT_TRUE(std::abs(roundTripped.y - (-2.5)) < 1e-15);
-      ASSERT_TRUE(std::abs(roundTripped.z - 3.0) < 1e-15);
+      ASSERT_TRUE(std::abs(round_tripped.x - 1.5) < 1e-15);
+      ASSERT_TRUE(std::abs(round_tripped.y - (-2.5)) < 1e-15);
+      ASSERT_TRUE(std::abs(round_tripped.z - 3.0) < 1e-15);
     });
   });
 
   DESCRIBE("TryFromJson non-throwing variant", {
     IT("succeeds on valid input", {
       auto original = MakeMinimalCoverage();
-      Amanuensis::Value jsonValue = Amanuensis::ToJson(original);
-      auto tryResult = Amanuensis::TryFromJson<PerFunctionCoverage>(jsonValue);
-      ASSERT_TRUE(tryResult.succeeded);
-      ASSERT_EQUAL(tryResult.value.qualifiedName, std::string("f"));
+      Amanuensis::Value json_value = Amanuensis::ToJson(original);
+      auto try_result = Amanuensis::TryFromJson<PerFunctionCoverage>(json_value);
+      ASSERT_TRUE(try_result.succeeded);
+      ASSERT_EQUAL(try_result.value.qualifiedName, std::string("f"));
     });
 
     IT("fails on missing required fields without throwing", {
-      Amanuensis::Value emptyObject = Amanuensis::Value::MakeObject();
-      auto tryResult = Amanuensis::TryFromJson<PerFunctionCoverage>(emptyObject);
-      ASSERT_FALSE(tryResult.succeeded);
-      ASSERT_FALSE(tryResult.errorMessage.empty());
+      Amanuensis::Value empty_object = Amanuensis::Json::MakeObject();
+      auto try_result = Amanuensis::TryFromJson<PerFunctionCoverage>(empty_object);
+      ASSERT_FALSE(try_result.succeeded);
+      ASSERT_FALSE(try_result.errorMessage.empty());
     });
   });
 
   DESCRIBE("Built-in JsonTraits: std::vector", {
     IT("serialises a vector of ints", {
       auto original = MakeIntVector();
-      Amanuensis::Value jsonValue = Amanuensis::ToJson(original);
-      ASSERT_TRUE(jsonValue.IsArray());
-      ASSERT_EQUAL(jsonValue.Size(), 3u);
-      ASSERT_EQUAL(jsonValue.At(0).AsInteger(), 10LL);
-      ASSERT_EQUAL(jsonValue.At(2).AsInteger(), 30LL);
+      Amanuensis::Value json_value = Amanuensis::ToJson(original);
+      ASSERT_TRUE(Amanuensis::Json::IsArray(json_value));
+      ASSERT_EQUAL(Amanuensis::Json::Size(json_value), 3u);
+      ASSERT_EQUAL(Amanuensis::Json::AsInteger(Amanuensis::Json::At(json_value, 0)), 10LL);
+      ASSERT_EQUAL(Amanuensis::Json::AsInteger(Amanuensis::Json::At(json_value, 2)), 30LL);
     });
 
     IT("deserialises a vector of ints", {
       auto original = MakeIntVector();
-      Amanuensis::Value jsonValue = Amanuensis::ToJson(original);
-      auto roundTripped = Amanuensis::FromJson<std::vector<int>>(jsonValue);
-      ASSERT_EQUAL(roundTripped.size(), 3u);
-      ASSERT_EQUAL(roundTripped[0], 10);
-      ASSERT_EQUAL(roundTripped[2], 30);
+      Amanuensis::Value json_value = Amanuensis::ToJson(original);
+      auto round_tripped = Amanuensis::FromJson<std::vector<int>>(json_value);
+      ASSERT_EQUAL(round_tripped.size(), 3u);
+      ASSERT_EQUAL(round_tripped[0], 10);
+      ASSERT_EQUAL(round_tripped[2], 30);
     });
 
     IT("handles an empty vector", {
-      std::vector<int> emptyVector;
-      Amanuensis::Value jsonValue = Amanuensis::ToJson(emptyVector);
-      ASSERT_TRUE(jsonValue.IsArray());
-      ASSERT_EQUAL(jsonValue.Size(), 0u);
+      std::vector<int> empty_vector;
+      Amanuensis::Value json_value = Amanuensis::ToJson(empty_vector);
+      ASSERT_TRUE(Amanuensis::Json::IsArray(json_value));
+      ASSERT_EQUAL(Amanuensis::Json::Size(json_value), 0u);
     });
 
     IT("serialises a vector of user types", {
       auto vectors = MakeVec3Vector();
-      Amanuensis::Value jsonValue = Amanuensis::ToJson(vectors);
-      ASSERT_EQUAL(jsonValue.Size(), 2u);
-      ASSERT_EQUAL(jsonValue.At(0).Size(), 3u);
+      Amanuensis::Value json_value = Amanuensis::ToJson(vectors);
+      ASSERT_EQUAL(Amanuensis::Json::Size(json_value), 2u);
+      ASSERT_EQUAL(Amanuensis::Json::Size(Amanuensis::Json::At(json_value, 0)), 3u);
     });
   });
 
   DESCRIBE("Built-in JsonTraits: std::optional", {
     IT("serialises a present optional", {
       std::optional<int> present = 42;
-      Amanuensis::Value jsonValue = Amanuensis::ToJson(present);
-      ASSERT_TRUE(jsonValue.IsInteger());
-      ASSERT_EQUAL(jsonValue.AsInteger(), 42LL);
+      Amanuensis::Value json_value = Amanuensis::ToJson(present);
+      ASSERT_TRUE(Amanuensis::Json::IsInteger(json_value));
+      ASSERT_EQUAL(Amanuensis::Json::AsInteger(json_value), 42LL);
     });
 
     IT("serialises an absent optional as null", {
       std::optional<int> absent = std::nullopt;
-      Amanuensis::Value jsonValue = Amanuensis::ToJson(absent);
-      ASSERT_TRUE(jsonValue.IsNull());
+      Amanuensis::Value json_value = Amanuensis::ToJson(absent);
+      ASSERT_TRUE(Amanuensis::Json::IsNull(json_value));
     });
 
     IT("deserialises a present optional", {
-      Amanuensis::Value jsonValue(42);
-      auto result = Amanuensis::FromJson<std::optional<int>>(jsonValue);
+      Amanuensis::Value json_value{ 42LL };
+      auto result = Amanuensis::FromJson<std::optional<int>>(json_value);
       ASSERT_TRUE(result.has_value());
       ASSERT_EQUAL(*result, 42);
     });
 
     IT("deserialises null as empty optional", {
-      Amanuensis::Value jsonValue;
-      auto result = Amanuensis::FromJson<std::optional<int>>(jsonValue);
+      Amanuensis::Value json_value{ nullptr };
+      auto result = Amanuensis::FromJson<std::optional<int>>(json_value);
       ASSERT_FALSE(result.has_value());
     });
   });
@@ -345,18 +349,18 @@ DESCRIBE("Serialisation", {
   DESCRIBE("Built-in JsonTraits: std::map", {
     IT("serialises a string-keyed map", {
       auto original = MakeStringIntMap();
-      Amanuensis::Value jsonValue = Amanuensis::ToJson(original);
-      ASSERT_TRUE(jsonValue.IsObject());
-      ASSERT_EQUAL(jsonValue.Get("alpha").AsInteger(), 1LL);
-      ASSERT_EQUAL(jsonValue.Get("beta").AsInteger(), 2LL);
+      Amanuensis::Value json_value = Amanuensis::ToJson(original);
+      ASSERT_TRUE(Amanuensis::Json::IsObject(json_value));
+      ASSERT_EQUAL(Amanuensis::Json::AsInteger(Amanuensis::Json::Get(json_value, "alpha")), 1LL);
+      ASSERT_EQUAL(Amanuensis::Json::AsInteger(Amanuensis::Json::Get(json_value, "beta")), 2LL);
     });
 
     IT("deserialises a string-keyed map", {
       auto original = MakeStringIntMap();
-      Amanuensis::Value jsonValue = Amanuensis::ToJson(original);
-      auto roundTripped = Amanuensis::FromJson<StringIntMapType>(jsonValue);
-      ASSERT_EQUAL(roundTripped["alpha"], 1);
-      ASSERT_EQUAL(roundTripped["beta"], 2);
+      Amanuensis::Value json_value = Amanuensis::ToJson(original);
+      auto round_tripped = Amanuensis::FromJson<StringIntMapType>(json_value);
+      ASSERT_EQUAL(round_tripped["alpha"], 1);
+      ASSERT_EQUAL(round_tripped["beta"], 2);
     });
   });
 
@@ -382,8 +386,9 @@ DESCRIBE("Serialisation", {
     });
 
     IT("leaves optional field empty when null in JSON", {
-      auto parsed =
-          Amanuensis::Reader::ParseString(R"({"key":"host","value":8080,"description":null})");
+      auto parsed = Amanuensis::Reader::ParseString(
+          R"({"key":"host","value":8080,"description":null})"
+      );
       REQUIRE_TRUE(parsed.succeeded);
       auto entry = Amanuensis::FromJson<ConfigEntry>(parsed.value);
       ASSERT_FALSE(entry.description.has_value());
@@ -406,21 +411,21 @@ DESCRIBE("Serialisation", {
   DESCRIBE("Full serialisation round-trip through file", {
     IT("writes and reads back a struct through JSON file", {
       auto original = MakeTestCoverage2();
-      Amanuensis::Value jsonValue = Amanuensis::ToJson(original);
+      Amanuensis::Value json_value = Amanuensis::ToJson(original);
 
-      bool writeSucceeded =
-          Amanuensis::Writer::WriteToFile(jsonValue, "/tmp/amanuensis_serial_test.json");
-      REQUIRE_TRUE(writeSucceeded);
+      bool write_succeeded =
+          Amanuensis::Writer::WriteToFile(json_value, "/tmp/amanuensis_serial_test.json");
+      REQUIRE_TRUE(write_succeeded);
 
-      auto parseResult = Amanuensis::Reader::ParseFile("/tmp/amanuensis_serial_test.json");
-      REQUIRE_TRUE(parseResult.succeeded);
+      auto parse_result = Amanuensis::Reader::ParseFile("/tmp/amanuensis_serial_test.json");
+      REQUIRE_TRUE(parse_result.succeeded);
 
-      PerFunctionCoverage roundTripped =
-          Amanuensis::FromJson<PerFunctionCoverage>(parseResult.value);
-      ASSERT_EQUAL(roundTripped.qualifiedName, std::string("math::Multiply"));
-      ASSERT_EQUAL(roundTripped.startLine, 20);
-      ASSERT_EQUAL(roundTripped.linesCovered, 8);
-      ASSERT_EQUAL(roundTripped.executionCount, 7);
+      PerFunctionCoverage round_tripped =
+          Amanuensis::FromJson<PerFunctionCoverage>(parse_result.value);
+      ASSERT_EQUAL(round_tripped.qualifiedName, std::string("math::Multiply"));
+      ASSERT_EQUAL(round_tripped.startLine, 20);
+      ASSERT_EQUAL(round_tripped.linesCovered, 8);
+      ASSERT_EQUAL(round_tripped.executionCount, 7);
     });
   });
 });

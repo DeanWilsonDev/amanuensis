@@ -1,5 +1,6 @@
 #include <cimmerian/test.hpp>
 #include <amanuensis/value.hpp>
+#include <amanuensis/json.hpp>
 #include <amanuensis/io/reader.hpp>
 #include <amanuensis/io/writer.hpp>
 #include <amanuensis/io/parser-result.hpp>
@@ -7,11 +8,12 @@
 #include <string>
 #include <vector>
 
-// Helper to collect keys from an object in iteration order
-static std::vector<std::string> CollectKeys(const Amanuensis::Value& objectValue)
+static std::vector<std::string> CollectKeys(const Amanuensis::Value& object_value)
 {
   std::vector<std::string> keys;
-  for (auto iterator = objectValue.BeginObject(); iterator != objectValue.EndObject(); ++iterator) {
+  for (auto iterator = Amanuensis::Json::BeginObject(object_value);
+       iterator != Amanuensis::Json::EndObject(object_value);
+       ++iterator) {
     keys.push_back(iterator->first);
   }
   return keys;
@@ -20,12 +22,12 @@ static std::vector<std::string> CollectKeys(const Amanuensis::Value& objectValue
 DESCRIBE("Insertion order", {
   DESCRIBE("Programmatic construction", {
     IT("preserves insertion order for three keys", {
-      Amanuensis::Value objectValue = Amanuensis::Value::MakeObject();
-      objectValue.Insert("zebra", Amanuensis::Value(1));
-      objectValue.Insert("apple", Amanuensis::Value(2));
-      objectValue.Insert("mango", Amanuensis::Value(3));
+      Amanuensis::Value object_value = Amanuensis::Json::MakeObject();
+      Amanuensis::Json::Insert(object_value, "zebra", Amanuensis::Value{ 1LL });
+      Amanuensis::Json::Insert(object_value, "apple", Amanuensis::Value{ 2LL });
+      Amanuensis::Json::Insert(object_value, "mango", Amanuensis::Value{ 3LL });
 
-      auto keys = CollectKeys(objectValue);
+      auto keys = CollectKeys(object_value);
       ASSERT_EQUAL(keys.size(), 3u);
       ASSERT_EQUAL(keys[0], std::string("zebra"));
       ASSERT_EQUAL(keys[1], std::string("apple"));
@@ -33,16 +35,16 @@ DESCRIBE("Insertion order", {
     });
 
     IT("overwrites value but preserves position on duplicate key", {
-      Amanuensis::Value objectValue = Amanuensis::Value::MakeObject();
-      objectValue.Insert("first", Amanuensis::Value(1));
-      objectValue.Insert("second", Amanuensis::Value(2));
-      objectValue.Insert("first", Amanuensis::Value(99));
+      Amanuensis::Value object_value = Amanuensis::Json::MakeObject();
+      Amanuensis::Json::Insert(object_value, "first",  Amanuensis::Value{ 1LL });
+      Amanuensis::Json::Insert(object_value, "second", Amanuensis::Value{ 2LL });
+      Amanuensis::Json::Insert(object_value, "first",  Amanuensis::Value{ 99LL });
 
-      auto keys = CollectKeys(objectValue);
+      auto keys = CollectKeys(object_value);
       ASSERT_EQUAL(keys.size(), 2u);
       ASSERT_EQUAL(keys[0], std::string("first"));
       ASSERT_EQUAL(keys[1], std::string("second"));
-      ASSERT_EQUAL(objectValue.Get("first").AsInteger(), 99LL);
+      ASSERT_EQUAL(Amanuensis::Json::AsInteger(Amanuensis::Json::Get(object_value, "first")), 99LL);
     });
   });
 
@@ -74,24 +76,24 @@ DESCRIBE("Insertion order", {
 
   DESCRIBE("Round-trip order stability", {
     IT("key order survives parse-write-parse cycle", {
-      std::string originalJson = R"({"z":1,"a":2,"m":3})";
-      auto firstParse = Amanuensis::Reader::ParseString(originalJson);
-      REQUIRE_TRUE(firstParse.succeeded);
+      std::string original_json = R"({"z":1,"a":2,"m":3})";
+      auto first_parse = Amanuensis::Reader::ParseString(original_json);
+      REQUIRE_TRUE(first_parse.succeeded);
 
-      Amanuensis::WriterOptions minifiedOptions;
-      minifiedOptions.pretty = false;
-      minifiedOptions.trailingNewline = false;
-      std::string rewritten = Amanuensis::Writer::WriteToString(firstParse.value, minifiedOptions);
+      Amanuensis::WriterOptions minified_options;
+      minified_options.pretty = false;
+      minified_options.trailingNewline = false;
+      std::string rewritten = Amanuensis::Writer::WriteToString(first_parse.value, minified_options);
 
-      auto secondParse = Amanuensis::Reader::ParseString(rewritten);
-      REQUIRE_TRUE(secondParse.succeeded);
+      auto second_parse = Amanuensis::Reader::ParseString(rewritten);
+      REQUIRE_TRUE(second_parse.succeeded);
 
-      auto firstKeys = CollectKeys(firstParse.value);
-      auto secondKeys = CollectKeys(secondParse.value);
+      auto first_keys  = CollectKeys(first_parse.value);
+      auto second_keys = CollectKeys(second_parse.value);
 
-      ASSERT_EQUAL(firstKeys.size(), secondKeys.size());
-      for (std::size_t i = 0; i < firstKeys.size(); ++i) {
-        ASSERT_EQUAL(firstKeys[i], secondKeys[i]);
+      ASSERT_EQUAL(first_keys.size(), second_keys.size());
+      for (std::size_t i = 0; i < first_keys.size(); ++i) {
+        ASSERT_EQUAL(first_keys[i], second_keys[i]);
       }
     });
 
@@ -101,16 +103,16 @@ DESCRIBE("Insertion order", {
         auto parsed = Amanuensis::Reader::ParseString(json);
         REQUIRE_TRUE(parsed.succeeded);
 
-        Amanuensis::WriterOptions minifiedOptions;
-        minifiedOptions.pretty = false;
-        minifiedOptions.trailingNewline = false;
-        json = Amanuensis::Writer::WriteToString(parsed.value, minifiedOptions);
+        Amanuensis::WriterOptions minified_options;
+        minified_options.pretty = false;
+        minified_options.trailingNewline = false;
+        json = Amanuensis::Writer::WriteToString(parsed.value, minified_options);
       }
 
-      auto finalParse = Amanuensis::Reader::ParseString(json);
-      REQUIRE_TRUE(finalParse.succeeded);
+      auto final_parse = Amanuensis::Reader::ParseString(json);
+      REQUIRE_TRUE(final_parse.succeeded);
 
-      auto keys = CollectKeys(finalParse.value);
+      auto keys = CollectKeys(final_parse.value);
       ASSERT_EQUAL(keys[0], std::string("c"));
       ASSERT_EQUAL(keys[1], std::string("a"));
       ASSERT_EQUAL(keys[2], std::string("b"));

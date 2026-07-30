@@ -1,6 +1,7 @@
 #pragma once
 
-#include "amanuensis/value.hpp"
+#include <amanuensis/value.hpp>
+#include <amanuensis/json.hpp>
 
 namespace Amanuensis {
 
@@ -11,7 +12,7 @@ namespace Amanuensis {
 class WriteArchive {
 public:
   WriteArchive()
-      : object_(Value::MakeObject())
+      : object_(Json::MakeObject())
   {
   }
 
