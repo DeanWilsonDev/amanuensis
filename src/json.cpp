@@ -146,7 +146,7 @@ std::size_t Json::Size(const Value& value)
     return std::get<std::vector<Value>>(value.data).size();
   }
   if (IsObject(value)) {
-    return std::get<OrderedMap>(value.data).Size();
+    return std::get<OrderedMap<Value>>(value.data).Size();
   }
   throw TypeMismatchError("Size called on non-Array, non-Object Value");
 }
@@ -190,7 +190,7 @@ void Json::Insert(Value& value, std::string key, Value element)
   if (!IsObject(value)) {
     throw TypeMismatchError("Insert called on non-Object Value");
   }
-  std::get<OrderedMap>(value.data).Insert(std::move(key), std::move(element));
+  std::get<OrderedMap<Value>>(value.data).Insert(std::move(key), std::move(element));
 }
 
 bool Json::Contains(const Value& value, const std::string& key)
@@ -198,7 +198,7 @@ bool Json::Contains(const Value& value, const std::string& key)
   if (!IsObject(value)) {
     throw TypeMismatchError("Contains called on non-Object Value");
   }
-  return std::get<OrderedMap>(value.data).Contains(key);
+  return std::get<OrderedMap<Value>>(value.data).Contains(key);
 }
 
 const Value& Json::Get(const Value& value, const std::string& key)
@@ -206,7 +206,7 @@ const Value& Json::Get(const Value& value, const std::string& key)
   if (!IsObject(value)) {
     throw TypeMismatchError("Get called on non-Object Value");
   }
-  return std::get<OrderedMap>(value.data).Get(key);
+  return std::get<OrderedMap<Value>>(value.data).Get(key);
 }
 
 Value& Json::Get(Value& value, const std::string& key)
@@ -214,7 +214,7 @@ Value& Json::Get(Value& value, const std::string& key)
   if (!IsObject(value)) {
     throw TypeMismatchError("Get called on non-Object Value");
   }
-  return std::get<OrderedMap>(value.data).Get(key);
+  return std::get<OrderedMap<Value>>(value.data).Get(key);
 }
 
 const Value* Json::Find(const Value& value, const std::string& key)
@@ -222,7 +222,7 @@ const Value* Json::Find(const Value& value, const std::string& key)
   if (!IsObject(value)) {
     throw TypeMismatchError("Find called on non-Object Value");
   }
-  return std::get<OrderedMap>(value.data).Find(key);
+  return std::get<OrderedMap<Value>>(value.data).Find(key);
 }
 
 ObjectIterator Json::BeginObject(const Value& value)
@@ -230,7 +230,7 @@ ObjectIterator Json::BeginObject(const Value& value)
   if (!IsObject(value)) {
     throw TypeMismatchError("BeginObject called on non-Object Value");
   }
-  return ObjectIterator(std::get<OrderedMap>(value.data).GetEntries().begin());
+  return ObjectIterator(std::get<OrderedMap<Value>>(value.data).GetEntries().begin());
 }
 
 ObjectIterator Json::EndObject(const Value& value)
@@ -238,7 +238,7 @@ ObjectIterator Json::EndObject(const Value& value)
   if (!IsObject(value)) {
     throw TypeMismatchError("EndObject called on non-Object Value");
   }
-  return ObjectIterator(std::get<OrderedMap>(value.data).GetEntries().end());
+  return ObjectIterator(std::get<OrderedMap<Value>>(value.data).GetEntries().end());
 }
 
 
@@ -249,7 +249,7 @@ Value Json::MakeArray()
 
 Value Json::MakeObject()
 {
-  return Value{OrderedMap{}};
+  return Value{OrderedMap<Value>{}};
 }
 
 
