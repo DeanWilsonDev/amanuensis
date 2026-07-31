@@ -1,5 +1,5 @@
 #include <cimmerian/test.hpp>
-#include <amanuensis/serialisation/serialization.hpp>
+#include <amanuensis/serialization/serialization.hpp>
 #include <amanuensis/io/reader.hpp>
 #include <amanuensis/io/writer.hpp>
 #include <amanuensis/io/parse-result.hpp>
@@ -54,17 +54,16 @@ template <> struct JsonTraits<Vec3> {
   static Value ToJson(const Vec3& vector)
   {
     Value array_value = Json::MakeArray();
-    Json::PushBack(array_value, Value{ vector.x });
-    Json::PushBack(array_value, Value{ vector.y });
-    Json::PushBack(array_value, Value{ vector.z });
+    Json::PushBack(array_value, Value{vector.x});
+    Json::PushBack(array_value, Value{vector.y});
+    Json::PushBack(array_value, Value{vector.z});
     return array_value;
   }
   static Vec3 FromJson(const Value& value)
   {
     return {
-      Json::AsDouble(Json::At(value, 0)),
-      Json::AsDouble(Json::At(value, 1)),
-      Json::AsDouble(Json::At(value, 2))
+        Json::AsDouble(Json::At(value, 0)), Json::AsDouble(Json::At(value, 1)),
+        Json::AsDouble(Json::At(value, 2))
     };
   }
 };
@@ -190,12 +189,23 @@ DESCRIBE("Serialisation", {
       Amanuensis::Value json_value = Amanuensis::ToJson(original);
 
       ASSERT_TRUE(Amanuensis::Json::IsObject(json_value));
-      ASSERT_EQUAL(Amanuensis::Json::AsString(Amanuensis::Json::Get(json_value, "qualifiedName")), std::string("math::Add"));
-      ASSERT_EQUAL(Amanuensis::Json::AsInteger(Amanuensis::Json::Get(json_value, "startLine")), 10LL);
+      ASSERT_EQUAL(
+          Amanuensis::Json::AsString(Amanuensis::Json::Get(json_value, "qualifiedName")),
+          std::string("math::Add")
+      );
+      ASSERT_EQUAL(
+          Amanuensis::Json::AsInteger(Amanuensis::Json::Get(json_value, "startLine")), 10LL
+      );
       ASSERT_EQUAL(Amanuensis::Json::AsInteger(Amanuensis::Json::Get(json_value, "endLine")), 14LL);
-      ASSERT_EQUAL(Amanuensis::Json::AsInteger(Amanuensis::Json::Get(json_value, "linesTotal")), 5LL);
-      ASSERT_EQUAL(Amanuensis::Json::AsInteger(Amanuensis::Json::Get(json_value, "linesCovered")), 5LL);
-      ASSERT_EQUAL(Amanuensis::Json::AsInteger(Amanuensis::Json::Get(json_value, "executionCount")), 3LL);
+      ASSERT_EQUAL(
+          Amanuensis::Json::AsInteger(Amanuensis::Json::Get(json_value, "linesTotal")), 5LL
+      );
+      ASSERT_EQUAL(
+          Amanuensis::Json::AsInteger(Amanuensis::Json::Get(json_value, "linesCovered")), 5LL
+      );
+      ASSERT_EQUAL(
+          Amanuensis::Json::AsInteger(Amanuensis::Json::Get(json_value, "executionCount")), 3LL
+      );
     });
 
     IT("deserialises JSON back to a struct", {
@@ -234,8 +244,13 @@ DESCRIBE("Serialisation", {
     IT("serialises with renamed keys", {
       auto original = MakeRenamedFields();
       Amanuensis::Value json_value = Amanuensis::ToJson(original);
-      ASSERT_EQUAL(Amanuensis::Json::AsString(Amanuensis::Json::Get(json_value, "display_name")), std::string("Widget"));
-      ASSERT_EQUAL(Amanuensis::Json::AsInteger(Amanuensis::Json::Get(json_value, "item_count")), 42LL);
+      ASSERT_EQUAL(
+          Amanuensis::Json::AsString(Amanuensis::Json::Get(json_value, "display_name")),
+          std::string("Widget")
+      );
+      ASSERT_EQUAL(
+          Amanuensis::Json::AsInteger(Amanuensis::Json::Get(json_value, "item_count")), 42LL
+      );
     });
 
     IT("deserialises with renamed keys", {
@@ -333,14 +348,14 @@ DESCRIBE("Serialisation", {
     });
 
     IT("deserialises a present optional", {
-      Amanuensis::Value json_value{ 42LL };
+      Amanuensis::Value json_value{42LL};
       auto result = Amanuensis::FromJson<std::optional<int>>(json_value);
       ASSERT_TRUE(result.has_value());
       ASSERT_EQUAL(*result, 42);
     });
 
     IT("deserialises null as empty optional", {
-      Amanuensis::Value json_value{ nullptr };
+      Amanuensis::Value json_value{nullptr};
       auto result = Amanuensis::FromJson<std::optional<int>>(json_value);
       ASSERT_FALSE(result.has_value());
     });
@@ -386,9 +401,8 @@ DESCRIBE("Serialisation", {
     });
 
     IT("leaves optional field empty when null in JSON", {
-      auto parsed = Amanuensis::Reader::ParseString(
-          R"({"key":"host","value":8080,"description":null})"
-      );
+      auto parsed =
+          Amanuensis::Reader::ParseString(R"({"key":"host","value":8080,"description":null})");
       REQUIRE_TRUE(parsed.succeeded);
       auto entry = Amanuensis::FromJson<ConfigEntry>(parsed.value);
       ASSERT_FALSE(entry.description.has_value());

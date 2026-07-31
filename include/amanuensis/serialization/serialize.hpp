@@ -1,9 +1,9 @@
 #pragma once
 
 #include <amanuensis/value.hpp>
-#include <amanuensis/serialisation/json-traits.hpp>
-#include <amanuensis/serialisation/write-archive.hpp>
-#include <amanuensis/serialisation/read-archive.hpp>
+#include <amanuensis/serialization/json-traits.hpp>
+#include <amanuensis/serialization/write-archive.hpp>
+#include <amanuensis/serialization/read-archive.hpp>
 #include <amanuensis/errors.hpp>
 
 #include <optional>

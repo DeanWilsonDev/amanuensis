@@ -7,4 +7,4 @@
 #include "amanuensis/io/parse-result.hpp"
 #include "amanuensis/io/parse-error.hpp"
 #include "amanuensis/io/writer.hpp"
-#include "amanuensis/serealisation/serialization.hpp"
+#include "amanuensis/serialization/serialization.hpp"

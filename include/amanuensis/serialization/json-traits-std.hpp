@@ -1,8 +1,8 @@
 
 #pragma once
 
-#include <amanuensis/serialisation/json-traits.hpp>
-#include <amanuensis/serialisation/serialize.hpp>
+#include <amanuensis/serialization/json-traits.hpp>
+#include <amanuensis/serialization/serialize.hpp>
 
 namespace Amanuensis {
 
