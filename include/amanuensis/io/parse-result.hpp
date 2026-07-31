@@ -1,7 +1,7 @@
 #pragma once
 
 #include <amanuensis/value.hpp>
-#include <amanuensis/io/parser-error.hpp>
+#include <amanuensis/io/parse-error.hpp>
 
 namespace Amanuensis {
 struct ParseResult {

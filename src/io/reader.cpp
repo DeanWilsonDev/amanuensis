@@ -1,5 +1,5 @@
 #include "amanuensis/io/reader.hpp"
-#include "amanuensis/io/parser-result.hpp"
+#include "amanuensis/io/parse-result.hpp"
 #include "parser.hpp"
 
 #include <cerrno>

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <filesystem>
-#include "parser-result.hpp"
+#include "parse-result.hpp"
 
 namespace Amanuensis {
 

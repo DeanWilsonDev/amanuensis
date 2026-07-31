@@ -14,5 +14,4 @@ struct Value {
   DataType data;
 };
 
-
 } // namespace Amanuensis
