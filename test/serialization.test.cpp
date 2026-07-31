@@ -9,6 +9,7 @@
 #include <map>
 #include <optional>
 #include <string>
+#include <variant>
 #include <vector>
 
 // -----------------------------------------------------------------------
@@ -355,7 +356,7 @@ DESCRIBE("Serialisation", {
     });
 
     IT("deserialises null as empty optional", {
-      Amanuensis::Value json_value{nullptr};
+      Amanuensis::Value json_value{std::monostate()};
       auto result = Amanuensis::FromJson<std::optional<int>>(json_value);
       ASSERT_FALSE(result.has_value());
     });

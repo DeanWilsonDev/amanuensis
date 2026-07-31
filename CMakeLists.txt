@@ -32,6 +32,7 @@ add_library(
   src/io/writer-context.cpp
   src/io/parser.cpp
   src/serialization/serialization.cpp
+  src/converter.cpp
   src/ordered-map.cpp)
 
 target_include_directories(

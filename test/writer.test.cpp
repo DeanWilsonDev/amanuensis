@@ -7,11 +7,12 @@
 
 #include <cmath>
 #include <string>
+#include <variant>
 
 DESCRIBE("Writer", {
   DESCRIBE("Null output", {
     IT("writes null", {
-      Amanuensis::Value null_value{nullptr};
+      Amanuensis::Value null_value{std::monostate()};
       Amanuensis::WriterOptions minified_options;
       minified_options.pretty = false;
       minified_options.trailingNewline = false;
