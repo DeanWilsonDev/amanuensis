@@ -33,7 +33,9 @@ add_library(
   src/io/parser.cpp
   src/serialization/serialization.cpp
   src/converter.cpp
-  src/ordered-map.cpp)
+  src/ordered-map.cpp
+  src/value-traits.cpp
+)
 
 target_include_directories(
   amanuensis PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
