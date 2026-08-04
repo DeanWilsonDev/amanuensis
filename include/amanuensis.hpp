@@ -9,4 +9,5 @@
 #include "amanuensis/io/writer.hpp"
 #include "amanuensis/ordered-map.hpp"
 #include "amanuensis/converter.hpp"
+#include "amanuensis/value-traits.hpp"
 #include "amanuensis/serialization/serialization.hpp"
