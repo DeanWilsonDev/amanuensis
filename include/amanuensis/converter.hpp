@@ -1,10 +1,12 @@
 #pragma once
 
 #include "amanuensis/json.hpp"
+#include "amanuensis/value-traits.hpp"
 
 namespace Amanuensis {
 
-template <typename SourceValue, typename TargetValue, typename Traits> class Converter {
+template <typename SourceValue, typename TargetValue, typename Traits = ValueTraits<TargetValue>>
+class Converter {
 public:
   Converter() = delete;
 
