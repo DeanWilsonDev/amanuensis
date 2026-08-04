@@ -1,15 +1,14 @@
 #pragma once
 
-#include "amanuensis/value.hpp"
 #include "amanuensis/json.hpp"
 
 namespace Amanuensis {
 
-template <typename TargetValue, typename Traits> class Converter {
+template <typename SourceValue, typename TargetValue, typename Traits> class Converter {
 public:
   Converter() = delete;
 
-  static TargetValue FromValue(const Value& source)
+  static TargetValue ConvertValue(const SourceValue& source)
   {
     if (Json::IsNull(source))
       return Traits::MakeNull();
