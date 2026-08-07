@@ -15,10 +15,10 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
-  message(STATUS "IS_ROOT_PROJECT is ON")
-  set(IS_ROOT_PROJECT ON)
+  message(STATUS "AMANUENSIS_IS_ROOT_PROJECT is ON")
+  set(AMANUENSIS_IS_ROOT_PROJECT ON)
 else()
-  set(IS_ROOT_PROJECT OFF)
+  set(AMANUENSIS_IS_ROOT_PROJECT OFF)
 endif()
 
 # ------------------------
@@ -34,8 +34,7 @@ add_library(
   src/serialization/serialization.cpp
   src/converter.cpp
   src/ordered-map.cpp
-  src/value-traits.cpp
-)
+  src/value-traits.cpp)
 
 target_include_directories(
   amanuensis PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -95,12 +94,8 @@ endif()
 # Test executable
 # -------------------------
 
-if(IS_ROOT_PROJECT)
-  message(STATUS "IS_ROOT_PROJECT is ON, adding tests")
-  option(AMANUENSIS_BUILD_TESTS "Build amanuensis tests" ON)
-else()
-  option(AMANUENSIS_BUILD_TESTS "Build amanuensis tests" OFF)
-endif()
+option(AMANUENSIS_BUILD_TESTS "Build amanuensis tests"
+       ${AMANUENSIS_IS_ROOT_PROJECT})
 
 if(AMANUENSIS_BUILD_TESTS)
   add_subdirectory(external/cimmerian)
