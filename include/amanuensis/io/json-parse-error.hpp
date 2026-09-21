@@ -4,7 +4,7 @@
 
 namespace Amanuensis {
 
-struct ParseError {
+struct JsonParseError {
   std::string message;
   int line;
   int column;

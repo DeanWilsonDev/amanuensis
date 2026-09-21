@@ -1,6 +1,6 @@
 #pragma once
 
-#include "amanuensis/value.hpp"
+#include "amanuensis/json-value.hpp"
 #include "amanuensis/errors.hpp"
 #include "amanuensis/json.hpp"
 #include "amanuensis/io/reader.hpp"

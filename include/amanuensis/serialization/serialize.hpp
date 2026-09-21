@@ -1,6 +1,6 @@
 #pragma once
 
-#include <amanuensis/value.hpp>
+#include <amanuensis/json-value.hpp>
 #include <amanuensis/serialization/json-traits.hpp>
 #include <amanuensis/serialization/write-archive.hpp>
 #include <amanuensis/serialization/read-archive.hpp>
@@ -46,21 +46,21 @@ struct HasSerialiseFree<
 //   4. Compile error
 // -----------------------------------------------------------------------
 
-template <typename T> Value ToJson(const T& value)
+template <typename T> JsonValue ToJson(const T& value)
 {
   if constexpr (HasJsonTraits<T>::value) {
     return JsonTraits<T>::ToJson(value);
   }
   else if constexpr (Detail::HasSerialiseMember<T>::value) {
     WriteArchive archive;
-    // const_cast is safe: WriteArchive::Field only reads from fieldValue
+    // const_cast is safe: WriteArchive::Field only reads from fieldJsonValue
     const_cast<T&>(value).Serialise(archive);
-    return archive.GetValue();
+    return archive.GetJsonValue();
   }
   else if constexpr (Detail::HasSerialiseFree<T>::value) {
     WriteArchive archive;
     AmanuensisSerialiseFree(const_cast<T&>(value), archive);
-    return archive.GetValue();
+    return archive.GetJsonValue();
   }
   else {
     static_assert(
@@ -72,7 +72,7 @@ template <typename T> Value ToJson(const T& value)
   }
 }
 
-template <typename T> T FromJson(const Value& value)
+template <typename T> T FromJson(const JsonValue& value)
 {
   if constexpr (HasJsonTraits<T>::value) {
     return JsonTraits<T>::FromJson(value);
@@ -109,10 +109,10 @@ template <typename T> struct FromJsonResult {
   std::string errorMessage;
 };
 
-template <typename T> FromJsonResult<T> TryFromJson(const Value& jsonValue)
+template <typename T> FromJsonResult<T> TryFromJson(const JsonValue& jsonJsonValue)
 {
   try {
-    T result = FromJson<T>(jsonValue);
+    T result = FromJson<T>(jsonJsonValue);
     return FromJsonResult<T>{true, std::move(result), {}};
   }
   catch (const std::exception& error) {
@@ -124,23 +124,23 @@ template <typename T> FromJsonResult<T> TryFromJson(const Value& jsonValue)
 // ReadArchive::Field — deserialise a single field from the source object
 // -----------------------------------------------------------------------
 
-template <typename FieldType> void ReadArchive::Field(const char* jsonKey, FieldType& fieldValue)
+template <typename FieldType> void ReadArchive::Field(const char* jsonKey, FieldType& fieldJsonValue)
 {
   // std::optional fields: missing or null key → leave empty
   if constexpr (Detail::IsOptional<FieldType>::value) {
-    const Value* found = Json::Find(source_, jsonKey);
+    const JsonValue* found = Json::Find(source_, jsonKey);
     if (found == nullptr || Json::IsNull(*found)) {
-      fieldValue = std::nullopt;
+      fieldJsonValue = std::nullopt;
       return;
     }
-    fieldValue = FromJson<typename FieldType::value_type>(*found);
+    fieldJsonValue = FromJson<typename FieldType::value_type>(*found);
   }
   else {
-    const Value* found = Json::Find(source_, jsonKey);
+    const JsonValue* found = Json::Find(source_, jsonKey);
     if (found == nullptr) {
       throw KeyNotFoundError(std::string("Missing required field: \"") + jsonKey + "\"");
     }
-    fieldValue = FromJson<FieldType>(*found);
+    fieldJsonValue = FromJson<FieldType>(*found);
   }
 }
 

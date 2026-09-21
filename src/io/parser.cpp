@@ -18,10 +18,10 @@ Parser::Parser(std::string_view input)
 
 Parser::~Parser() = default;
 
-ParseResult Parser::Parse()
+JsonParseResult Parser::Parse()
 {
   this->SkipWhitespace();
-  auto result = ParseValue();
+  auto result = ParseJsonValue();
   if (!result.succeeded)
     return result;
   this->SkipWhitespace();
@@ -59,9 +59,9 @@ char Parser::Advance()
   return current;
 }
 
-ParseResult Parser::MakeError(const std::string& message) const
+JsonParseResult Parser::MakeError(const std::string& message) const
 {
-  return ParseResult{false, Value(), ParseError{message, line, column}};
+  return JsonParseResult{false, JsonValue(), JsonParseError{message, line, column}};
 }
 
 // -----------------------------------------------------------------------
@@ -85,7 +85,7 @@ void Parser::SkipWhitespace()
 // Literal keywords: null, true, false
 // -----------------------------------------------------------------------
 
-ParseResult Parser::ParseNull()
+JsonParseResult Parser::ParseNull()
 {
   const char* expected = "null";
   for (int i = 0; i < 4; ++i) {
@@ -94,10 +94,10 @@ ParseResult Parser::ParseNull()
     }
     this->Advance();
   }
-  return ParseResult{true, Value(), {}};
+  return JsonParseResult{true, JsonValue(), {}};
 }
 
-ParseResult Parser::ParseTrue()
+JsonParseResult Parser::ParseTrue()
 {
   const char* expected = "true";
   for (int i = 0; i < 4; ++i) {
@@ -106,10 +106,10 @@ ParseResult Parser::ParseTrue()
     }
     this->Advance();
   }
-  return ParseResult{true, Value(true), {}};
+  return JsonParseResult{true, JsonValue(true), {}};
 }
 
-ParseResult Parser::ParseFalse()
+JsonParseResult Parser::ParseFalse()
 {
   const char* expected = "false";
   for (int i = 0; i < 5; ++i) {
@@ -118,7 +118,7 @@ ParseResult Parser::ParseFalse()
     }
     this->Advance();
   }
-  return ParseResult{true, Value(false), {}};
+  return JsonParseResult{true, JsonValue(false), {}};
 }
 
 // -----------------------------------------------------------------------
@@ -129,7 +129,7 @@ ParseResult Parser::ParseFalse()
 // '.', 'e', or 'E'.  Parse accordingly.
 // -----------------------------------------------------------------------
 
-ParseResult Parser::ParseNumber()
+JsonParseResult Parser::ParseNumber()
 {
   std::size_t startPosition = this->cursor;
   int startLine = this->line;
@@ -191,40 +191,40 @@ ParseResult Parser::ParseNumber()
 
   if (isFloatingPoint) {
     // Parse as double
-    double doubleValue = 0.0;
+    double doubleJsonValue = 0.0;
     auto [endPointer, errorCode] =
-        std::from_chars(numberText.data(), numberText.data() + numberText.size(), doubleValue);
+        std::from_chars(numberText.data(), numberText.data() + numberText.size(), doubleJsonValue);
     if (errorCode != std::errc()) {
-      return ParseResult{
-          false, Value(),
-          ParseError{"Failed to parse floating-point number", startLine, startColumn}
+      return JsonParseResult{
+          false, JsonValue(),
+          JsonParseError{"Failed to parse floating-point number", startLine, startColumn}
       };
     }
-    return ParseResult{true, Value(doubleValue), {}};
+    return JsonParseResult{true, JsonValue(doubleJsonValue), {}};
   }
   else {
     // Try integer first; fall back to double on overflow
-    long long integerValue = 0;
+    long long integerJsonValue = 0;
     auto [endPointer, errorCode] =
-        std::from_chars(numberText.data(), numberText.data() + numberText.size(), integerValue);
+        std::from_chars(numberText.data(), numberText.data() + numberText.size(), integerJsonValue);
     if (errorCode == std::errc::result_out_of_range) {
       // Overflow — fall back to double silently, as per design doc
       double fallbackDouble = 0.0;
       auto [dblEnd, dblErr] =
           std::from_chars(numberText.data(), numberText.data() + numberText.size(), fallbackDouble);
       if (dblErr != std::errc()) {
-        return ParseResult{
-            false, Value(), ParseError{"Failed to parse number (overflow)", startLine, startColumn}
+        return JsonParseResult{
+            false, JsonValue(), JsonParseError{"Failed to parse number (overflow)", startLine, startColumn}
         };
       }
-      return ParseResult{true, Value(fallbackDouble), {}};
+      return JsonParseResult{true, JsonValue(fallbackDouble), {}};
     }
     if (errorCode != std::errc()) {
-      return ParseResult{
-          false, Value(), ParseError{"Failed to parse integer", startLine, startColumn}
+      return JsonParseResult{
+          false, JsonValue(), JsonParseError{"Failed to parse integer", startLine, startColumn}
       };
     }
-    return ParseResult{true, Value(integerValue), {}};
+    return JsonParseResult{true, JsonValue(integerJsonValue), {}};
   }
 }
 
@@ -232,7 +232,7 @@ ParseResult Parser::ParseNumber()
 // Strings — handles all RFC 8259 escape sequences including \uXXXX.
 // -----------------------------------------------------------------------
 
-int Parser::HexDigitValue(char character)
+int Parser::HexDigitJsonValue(char character)
 {
   if (character >= '0' && character <= '9')
     return character - '0';
@@ -250,11 +250,11 @@ bool Parser::ParseFourHexDigits(uint16_t& outCodeUnit)
     if (this->IsAtEnd()) {
       return false;
     }
-    int digitValue = HexDigitValue(this->Peek());
-    if (digitValue < 0) {
+    int digitJsonValue = HexDigitJsonValue(this->Peek());
+    if (digitJsonValue < 0) {
       return false;
     }
-    codeUnit = static_cast<uint16_t>((codeUnit << 4) | static_cast<uint16_t>(digitValue));
+    codeUnit = static_cast<uint16_t>((codeUnit << 4) | static_cast<uint16_t>(digitJsonValue));
     this->Advance();
   }
   outCodeUnit = codeUnit;
@@ -284,7 +284,7 @@ static void EncodeUtf8(std::string& output, uint32_t codePoint)
   }
 }
 
-ParseResult Parser::ParseString()
+JsonParseResult Parser::ParseString()
 {
   if (this->IsAtEnd() || this->Peek() != '"') {
     return this->MakeError("Expected '\"' at start of string");
@@ -301,7 +301,7 @@ ParseResult Parser::ParseString()
 
     if (current == '"') {
       this->Advance(); // consume closing quote
-      return ParseResult{true, Value(std::move(result)), {}};
+      return JsonParseResult{true, JsonValue(std::move(result)), {}};
     }
 
     if (static_cast<unsigned char>(current) < 0x20) {
@@ -385,26 +385,26 @@ ParseResult Parser::ParseString()
   }
 }
 
-ParseResult Parser::ParseArray()
+JsonParseResult Parser::ParseArray()
 {
   this->Advance(); // consume '['
   SkipWhitespace();
 
-  Value arrayValue = Json::MakeArray();
+  JsonValue arrayJsonValue = Json::MakeArray();
 
   if (!this->IsAtEnd() && this->Peek() == ']') {
     this->Advance();
-    return ParseResult{true, std::move(arrayValue), {}};
+    return JsonParseResult{true, std::move(arrayJsonValue), {}};
   }
 
   while (true) {
     this->SkipWhitespace();
 
-    auto elementResult = this->ParseValue();
+    auto elementResult = this->ParseJsonValue();
     if (!elementResult.succeeded) {
       return elementResult;
     }
-    Json::PushBack(arrayValue, std::move(elementResult.value));
+    Json::PushBack(arrayJsonValue, std::move(elementResult.value));
 
     this->SkipWhitespace();
 
@@ -414,7 +414,7 @@ ParseResult Parser::ParseArray()
 
     if (this->Peek() == ']') {
       this->Advance();
-      return ParseResult{true, std::move(arrayValue), {}};
+      return JsonParseResult{true, std::move(arrayJsonValue), {}};
     }
 
     if (this->Peek() != ',') {
@@ -432,16 +432,16 @@ ParseResult Parser::ParseArray()
   }
 }
 
-ParseResult Parser::ParseObject()
+JsonParseResult Parser::ParseObject()
 {
   this->Advance(); // consume '{'
   this->SkipWhitespace();
 
-  Value objectValue = Json::MakeObject();
+  JsonValue objectJsonValue = Json::MakeObject();
 
   if (!this->IsAtEnd() && this->Peek() == '}') {
     this->Advance();
-    return ParseResult{true, std::move(objectValue), {}};
+    return JsonParseResult{true, std::move(objectJsonValue), {}};
   }
 
   while (true) {
@@ -466,12 +466,12 @@ ParseResult Parser::ParseObject()
 
     this->SkipWhitespace();
 
-    auto valueResult = this->ParseValue();
+    auto valueResult = this->ParseJsonValue();
     if (!valueResult.succeeded) {
       return valueResult;
     }
 
-    Json::Insert(objectValue, std::move(key), std::move(valueResult.value));
+    Json::Insert(objectJsonValue, std::move(key), std::move(valueResult.value));
 
     this->SkipWhitespace();
 
@@ -481,7 +481,7 @@ ParseResult Parser::ParseObject()
 
     if (this->Peek() == '}') {
       this->Advance();
-      return ParseResult{true, std::move(objectValue), {}};
+      return JsonParseResult{true, std::move(objectJsonValue), {}};
     }
 
     if (this->Peek() != ',') {
@@ -499,7 +499,7 @@ ParseResult Parser::ParseObject()
   }
 }
 
-ParseResult Parser::ParseValue()
+JsonParseResult Parser::ParseJsonValue()
 {
   this->SkipWhitespace();
 

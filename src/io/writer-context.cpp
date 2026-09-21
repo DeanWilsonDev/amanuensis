@@ -60,12 +60,12 @@ void WriterContext::WriteEscapedString(std::string& output, const std::string& t
 
 void WriterContext::WriteArray(
     std::string& output,
-    const Value& arrayValue,
+    const JsonValue& arrayJsonValue,
     int depth,
     const WriterOptions& options
 )
 {
-  const auto& elements = Json::AsArray(arrayValue);
+  const auto& elements = Json::AsArray(arrayJsonValue);
   if (elements.empty()) {
     output.append("[]");
     return;
@@ -78,7 +78,7 @@ void WriterContext::WriteArray(
 
   for (std::size_t elementIndex = 0; elementIndex < elements.size(); ++elementIndex) {
     WriteIndent(output, depth + 1, options);
-    WriteValue(output, elements[elementIndex], depth + 1, options);
+    WriteJsonValue(output, elements[elementIndex], depth + 1, options);
     if (elementIndex + 1 < elements.size()) {
       output.push_back(',');
     }
@@ -93,12 +93,12 @@ void WriterContext::WriteArray(
 
 void WriterContext::WriteObject(
     std::string& output,
-    const Value& objectValue,
+    const JsonValue& objectJsonValue,
     int depth,
     const WriterOptions& options
 )
 {
-  if (Json::Size(objectValue) == 0) {
+  if (Json::Size(objectJsonValue) == 0) {
     output.append("{}");
     return;
   }
@@ -109,9 +109,9 @@ void WriterContext::WriteObject(
   }
 
   std::size_t entryIndex = 0;
-  std::size_t totalEntries = Json::Size(objectValue);
+  std::size_t totalEntries = Json::Size(objectJsonValue);
 
-  for (auto iterator = Json::BeginObject(objectValue); iterator != Json::EndObject(objectValue);
+  for (auto iterator = Json::BeginObject(objectJsonValue); iterator != Json::EndObject(objectJsonValue);
        ++iterator) {
     WriteIndent(output, depth + 1, options);
     WriteEscapedString(output, iterator->first);
@@ -119,7 +119,7 @@ void WriterContext::WriteObject(
     if (options.pretty) {
       output.push_back(' ');
     }
-    WriteValue(output, iterator->second, depth + 1, options);
+    WriteJsonValue(output, iterator->second, depth + 1, options);
     if (entryIndex + 1 < totalEntries) {
       output.push_back(',');
     }
@@ -133,40 +133,40 @@ void WriterContext::WriteObject(
   output.push_back('}');
 }
 
-void WriterContext::WriteValue(
+void WriterContext::WriteJsonValue(
     std::string& output,
-    const Value& value,
+    const JsonValue& value,
     int depth,
     const WriterOptions& options
 )
 {
   switch (Json::GetType(value)) {
-  case ValueType::Null:
+  case JsonValueType::Null:
     output.append("null");
     break;
 
-  case ValueType::Boolean:
+  case JsonValueType::Boolean:
     output.append(Json::AsBoolean(value) ? "true" : "false");
     break;
 
-  case ValueType::Integer: {
+  case JsonValueType::Integer: {
     // std::to_string is fine for integers
     output.append(std::to_string(Json::AsInteger(value)));
     break;
   }
 
-  case ValueType::Double: {
+  case JsonValueType::Double: {
     // Use enough precision for lossless round-trip.
     // 17 significant digits is sufficient for IEEE 754 double.
-    double doubleValue = Json::AsDouble(value);
-    if (std::isnan(doubleValue) || std::isinf(doubleValue)) {
+    double doubleJsonValue = Json::AsDouble(value);
+    if (std::isnan(doubleJsonValue) || std::isinf(doubleJsonValue)) {
       // JSON has no NaN/Inf — emit null as a safe fallback.
       output.append("null");
     }
     else {
       char formatBuffer[64];
       auto [endPointer, errorCode] =
-          std::to_chars(formatBuffer, formatBuffer + sizeof(formatBuffer), doubleValue);
+          std::to_chars(formatBuffer, formatBuffer + sizeof(formatBuffer), doubleJsonValue);
       std::string_view formatted(formatBuffer, static_cast<std::size_t>(endPointer - formatBuffer));
 
       // Ensure there's a decimal point so the output parses back as a double,
@@ -186,15 +186,15 @@ void WriterContext::WriteValue(
     break;
   }
 
-  case ValueType::String:
+  case JsonValueType::String:
     WriteEscapedString(output, Json::AsString(value));
     break;
 
-  case ValueType::Array:
+  case JsonValueType::Array:
     WriteArray(output, value, depth, options);
     break;
 
-  case ValueType::Object:
+  case JsonValueType::Object:
     WriteObject(output, value, depth, options);
     break;
   }

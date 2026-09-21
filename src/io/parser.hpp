@@ -1,7 +1,7 @@
 #pragma once
 
-#include <amanuensis/io/parse-result.hpp>
-#include "amanuensis/value.hpp"
+#include <amanuensis/io/json-parse-result.hpp>
+#include "amanuensis/json-value.hpp"
 #include <string>
 #include <cstdint>
 
@@ -12,25 +12,25 @@ public:
   Parser(std::string_view input);
   ~Parser();
 
-  ParseResult Parse();
+  JsonParseResult Parse();
   bool IsAtEnd() const;
   char Peek() const;
   char Advance();
-  ParseResult MakeError(const std::string& message) const;
+  JsonParseResult MakeError(const std::string& message) const;
 
   void SkipWhitespace();
-  ParseResult ParseNull();
-  ParseResult ParseString();
-  ParseResult ParseNumber();
-  ParseResult ParseArray();
-  ParseResult ParseObject();
-  ParseResult ParseTrue();
-  ParseResult ParseFalse();
-  ParseResult ParseValue();
+  JsonParseResult ParseNull();
+  JsonParseResult ParseString();
+  JsonParseResult ParseNumber();
+  JsonParseResult ParseArray();
+  JsonParseResult ParseObject();
+  JsonParseResult ParseTrue();
+  JsonParseResult ParseFalse();
+  JsonParseResult ParseJsonValue();
   void SetInput(std::string_view input);
 
 private:
-  static int HexDigitValue(char character);
+  static int HexDigitJsonValue(char character);
   bool ParseFourHexDigits(uint16_t& outCodeUnit);
 
   std::string_view input;

@@ -1,5 +1,5 @@
 #include "amanuensis/io/reader.hpp"
-#include "amanuensis/io/parse-result.hpp"
+#include "amanuensis/io/json-parse-result.hpp"
 #include "parser.hpp"
 
 #include <cerrno>
@@ -10,16 +10,18 @@
 
 namespace Amanuensis {
 
-ParseResult Reader::ParseString(std::string_view text)
+JsonParseResult Reader::ParseString(std::string_view text)
 {
   return Parser(text).Parse();
 }
 
-ParseResult Reader::ParseFile(const std::filesystem::path& path)
+JsonParseResult Reader::ParseFile(const std::filesystem::path& path)
 {
   std::ifstream inputFile(path, std::ios::binary);
   if (!inputFile.is_open()) {
-    return ParseResult{false, Value(), ParseError{"Could not open file: " + path.string(), 0, 0}};
+    return JsonParseResult{
+        false, JsonValue(), JsonParseError{"Could not open file: " + path.string(), 0, 0}
+    };
   }
 
   std::ostringstream contentStream;

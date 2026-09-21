@@ -3,45 +3,45 @@
 #include <cstddef>
 #include <string>
 #include <vector>
-#include "amanuensis/value.hpp"
+#include "amanuensis/json-value.hpp"
 #include "amanuensis/object-iterator.hpp"
 
 namespace Amanuensis {
 
 class Json {
 public:
-  static ValueType GetType(const Value& value);
-  static bool IsNull(const Value& value);
-  static bool IsBoolean(const Value& value);
-  static bool IsInteger(const Value& value);
-  static bool IsDouble(const Value& value);
-  static bool IsNumber(const Value& value);
-  static bool IsString(const Value& value);
-  static bool IsArray(const Value& value);
-  static bool IsObject(const Value& value);
+  static JsonValueType GetType(const JsonValue& value);
+  static bool IsNull(const JsonValue& value);
+  static bool IsBoolean(const JsonValue& value);
+  static bool IsInteger(const JsonValue& value);
+  static bool IsDouble(const JsonValue& value);
+  static bool IsNumber(const JsonValue& value);
+  static bool IsString(const JsonValue& value);
+  static bool IsArray(const JsonValue& value);
+  static bool IsObject(const JsonValue& value);
 
-  static bool AsBoolean(const Value& value);
-  static long long AsInteger(const Value& value);
-  static double AsDouble(const Value& value);
-  static const std::string& AsString(const Value& value);
-  static const std::vector<Value>& AsArray(const Value& value);
+  static bool AsBoolean(const JsonValue& value);
+  static long long AsInteger(const JsonValue& value);
+  static double AsDouble(const JsonValue& value);
+  static const std::string& AsString(const JsonValue& value);
+  static const std::vector<JsonValue>& AsArray(const JsonValue& value);
 
-  static void PushBack(Value& value, Value element);
-  static std::size_t Size(const Value& value);
-  static const Value& At(const Value& value, std::size_t index);
-  static Value& At(Value& value, std::size_t index);
+  static void PushBack(JsonValue& value, JsonValue element);
+  static std::size_t Size(const JsonValue& value);
+  static const JsonValue& At(const JsonValue& value, std::size_t index);
+  static JsonValue& At(JsonValue& value, std::size_t index);
 
-  static void Insert(Value& value, std::string key, Value element);
-  static bool Contains(const Value& value, const std::string& key);
-  static const Value& Get(const Value& value, const std::string& key);
-  static Value& Get(Value& value, const std::string& key);
-  static const Value* Find(const Value& value, const std::string& key);
+  static void Insert(JsonValue& value, std::string key, JsonValue element);
+  static bool Contains(const JsonValue& value, const std::string& key);
+  static const JsonValue& Get(const JsonValue& value, const std::string& key);
+  static JsonValue& Get(JsonValue& value, const std::string& key);
+  static const JsonValue* Find(const JsonValue& value, const std::string& key);
 
-  static ObjectIterator BeginObject(const Value& value);
-  static ObjectIterator EndObject(const Value& value);
+  static ObjectIterator BeginObject(const JsonValue& value);
+  static ObjectIterator EndObject(const JsonValue& value);
 
-  static Value MakeArray();
-  static Value MakeObject();
+  static JsonValue MakeArray();
+  static JsonValue MakeObject();
 };
 
 } // namespace Amanuensis

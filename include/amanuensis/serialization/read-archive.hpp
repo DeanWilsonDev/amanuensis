@@ -1,6 +1,6 @@
 #pragma once
 
-#include "amanuensis/value.hpp"
+#include "amanuensis/json-value.hpp"
 #include <optional>
 
 namespace Amanuensis {
@@ -11,12 +11,12 @@ template <typename T> struct IsOptional<std::optional<T>> : std::true_type {};
 } // namespace Detail
 
 // -----------------------------------------------------------------------
-// ReadArchive — handed to Serialise functions when converting Value → T
+// ReadArchive — handed to Serialise functions when converting JsonValue → T
 // -----------------------------------------------------------------------
 
 class ReadArchive {
 public:
-  explicit ReadArchive(const Value& source)
+  explicit ReadArchive(const JsonValue& source)
       : source_(source)
   {
   }
@@ -24,7 +24,7 @@ public:
   template <typename FieldType> void Field(const char* jsonKey, FieldType& fieldValue);
 
 private:
-  const Value& source_;
+  const JsonValue& source_;
 };
 
 } // namespace Amanuensis

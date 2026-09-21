@@ -5,10 +5,10 @@
 
 namespace Amanuensis {
 
-std::string Writer::WriteToString(const Value& value, const WriterOptions& options)
+std::string Writer::WriteToString(const JsonValue& value, const WriterOptions& options)
 {
   std::string output;
-  WriterContext().WriteValue(output, value, 0, options);
+  WriterContext().WriteJsonValue(output, value, 0, options);
   if (options.trailingNewline) {
     output.push_back('\n');
   }
@@ -16,7 +16,7 @@ std::string Writer::WriteToString(const Value& value, const WriterOptions& optio
 }
 
 bool Writer::WriteToFile(
-    const Value& value,
+    const JsonValue& value,
     const std::filesystem::path& path,
     const WriterOptions& options
 )

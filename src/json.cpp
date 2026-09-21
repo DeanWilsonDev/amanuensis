@@ -1,4 +1,4 @@
-#include "amanuensis/value.hpp"
+#include "amanuensis/json-value.hpp"
 #include "amanuensis/json.hpp"
 #include "amanuensis/ordered-map.hpp"
 #include "amanuensis/object-iterator.hpp"
@@ -16,62 +16,61 @@ static constexpr std::size_t kStringIndex = 4;
 static constexpr std::size_t kArrayIndex = 5;
 static constexpr std::size_t kObjectIndex = 6;
 
-
 // -----------------------------------------------------------------------
 // Type inspection
 // -----------------------------------------------------------------------
 
-ValueType Json::GetType(const Value& value)
+JsonValueType Json::GetType(const JsonValue& value)
 {
   switch (value.data.index()) {
   case kNullIndex:
-    return ValueType::Null;
+    return JsonValueType::Null;
   case kBoolIndex:
-    return ValueType::Boolean;
+    return JsonValueType::Boolean;
   case kIntegerIndex:
-    return ValueType::Integer;
+    return JsonValueType::Integer;
   case kDoubleIndex:
-    return ValueType::Double;
+    return JsonValueType::Double;
   case kStringIndex:
-    return ValueType::String;
+    return JsonValueType::String;
   case kArrayIndex:
-    return ValueType::Array;
+    return JsonValueType::Array;
   case kObjectIndex:
-    return ValueType::Object;
+    return JsonValueType::Object;
   default:
-    return ValueType::Null;
+    return JsonValueType::Null;
   }
 }
 
-bool Json::IsNull(const Value& value)
+bool Json::IsNull(const JsonValue& value)
 {
   return value.data.index() == kNullIndex;
 }
-bool Json::IsBoolean(const Value& value)
+bool Json::IsBoolean(const JsonValue& value)
 {
   return value.data.index() == kBoolIndex;
 }
-bool Json::IsInteger(const Value& value)
+bool Json::IsInteger(const JsonValue& value)
 {
   return value.data.index() == kIntegerIndex;
 }
-bool Json::IsDouble(const Value& value)
+bool Json::IsDouble(const JsonValue& value)
 {
   return value.data.index() == kDoubleIndex;
 }
-bool Json::IsNumber(const Value& value)
+bool Json::IsNumber(const JsonValue& value)
 {
   return IsInteger(value) || IsDouble(value);
 }
-bool Json::IsString(const Value& value)
+bool Json::IsString(const JsonValue& value)
 {
   return value.data.index() == kStringIndex;
 }
-bool Json::IsArray(const Value& value)
+bool Json::IsArray(const JsonValue& value)
 {
   return value.data.index() == kArrayIndex;
 }
-bool Json::IsObject(const Value& value)
+bool Json::IsObject(const JsonValue& value)
 {
   return value.data.index() == kObjectIndex;
 }
@@ -80,7 +79,7 @@ bool Json::IsObject(const Value& value)
 // Typed accessors
 // -----------------------------------------------------------------------
 
-bool Json::AsBoolean(const Value& value)
+bool Json::AsBoolean(const JsonValue& value)
 {
   if (!IsBoolean(value)) {
     throw TypeMismatchError(
@@ -90,7 +89,7 @@ bool Json::AsBoolean(const Value& value)
   return std::get<bool>(value.data);
 }
 
-long long Json::AsInteger(const Value& value)
+long long Json::AsInteger(const JsonValue& value)
 {
   if (!IsInteger(value)) {
     throw TypeMismatchError(
@@ -100,7 +99,7 @@ long long Json::AsInteger(const Value& value)
   return std::get<long long>(value.data);
 }
 
-double Json::AsDouble(const Value& value)
+double Json::AsDouble(const JsonValue& value)
 {
   if (!IsDouble(value)) {
     throw TypeMismatchError(
@@ -110,7 +109,7 @@ double Json::AsDouble(const Value& value)
   return std::get<double>(value.data);
 }
 
-const std::string& Json::AsString(const Value& value)
+const std::string& Json::AsString(const JsonValue& value)
 {
   if (!IsString(value)) {
     throw TypeMismatchError(
@@ -120,43 +119,43 @@ const std::string& Json::AsString(const Value& value)
   return std::get<std::string>(value.data);
 }
 
-const std::vector<Value>& Json::AsArray(const Value& value)
+const std::vector<JsonValue>& Json::AsArray(const JsonValue& value)
 {
   if (!IsArray(value)) {
-    throw TypeMismatchError("AsArray called on non-Array Value");
+    throw TypeMismatchError("AsArray called on non-Array JsonValue");
   }
-  return std::get<std::vector<Value>>(value.data);
+  return std::get<std::vector<JsonValue>>(value.data);
 }
 
 // -----------------------------------------------------------------------
 // Array operations
 // -----------------------------------------------------------------------
 
-void Json::PushBack(Value& value, Value element)
+void Json::PushBack(JsonValue& value, JsonValue element)
 {
   if (!IsArray(value)) {
-    throw TypeMismatchError("PushBack called on non-Array Value");
+    throw TypeMismatchError("PushBack called on non-Array JsonValue");
   }
-  std::get<std::vector<Value>>(value.data).push_back(std::move(element));
+  std::get<std::vector<JsonValue>>(value.data).push_back(std::move(element));
 }
 
-std::size_t Json::Size(const Value& value)
+std::size_t Json::Size(const JsonValue& value)
 {
   if (IsArray(value)) {
-    return std::get<std::vector<Value>>(value.data).size();
+    return std::get<std::vector<JsonValue>>(value.data).size();
   }
   if (IsObject(value)) {
-    return std::get<OrderedMap<Value>>(value.data).Size();
+    return std::get<OrderedMap<JsonValue>>(value.data).Size();
   }
-  throw TypeMismatchError("Size called on non-Array, non-Object Value");
+  throw TypeMismatchError("Size called on non-Array, non-Object JsonValue");
 }
 
-const Value& Json::At(const Value& value, std::size_t index)
+const JsonValue& Json::At(const JsonValue& value, std::size_t index)
 {
   if (!IsArray(value)) {
-    throw TypeMismatchError("At(index) called on non-Array Value");
+    throw TypeMismatchError("At(index) called on non-Array JsonValue");
   }
-  const auto& elements = std::get<std::vector<Value>>(value.data);
+  const auto& elements = std::get<std::vector<JsonValue>>(value.data);
   if (index >= elements.size()) {
     throw IndexOutOfRangeError(
         "Array index " + std::to_string(index) + " out of range (size " +
@@ -166,12 +165,12 @@ const Value& Json::At(const Value& value, std::size_t index)
   return elements[index];
 }
 
-Value& Json::At(Value& value, std::size_t index)
+JsonValue& Json::At(JsonValue& value, std::size_t index)
 {
   if (!IsArray(value)) {
-    throw TypeMismatchError("At(index) called on non-Array Value");
+    throw TypeMismatchError("At(index) called on non-Array JsonValue");
   }
-  auto& elements = std::get<std::vector<Value>>(value.data);
+  auto& elements = std::get<std::vector<JsonValue>>(value.data);
   if (index >= elements.size()) {
     throw IndexOutOfRangeError(
         "Array index " + std::to_string(index) + " out of range (size " +
@@ -185,73 +184,71 @@ Value& Json::At(Value& value, std::size_t index)
 // Object operations
 // -----------------------------------------------------------------------
 
-void Json::Insert(Value& value, std::string key, Value element)
+void Json::Insert(JsonValue& value, std::string key, JsonValue element)
 {
   if (!IsObject(value)) {
-    throw TypeMismatchError("Insert called on non-Object Value");
+    throw TypeMismatchError("Insert called on non-Object JsonValue");
   }
-  std::get<OrderedMap<Value>>(value.data).Insert(std::move(key), std::move(element));
+  std::get<OrderedMap<JsonValue>>(value.data).Insert(std::move(key), std::move(element));
 }
 
-bool Json::Contains(const Value& value, const std::string& key)
+bool Json::Contains(const JsonValue& value, const std::string& key)
 {
   if (!IsObject(value)) {
-    throw TypeMismatchError("Contains called on non-Object Value");
+    throw TypeMismatchError("Contains called on non-Object JsonValue");
   }
-  return std::get<OrderedMap<Value>>(value.data).Contains(key);
+  return std::get<OrderedMap<JsonValue>>(value.data).Contains(key);
 }
 
-const Value& Json::Get(const Value& value, const std::string& key)
+const JsonValue& Json::Get(const JsonValue& value, const std::string& key)
 {
   if (!IsObject(value)) {
-    throw TypeMismatchError("Get called on non-Object Value");
+    throw TypeMismatchError("Get called on non-Object JsonValue");
   }
-  return std::get<OrderedMap<Value>>(value.data).Get(key);
+  return std::get<OrderedMap<JsonValue>>(value.data).Get(key);
 }
 
-Value& Json::Get(Value& value, const std::string& key)
+JsonValue& Json::Get(JsonValue& value, const std::string& key)
 {
   if (!IsObject(value)) {
-    throw TypeMismatchError("Get called on non-Object Value");
+    throw TypeMismatchError("Get called on non-Object JsonValue");
   }
-  return std::get<OrderedMap<Value>>(value.data).Get(key);
+  return std::get<OrderedMap<JsonValue>>(value.data).Get(key);
 }
 
-const Value* Json::Find(const Value& value, const std::string& key)
+const JsonValue* Json::Find(const JsonValue& value, const std::string& key)
 {
   if (!IsObject(value)) {
-    throw TypeMismatchError("Find called on non-Object Value");
+    throw TypeMismatchError("Find called on non-Object JsonValue");
   }
-  return std::get<OrderedMap<Value>>(value.data).Find(key);
+  return std::get<OrderedMap<JsonValue>>(value.data).Find(key);
 }
 
-ObjectIterator Json::BeginObject(const Value& value)
+ObjectIterator Json::BeginObject(const JsonValue& value)
 {
   if (!IsObject(value)) {
-    throw TypeMismatchError("BeginObject called on non-Object Value");
+    throw TypeMismatchError("BeginObject called on non-Object JsonValue");
   }
-  return ObjectIterator(std::get<OrderedMap<Value>>(value.data).GetEntries().begin());
+  return ObjectIterator(std::get<OrderedMap<JsonValue>>(value.data).GetEntries().begin());
 }
 
-ObjectIterator Json::EndObject(const Value& value)
+ObjectIterator Json::EndObject(const JsonValue& value)
 {
   if (!IsObject(value)) {
-    throw TypeMismatchError("EndObject called on non-Object Value");
+    throw TypeMismatchError("EndObject called on non-Object JsonValue");
   }
-  return ObjectIterator(std::get<OrderedMap<Value>>(value.data).GetEntries().end());
+  return ObjectIterator(std::get<OrderedMap<JsonValue>>(value.data).GetEntries().end());
 }
 
-
-Value Json::MakeArray()
+JsonValue Json::MakeArray()
 {
-  return Value{std::vector<Value>{}};
+  return JsonValue{std::vector<JsonValue>{}};
 }
 
-Value Json::MakeObject()
+JsonValue Json::MakeObject()
 {
-  return Value{OrderedMap<Value>{}};
+  return JsonValue{OrderedMap<JsonValue>{}};
 }
-
 
 } // namespace Amanuensis
   //
