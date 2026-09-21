@@ -26,7 +26,7 @@ public:
     if (Json::IsArray(source)) {
       auto target = Traits::MakeArray();
       for (const auto& element : Json::AsArray(source)) {
-        Traits::PushBack(target, FromValue(element));
+        Traits::PushBack(target, ConvertValue(element));
       }
       return target;
     }
@@ -34,7 +34,7 @@ public:
     if (Json::IsObject(source)) {
       auto target = Traits::MakeObject();
       for (auto it = Json::BeginObject(source); it != Json::EndObject(source); ++it) {
-        Traits::Insert(target, it->first, FromValue(it->second));
+        Traits::Insert(target, it->first, ConvertValue(it->second));
       }
       return target;
     }
