@@ -1,45 +1,48 @@
 #pragma once
 
-#include "amanuensis/json.hpp"
 #include "amanuensis/value-traits.hpp"
 
 namespace Amanuensis {
 
-template <typename SourceValue, typename TargetValue, typename Traits = ValueTraits<TargetValue>>
+template <
+    typename SourceValue,
+    typename TargetValue,
+    typename TargetTraits = ValueTraits<TargetValue>,
+    typename SourceTraits = ValueTraits<SourceValue>>
 class Converter {
 public:
   Converter() = delete;
 
   static TargetValue ConvertValue(const SourceValue& source)
   {
-    if (Json::IsNull(source))
-      return Traits::MakeNull();
-    if (Json::IsBoolean(source))
-      return Traits::MakeBoolean(Json::AsBoolean(source));
-    if (Json::IsInteger(source))
-      return Traits::MakeInteger(Json::AsInteger(source));
-    if (Json::IsDouble(source))
-      return Traits::MakeDouble(Json::AsDouble(source));
-    if (Json::IsString(source))
-      return Traits::MakeString(Json::AsString(source));
-
-    if (Json::IsArray(source)) {
-      auto target = Traits::MakeArray();
-      for (const auto& element : Json::AsArray(source)) {
-        Traits::PushBack(target, ConvertValue(element));
+    switch (SourceTraits::GetType(source)) {
+    case JsonValueType::Null:
+      return TargetTraits::MakeNull();
+    case JsonValueType::Boolean:
+      return TargetTraits::MakeBoolean(SourceTraits::AsBoolean(source));
+    case JsonValueType::Integer:
+      return TargetTraits::MakeInteger(SourceTraits::AsInteger(source));
+    case JsonValueType::Double:
+      return TargetTraits::MakeDouble(SourceTraits::AsDouble(source));
+    case JsonValueType::String:
+      return TargetTraits::MakeString(SourceTraits::AsString(source));
+    case JsonValueType::Array: {
+      auto target = TargetTraits::MakeArray();
+      for (const auto& element : SourceTraits::AsArray(source)) {
+        TargetTraits::PushBack(target, ConvertValue(element));
       }
       return target;
     }
-
-    if (Json::IsObject(source)) {
-      auto target = Traits::MakeObject();
-      for (auto it = Json::BeginObject(source); it != Json::EndObject(source); ++it) {
-        Traits::Insert(target, it->first, ConvertValue(it->second));
+    case JsonValueType::Object: {
+      auto target = TargetTraits::MakeObject();
+      for (const auto& [key, element] : SourceTraits::AsObject(source)) {
+        TargetTraits::Insert(target, key, ConvertValue(element));
       }
       return target;
     }
+    }
 
-    return Traits::MakeNull();
+    throw TypeMismatchError("Unsupported source value type");
   }
 };
 

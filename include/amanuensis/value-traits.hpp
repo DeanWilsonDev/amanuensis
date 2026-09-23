@@ -1,8 +1,12 @@
 #pragma once
 
+#include <string>
+#include <utility>
 #include <variant>
 #include <vector>
-#include "ordered-map.hpp"
+#include "amanuensis/errors.hpp"
+#include "amanuensis/json-value.hpp"
+#include "amanuensis/ordered-map.hpp"
 
 namespace Amanuensis {
 
@@ -14,6 +18,44 @@ struct ValueTraits {
   using Value = TValue;
   using ValueArray = TValueArray;
   using ValueObject = TValueObject;
+
+  static JsonValueType GetType(const TValue& value)
+  {
+    switch (value.data.index()) {
+    case 0:
+      return JsonValueType::Null;
+    case 1:
+      return JsonValueType::Boolean;
+    case 2:
+      return JsonValueType::Integer;
+    case 3:
+      return JsonValueType::Double;
+    case 4:
+      return JsonValueType::String;
+    case 5:
+      return JsonValueType::Array;
+    case 6:
+      return JsonValueType::Object;
+    default:
+      throw TypeMismatchError("Unsupported value type");
+    }
+  }
+
+  static bool AsBoolean(const TValue& value) { return std::get<bool>(value.data); }
+  static long long AsInteger(const TValue& value) { return std::get<long long>(value.data); }
+  static double AsDouble(const TValue& value) { return std::get<double>(value.data); }
+  static const std::string& AsString(const TValue& value)
+  {
+    return std::get<std::string>(value.data);
+  }
+  static const TValueArray& AsArray(const TValue& value)
+  {
+    return std::get<TValueArray>(value.data);
+  }
+  static const std::vector<std::pair<std::string, TValue>>& AsObject(const TValue& value)
+  {
+    return std::get<TValueObject>(value.data).GetEntries();
+  }
 
   static TValue MakeNull() { return TValue{std::monostate{}}; }
   static TValue MakeBoolean(bool value) { return TValue{value}; }
