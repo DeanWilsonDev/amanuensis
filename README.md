@@ -2,7 +2,7 @@
 
 # Amanuensis
 
-A zero-dependency C++20 JSON read/write library. Minimal feature surface, insertion-order preserving, consumed via CMake `add_subdirectory`.
+A zero-dependency C++26 JSON read/write library. Minimal feature surface, insertion-order preserving, consumed via CMake `add_subdirectory`.
 
 ---
 
@@ -17,7 +17,7 @@ The library is deliberately minimal. It covers the subset of JSON that real firs
 
 - Read and write JSON conforming to RFC 8259
 - Preserve insertion order on write so generated files are stable under diffing
-- Zero external dependencies — C++20 stdlib only
+- Zero external dependencies — C++26 stdlib only
 - Consumed via CMake `add_subdirectory`
 - Human-readable output by default (pretty-printed, 2-space indent)
 - Minified output mode for wire formats and size-sensitive use cases
@@ -271,6 +271,7 @@ Tests are written using [Cimmerian](https://github.com/DeanWilsonDev/Cimmerian),
 
 ## Requirements
 
-- C++20 or later
-- GCC 13+ / Clang 16+ / MSVC 19.29+ (any compiler with C++20 support)
-- CMake 3.25+
+- C++26
+- GCC 14+ / Clang 18+ / a recent AppleClang (configure fails on an older GCC or Clang)
+- On Windows, clang-cl from Clang 18+; MSVC's cl.exe isn't supported
+- CMake 3.30+

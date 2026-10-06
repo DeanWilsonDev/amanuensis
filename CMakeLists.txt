@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.25)
+cmake_minimum_required(VERSION 3.30)
 
 if(TARGET amanuensis)
   return()
@@ -9,7 +9,12 @@ project(
   VERSION 1.0.0
   LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 20)
+if((CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 14)
+   OR (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 18))
+  message(FATAL_ERROR "Amanuensis needs GCC 14 or later or Clang 18 or later; found ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}")
+endif()
+
+set(CMAKE_CXX_STANDARD 26)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -40,7 +45,7 @@ target_include_directories(
   amanuensis PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
                     $<INSTALL_INTERFACE:include>)
 
-target_compile_features(amanuensis PUBLIC cxx_std_20)
+target_compile_features(amanuensis PUBLIC cxx_std_26)
 set_target_properties(amanuensis PROPERTIES C_EXTENSIONS OFF)
 
 # -------------------------
@@ -105,7 +110,7 @@ if(AMANUENSIS_BUILD_TESTS)
     test/round-trip.test.cpp test/value.test.cpp test/serialization.test.cpp
     test/converter.test.cpp)
   target_link_libraries(test_amanuensis PRIVATE amanuensis cimmerian)
-  target_compile_features(test_amanuensis PRIVATE cxx_std_20)
+  target_compile_features(test_amanuensis PRIVATE cxx_std_26)
 endif()
 
 # ------------------------
