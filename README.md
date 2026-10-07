@@ -272,6 +272,6 @@ Tests are written using [Cimmerian](https://github.com/DeanWilsonDev/Cimmerian),
 ## Requirements
 
 - C++26
-- GCC 14+ / Clang 18+ / a recent AppleClang (configure fails on an older GCC or Clang)
-- On Windows, clang-cl from Clang 18+; MSVC's cl.exe isn't supported
+- GCC 14+ / Clang 19+ / a recent AppleClang (configure fails on an older GCC or Clang)
+- On Windows, clang-cl from Clang 19+; MSVC's cl.exe isn't supported
 - CMake 3.30+
