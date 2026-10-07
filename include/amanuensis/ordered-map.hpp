@@ -10,8 +10,19 @@
 
 namespace Amanuensis {
 
+// The special members are defaulted out of line so they aren't constexpr. An
+// implicit destructor would make Clang instantiate the constexpr ~vector as soon
+// as libstdc++ 13's std::pair<std::string, JsonValue> asks whether JsonValue is
+// default-constructible, while that pair is still incomplete.
 template <typename TValue> class OrderedMap {
 public:
+  OrderedMap();
+  OrderedMap(const OrderedMap& other);
+  OrderedMap(OrderedMap&& other) noexcept;
+  OrderedMap& operator=(const OrderedMap& other);
+  OrderedMap& operator=(OrderedMap&& other) noexcept;
+  ~OrderedMap();
+
   void Insert(std::string key, TValue value)
   {
     auto existing_entry = key_to_index_.find(key);
@@ -61,5 +72,14 @@ private:
   std::unordered_map<std::string, std::size_t> key_to_index_;
   std::vector<std::pair<std::string, TValue>> entries_;
 };
+
+template <typename TValue> OrderedMap<TValue>::OrderedMap() = default;
+template <typename TValue> OrderedMap<TValue>::OrderedMap(const OrderedMap&) = default;
+template <typename TValue> OrderedMap<TValue>::OrderedMap(OrderedMap&&) noexcept = default;
+template <typename TValue>
+OrderedMap<TValue>& OrderedMap<TValue>::operator=(const OrderedMap&) = default;
+template <typename TValue>
+OrderedMap<TValue>& OrderedMap<TValue>::operator=(OrderedMap&&) noexcept = default;
+template <typename TValue> OrderedMap<TValue>::~OrderedMap() = default;
 
 } // namespace Amanuensis
