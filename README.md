@@ -78,7 +78,7 @@ Tests use [Cimmerian](https://github.com/DeanWilsonDev/Cimmerian), which is a gi
 ```bash
 git submodule update --init
 cmake -B build
-cmake --build build --target test_amanuensis
+cmake --build build
 ./build/test_amanuensis
 ```
 

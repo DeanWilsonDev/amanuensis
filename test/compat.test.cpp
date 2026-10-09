@@ -67,16 +67,6 @@ template <> struct JsonTraits<LegacyPoint> {
 static_assert(amanuensis::HasJsonTraits<LegacyPoint>::value);
 static_assert(amanuensis::HasSerialTraits<LegacyPoint>::value);
 
-static LegacyPoint MakeLegacyPoint(long long x, long long y)
-{
-  return {x, y};
-}
-
-static std::vector<LegacyPoint> MakeLegacyPoints()
-{
-  return {{1, 2}, {5, 6}};
-}
-
 DESCRIBE("Compatibility names", {
   IT("lets qualified names use the old Amanuensis spelling", {
     Amanuensis::JsonValue object_value = Amanuensis::Json::MakeObject();
@@ -101,7 +91,7 @@ DESCRIBE("Compatibility names", {
   });
 
   IT("picks up an old JsonTraits specialisation through SerialTraits", {
-    LegacyPoint original = MakeLegacyPoint(3, 4);
+    LegacyPoint original{3, 4};
     amanuensis::core::Value value = amanuensis::ToValue(original);
     ASSERT_EQUAL(amanuensis::Json::AsInteger(amanuensis::Json::At(value, 1)), 4LL);
 
@@ -111,7 +101,7 @@ DESCRIBE("Compatibility names", {
   });
 
   IT("forwards ToJson, FromJson and TryFromJson to the new names", {
-    std::vector<LegacyPoint> original = MakeLegacyPoints();
+    std::vector<LegacyPoint> original{{1, 2}, {5, 6}};
     amanuensis::core::Value value = amanuensis::ToJson(original);
     auto round_tripped = amanuensis::FromJson<std::vector<LegacyPoint>>(value);
     ASSERT_EQUAL(round_tripped.size(), 2u);
