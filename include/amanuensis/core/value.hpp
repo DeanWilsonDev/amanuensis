@@ -3,9 +3,9 @@
 #include <cstddef>
 #include <vector>
 #include <variant>
-#include "amanuensis/ordered-map.hpp"
+#include "amanuensis/core/ordered-map.hpp"
 
-namespace amanuensis {
+namespace amanuensis::core {
 
 enum class ValueType { Null, Boolean, Integer, Double, String, Array, Object };
 
@@ -21,4 +21,4 @@ struct Value {
   DataType data;
 };
 
-} // namespace amanuensis
+} // namespace amanuensis::core

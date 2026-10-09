@@ -1,10 +1,10 @@
 #pragma once
 
-#include <amanuensis/value.hpp>
+#include <amanuensis/core/value.hpp>
 #include <amanuensis/serialization/serial-traits.hpp>
 #include <amanuensis/serialization/write-archive.hpp>
 #include <amanuensis/serialization/read-archive.hpp>
-#include <amanuensis/errors.hpp>
+#include <amanuensis/core/errors.hpp>
 
 #include <optional>
 #include <string>
@@ -46,7 +46,7 @@ struct HasSerialiseFree<
 //   4. Compile error
 // -----------------------------------------------------------------------
 
-template <typename T> Value ToValue(const T& value)
+template <typename T> core::Value ToValue(const T& value)
 {
   if constexpr (HasSerialTraits<T>::value) {
     return SerialTraits<T>::ToValue(value);
@@ -72,7 +72,7 @@ template <typename T> Value ToValue(const T& value)
   }
 }
 
-template <typename T> T FromValue(const Value& value)
+template <typename T> T FromValue(const core::Value& value)
 {
   if constexpr (HasSerialTraits<T>::value) {
     return SerialTraits<T>::FromValue(value);
@@ -109,7 +109,7 @@ template <typename T> struct FromValueResult {
   std::string errorMessage;
 };
 
-template <typename T> FromValueResult<T> TryFromValue(const Value& jsonValue)
+template <typename T> FromValueResult<T> TryFromValue(const core::Value& jsonValue)
 {
   try {
     T result = FromValue<T>(jsonValue);
@@ -124,15 +124,15 @@ template <typename T> FromValueResult<T> TryFromValue(const Value& jsonValue)
 // Old names, kept until the consumer sweep (see compat.hpp).
 template <typename T> using FromJsonResult = FromValueResult<T>;
 
-template <typename T> Value ToJson(const T& value)
+template <typename T> core::Value ToJson(const T& value)
 {
   return ToValue<T>(value);
 }
-template <typename T> T FromJson(const Value& value)
+template <typename T> T FromJson(const core::Value& value)
 {
   return FromValue<T>(value);
 }
-template <typename T> FromValueResult<T> TryFromJson(const Value& value)
+template <typename T> FromValueResult<T> TryFromJson(const core::Value& value)
 {
   return TryFromValue<T>(value);
 }
@@ -146,7 +146,7 @@ template <typename FieldType> void ReadArchive::Field(const char* jsonKey, Field
 {
   // std::optional fields: missing or null key → leave empty
   if constexpr (detail::IsOptional<FieldType>::value) {
-    const Value* found = Json::Find(source_, jsonKey);
+    const core::Value* found = Json::Find(source_, jsonKey);
     if (found == nullptr || Json::IsNull(*found)) {
       fieldValue = std::nullopt;
       return;
@@ -154,9 +154,9 @@ template <typename FieldType> void ReadArchive::Field(const char* jsonKey, Field
     fieldValue = FromValue<typename FieldType::value_type>(*found);
   }
   else {
-    const Value* found = Json::Find(source_, jsonKey);
+    const core::Value* found = Json::Find(source_, jsonKey);
     if (found == nullptr) {
-      throw KeyNotFoundError(std::string("Missing required field: \"") + jsonKey + "\"");
+      throw core::KeyNotFoundError(std::string("Missing required field: \"") + jsonKey + "\"");
     }
     fieldValue = FromValue<FieldType>(*found);
   }

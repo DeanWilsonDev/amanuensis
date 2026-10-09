@@ -1,15 +1,8 @@
 #pragma once
 
-#include <filesystem>
-#include "amanuensis/io/parse-result.hpp"
+// Old path, kept until the consumer sweep (see compat.hpp).
+#ifdef AMANUENSIS_NO_COMPAT
+#error "amanuensis/io/reader.hpp is now amanuensis/json/reader.hpp"
+#endif
 
-namespace amanuensis {
-
-class Reader {
-public:
-  Reader();
-  static ParseResult ParseString(std::string_view text);
-  static ParseResult ParseFile(const std::filesystem::path& path);
-};
-
-} // namespace amanuensis
+#include "amanuensis/json/reader.hpp"

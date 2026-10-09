@@ -1,19 +1,8 @@
 #pragma once
 
-#include <amanuensis/value.hpp>
-#include <amanuensis/io/writer-options.hpp>
-#include <filesystem>
+// Old path, kept until the consumer sweep (see compat.hpp).
+#ifdef AMANUENSIS_NO_COMPAT
+#error "amanuensis/io/writer.hpp is now amanuensis/json/writer.hpp"
+#endif
 
-namespace amanuensis {
-
-class Writer {
-public:
-  static std::string WriteToString(const Value& value, const WriterOptions& options = {});
-  static bool WriteToFile(
-      const Value& value,
-      const std::filesystem::path& path,
-      const WriterOptions& options = {}
-  );
-};
-
-} // namespace amanuensis
+#include "amanuensis/json/writer.hpp"

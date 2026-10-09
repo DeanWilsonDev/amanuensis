@@ -1,22 +1,8 @@
 #pragma once
-#include "amanuensis/compat.hpp"
-#include <stdexcept>
 
-namespace amanuensis {
+// Old path, kept until the consumer sweep (see compat.hpp).
+#ifdef AMANUENSIS_NO_COMPAT
+#error "amanuensis/errors.hpp is now amanuensis/core/errors.hpp"
+#endif
 
-class TypeMismatchError : public std::runtime_error {
-public:
-  using std::runtime_error::runtime_error;
-};
-
-class KeyNotFoundError : public std::runtime_error {
-public:
-  using std::runtime_error::runtime_error;
-};
-
-class IndexOutOfRangeError : public std::out_of_range {
-public:
-  using std::out_of_range::out_of_range;
-};
-
-} // namespace amanuensis
+#include "amanuensis/core/errors.hpp"

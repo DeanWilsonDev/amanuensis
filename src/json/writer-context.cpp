@@ -3,7 +3,7 @@
 #include <charconv>
 #include <cmath>
 
-namespace amanuensis {
+namespace amanuensis::json {
 
 void WriterContext::WriteIndent(std::string& output, int depth, const WriterOptions& options)
 {
@@ -60,7 +60,7 @@ void WriterContext::WriteEscapedString(std::string& output, const std::string& t
 
 void WriterContext::WriteArray(
     std::string& output,
-    const Value& arrayValue,
+    const core::Value& arrayValue,
     int depth,
     const WriterOptions& options
 )
@@ -93,7 +93,7 @@ void WriterContext::WriteArray(
 
 void WriterContext::WriteObject(
     std::string& output,
-    const Value& objectValue,
+    const core::Value& objectValue,
     int depth,
     const WriterOptions& options
 )
@@ -135,27 +135,27 @@ void WriterContext::WriteObject(
 
 void WriterContext::WriteValue(
     std::string& output,
-    const Value& value,
+    const core::Value& value,
     int depth,
     const WriterOptions& options
 )
 {
   switch (Json::GetType(value)) {
-  case ValueType::Null:
+  case core::ValueType::Null:
     output.append("null");
     break;
 
-  case ValueType::Boolean:
+  case core::ValueType::Boolean:
     output.append(Json::AsBoolean(value) ? "true" : "false");
     break;
 
-  case ValueType::Integer: {
+  case core::ValueType::Integer: {
     // std::to_string is fine for integers
     output.append(std::to_string(Json::AsInteger(value)));
     break;
   }
 
-  case ValueType::Double: {
+  case core::ValueType::Double: {
     // Use enough precision for lossless round-trip.
     // 17 significant digits is sufficient for IEEE 754 double.
     double doubleValue = Json::AsDouble(value);
@@ -186,17 +186,17 @@ void WriterContext::WriteValue(
     break;
   }
 
-  case ValueType::String:
+  case core::ValueType::String:
     WriteEscapedString(output, Json::AsString(value));
     break;
 
-  case ValueType::Array:
+  case core::ValueType::Array:
     WriteArray(output, value, depth, options);
     break;
 
-  case ValueType::Object:
+  case core::ValueType::Object:
     WriteObject(output, value, depth, options);
     break;
   }
 }
-} // namespace amanuensis
+} // namespace amanuensis::json

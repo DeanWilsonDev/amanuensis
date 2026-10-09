@@ -1,6 +1,6 @@
 #pragma once
 
-#include "amanuensis/value.hpp"
+#include "amanuensis/core/value.hpp"
 #include <optional>
 
 namespace amanuensis {
@@ -16,7 +16,7 @@ template <typename T> struct IsOptional<std::optional<T>> : std::true_type {};
 
 class ReadArchive {
 public:
-  explicit ReadArchive(const Value& source)
+  explicit ReadArchive(const core::Value& source)
       : source_(source)
   {
   }
@@ -24,7 +24,7 @@ public:
   template <typename FieldType> void Field(const char* jsonKey, FieldType& fieldValue);
 
 private:
-  const Value& source_;
+  const core::Value& source_;
 };
 
 } // namespace amanuensis

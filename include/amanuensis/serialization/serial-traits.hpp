@@ -1,5 +1,5 @@
 #pragma once
-#include <amanuensis/value.hpp>
+#include <amanuensis/core/value.hpp>
 #include <amanuensis/json.hpp>
 
 #include <optional>
@@ -17,14 +17,14 @@ template <typename T> struct SerialTraits; // Mechanism 3 — specialise for ext
 // deduces its return type so that a T no function can return, such as an
 // array, still gets the "no serialisation" static_assert and nothing else.
 template <typename T> struct SerialTraits {
-  static Value ToValue(const T& value)
+  static core::Value ToValue(const T& value)
     requires requires(const T& source) { JsonTraits<T>::ToJson(source); }
   {
     return JsonTraits<T>::ToJson(value);
   }
 
-  static auto FromValue(const Value& value)
-    requires requires(const Value& source) { JsonTraits<T>::FromJson(source); }
+  static auto FromValue(const core::Value& value)
+    requires requires(const core::Value& source) { JsonTraits<T>::FromJson(source); }
   {
     return JsonTraits<T>::FromJson(value);
   }
@@ -37,50 +37,53 @@ template <typename T> struct SerialTraits {
 
 // bool
 template <> struct SerialTraits<bool> {
-  static Value ToValue(const bool& value) { return Value(value); }
-  static bool FromValue(const Value& value) { return Json::AsBoolean(value); }
+  static core::Value ToValue(const bool& value) { return core::Value(value); }
+  static bool FromValue(const core::Value& value) { return Json::AsBoolean(value); }
 };
 
 // int
 template <> struct SerialTraits<int> {
-  static Value ToValue(const int& value) { return Value(value); }
-  static int FromValue(const Value& value) { return static_cast<int>(Json::AsInteger(value)); }
+  static core::Value ToValue(const int& value) { return core::Value(value); }
+  static int FromValue(const core::Value& value)
+  {
+    return static_cast<int>(Json::AsInteger(value));
+  }
 };
 
 // long long
 template <> struct SerialTraits<long long> {
-  static Value ToValue(const long long& value) { return Value(value); }
-  static long long FromValue(const Value& value) { return Json::AsInteger(value); }
+  static core::Value ToValue(const long long& value) { return core::Value(value); }
+  static long long FromValue(const core::Value& value) { return Json::AsInteger(value); }
 };
 
 // double
 template <> struct SerialTraits<double> {
-  static Value ToValue(const double& value) { return Value(value); }
-  static double FromValue(const Value& value) { return Json::AsDouble(value); }
+  static core::Value ToValue(const double& value) { return core::Value(value); }
+  static double FromValue(const core::Value& value) { return Json::AsDouble(value); }
 };
 
 // std::string
 template <> struct SerialTraits<std::string> {
-  static Value ToValue(const std::string& value) { return Value(value); }
-  static std::string FromValue(const Value& value) { return Json::AsString(value); }
+  static core::Value ToValue(const std::string& value) { return core::Value(value); }
+  static std::string FromValue(const core::Value& value) { return Json::AsString(value); }
 };
 
 // std::vector<T>
 template <typename ElementType> struct SerialTraits<std::vector<ElementType>> {
-  static Value ToValue(const std::vector<ElementType>& elements);
-  static std::vector<ElementType> FromValue(const Value& value);
+  static core::Value ToValue(const std::vector<ElementType>& elements);
+  static std::vector<ElementType> FromValue(const core::Value& value);
 };
 
 // std::optional<T>
 template <typename WrappedType> struct SerialTraits<std::optional<WrappedType>> {
-  static Value ToValue(const std::optional<WrappedType>& optionalValue);
-  static std::optional<WrappedType> FromValue(const Value& value);
+  static core::Value ToValue(const std::optional<WrappedType>& optionalValue);
+  static std::optional<WrappedType> FromValue(const core::Value& value);
 };
 
 // std::map<std::string, T>
 template <typename MappedType> struct SerialTraits<std::map<std::string, MappedType>> {
-  static Value ToValue(const std::map<std::string, MappedType>& entries);
-  static std::map<std::string, MappedType> FromValue(const Value& value);
+  static core::Value ToValue(const std::map<std::string, MappedType>& entries);
+  static std::map<std::string, MappedType> FromValue(const core::Value& value);
 };
 
 // Detect SerialTraits<T>::ToValue

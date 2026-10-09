@@ -6,7 +6,7 @@
 #include <cstdlib>
 #include <cstdint>
 
-namespace amanuensis {
+namespace amanuensis::json {
 
 Parser::Parser(std::string_view input)
     : input(input)
@@ -18,7 +18,7 @@ Parser::Parser(std::string_view input)
 
 Parser::~Parser() = default;
 
-ParseResult Parser::Parse()
+core::ParseResult Parser::Parse()
 {
   this->SkipWhitespace();
   auto result = ParseValue();
@@ -59,9 +59,9 @@ char Parser::Advance()
   return current;
 }
 
-ParseResult Parser::MakeError(const std::string& message) const
+core::ParseResult Parser::MakeError(const std::string& message) const
 {
-  return ParseResult{false, Value(), ParseError{message, line, column}};
+  return core::ParseResult{false, core::Value(), core::ParseError{message, line, column}};
 }
 
 // -----------------------------------------------------------------------
@@ -85,7 +85,7 @@ void Parser::SkipWhitespace()
 // Literal keywords: null, true, false
 // -----------------------------------------------------------------------
 
-ParseResult Parser::ParseNull()
+core::ParseResult Parser::ParseNull()
 {
   const char* expected = "null";
   for (int i = 0; i < 4; ++i) {
@@ -94,10 +94,10 @@ ParseResult Parser::ParseNull()
     }
     this->Advance();
   }
-  return ParseResult{true, Value(), {}};
+  return core::ParseResult{true, core::Value(), {}};
 }
 
-ParseResult Parser::ParseTrue()
+core::ParseResult Parser::ParseTrue()
 {
   const char* expected = "true";
   for (int i = 0; i < 4; ++i) {
@@ -106,10 +106,10 @@ ParseResult Parser::ParseTrue()
     }
     this->Advance();
   }
-  return ParseResult{true, Value(true), {}};
+  return core::ParseResult{true, core::Value(true), {}};
 }
 
-ParseResult Parser::ParseFalse()
+core::ParseResult Parser::ParseFalse()
 {
   const char* expected = "false";
   for (int i = 0; i < 5; ++i) {
@@ -118,7 +118,7 @@ ParseResult Parser::ParseFalse()
     }
     this->Advance();
   }
-  return ParseResult{true, Value(false), {}};
+  return core::ParseResult{true, core::Value(false), {}};
 }
 
 // -----------------------------------------------------------------------
@@ -129,7 +129,7 @@ ParseResult Parser::ParseFalse()
 // '.', 'e', or 'E'.  Parse accordingly.
 // -----------------------------------------------------------------------
 
-ParseResult Parser::ParseNumber()
+core::ParseResult Parser::ParseNumber()
 {
   std::size_t startPosition = this->cursor;
   int startLine = this->line;
@@ -195,12 +195,12 @@ ParseResult Parser::ParseNumber()
     auto [endPointer, errorCode] =
         std::from_chars(numberText.data(), numberText.data() + numberText.size(), doubleValue);
     if (errorCode != std::errc()) {
-      return ParseResult{
-          false, Value(),
-          ParseError{"Failed to parse floating-point number", startLine, startColumn}
+      return core::ParseResult{
+          false, core::Value(),
+          core::ParseError{"Failed to parse floating-point number", startLine, startColumn}
       };
     }
-    return ParseResult{true, Value(doubleValue), {}};
+    return core::ParseResult{true, core::Value(doubleValue), {}};
   }
   else {
     // Try integer first; fall back to double on overflow
@@ -213,18 +213,19 @@ ParseResult Parser::ParseNumber()
       auto [dblEnd, dblErr] =
           std::from_chars(numberText.data(), numberText.data() + numberText.size(), fallbackDouble);
       if (dblErr != std::errc()) {
-        return ParseResult{
-            false, Value(), ParseError{"Failed to parse number (overflow)", startLine, startColumn}
+        return core::ParseResult{
+            false, core::Value(),
+            core::ParseError{"Failed to parse number (overflow)", startLine, startColumn}
         };
       }
-      return ParseResult{true, Value(fallbackDouble), {}};
+      return core::ParseResult{true, core::Value(fallbackDouble), {}};
     }
     if (errorCode != std::errc()) {
-      return ParseResult{
-          false, Value(), ParseError{"Failed to parse integer", startLine, startColumn}
+      return core::ParseResult{
+          false, core::Value(), core::ParseError{"Failed to parse integer", startLine, startColumn}
       };
     }
-    return ParseResult{true, Value(integerValue), {}};
+    return core::ParseResult{true, core::Value(integerValue), {}};
   }
 }
 
@@ -284,7 +285,7 @@ static void EncodeUtf8(std::string& output, uint32_t codePoint)
   }
 }
 
-ParseResult Parser::ParseString()
+core::ParseResult Parser::ParseString()
 {
   if (this->IsAtEnd() || this->Peek() != '"') {
     return this->MakeError("Expected '\"' at start of string");
@@ -301,7 +302,7 @@ ParseResult Parser::ParseString()
 
     if (current == '"') {
       this->Advance(); // consume closing quote
-      return ParseResult{true, Value(std::move(result)), {}};
+      return core::ParseResult{true, core::Value(std::move(result)), {}};
     }
 
     if (static_cast<unsigned char>(current) < 0x20) {
@@ -385,16 +386,16 @@ ParseResult Parser::ParseString()
   }
 }
 
-ParseResult Parser::ParseArray()
+core::ParseResult Parser::ParseArray()
 {
   this->Advance(); // consume '['
   SkipWhitespace();
 
-  Value arrayValue = Json::MakeArray();
+  core::Value arrayValue = Json::MakeArray();
 
   if (!this->IsAtEnd() && this->Peek() == ']') {
     this->Advance();
-    return ParseResult{true, std::move(arrayValue), {}};
+    return core::ParseResult{true, std::move(arrayValue), {}};
   }
 
   while (true) {
@@ -414,7 +415,7 @@ ParseResult Parser::ParseArray()
 
     if (this->Peek() == ']') {
       this->Advance();
-      return ParseResult{true, std::move(arrayValue), {}};
+      return core::ParseResult{true, std::move(arrayValue), {}};
     }
 
     if (this->Peek() != ',') {
@@ -432,16 +433,16 @@ ParseResult Parser::ParseArray()
   }
 }
 
-ParseResult Parser::ParseObject()
+core::ParseResult Parser::ParseObject()
 {
   this->Advance(); // consume '{'
   this->SkipWhitespace();
 
-  Value objectValue = Json::MakeObject();
+  core::Value objectValue = Json::MakeObject();
 
   if (!this->IsAtEnd() && this->Peek() == '}') {
     this->Advance();
-    return ParseResult{true, std::move(objectValue), {}};
+    return core::ParseResult{true, std::move(objectValue), {}};
   }
 
   while (true) {
@@ -481,7 +482,7 @@ ParseResult Parser::ParseObject()
 
     if (this->Peek() == '}') {
       this->Advance();
-      return ParseResult{true, std::move(objectValue), {}};
+      return core::ParseResult{true, std::move(objectValue), {}};
     }
 
     if (this->Peek() != ',') {
@@ -499,7 +500,7 @@ ParseResult Parser::ParseObject()
   }
 }
 
-ParseResult Parser::ParseValue()
+core::ParseResult Parser::ParseValue()
 {
   this->SkipWhitespace();
 
@@ -529,4 +530,4 @@ ParseResult Parser::ParseValue()
     return this->MakeError(std::string("Unexpected character '") + current + "'");
   }
 }
-} // namespace amanuensis
+} // namespace amanuensis::json

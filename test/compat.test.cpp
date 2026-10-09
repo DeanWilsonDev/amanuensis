@@ -4,19 +4,44 @@
 #include <amanuensis/io/json-parse-error.hpp>
 #include <amanuensis/serialization/json-traits.hpp>
 #include <amanuensis/serialization/json-traits-std.hpp>
+#include <amanuensis/ordered-map.hpp>
+#include <amanuensis/object-iterator.hpp>
+#include <amanuensis/errors.hpp>
+#include <amanuensis/value-traits.hpp>
+#include <amanuensis/converter.hpp>
 #include <amanuensis/json.hpp>
+#include <amanuensis/io/reader.hpp>
 #include <amanuensis/io/writer.hpp>
+#include <amanuensis/io/writer-options.hpp>
 
 #include <string>
 #include <type_traits>
 #include <vector>
 
 static_assert(std::is_same_v<Amanuensis::JsonValue, amanuensis::JsonValue>);
-static_assert(std::is_same_v<amanuensis::JsonValue, amanuensis::Value>);
-static_assert(std::is_same_v<amanuensis::JsonValueType, amanuensis::ValueType>);
-static_assert(std::is_same_v<amanuensis::JsonParseResult, amanuensis::ParseResult>);
-static_assert(std::is_same_v<amanuensis::JsonParseError, amanuensis::ParseError>);
+static_assert(std::is_same_v<amanuensis::JsonValue, amanuensis::core::Value>);
+static_assert(std::is_same_v<amanuensis::JsonValueType, amanuensis::core::ValueType>);
+static_assert(std::is_same_v<amanuensis::JsonParseResult, amanuensis::core::ParseResult>);
+static_assert(std::is_same_v<amanuensis::JsonParseError, amanuensis::core::ParseError>);
 static_assert(std::is_same_v<amanuensis::FromJsonResult<int>, amanuensis::FromValueResult<int>>);
+
+// Names that moved from amanuensis into amanuensis::core and amanuensis::json.
+static_assert(std::is_same_v<amanuensis::OrderedMap<int>, amanuensis::core::OrderedMap<int>>);
+static_assert(std::is_same_v<amanuensis::ObjectIterator, amanuensis::core::ObjectIterator>);
+static_assert(std::is_same_v<amanuensis::TypeMismatchError, amanuensis::core::TypeMismatchError>);
+static_assert(std::is_same_v<amanuensis::KeyNotFoundError, amanuensis::core::KeyNotFoundError>);
+static_assert(
+    std::is_same_v<amanuensis::IndexOutOfRangeError, amanuensis::core::IndexOutOfRangeError>
+);
+static_assert(std::is_same_v<
+              amanuensis::ValueTraits<amanuensis::JsonValue>,
+              amanuensis::core::ValueTraits<amanuensis::core::Value>>);
+static_assert(std::is_same_v<
+              Amanuensis::Converter<Amanuensis::JsonValue, Amanuensis::JsonValue>,
+              amanuensis::core::Converter<amanuensis::core::Value, amanuensis::core::Value>>);
+static_assert(std::is_same_v<amanuensis::Reader, amanuensis::json::Reader>);
+static_assert(std::is_same_v<amanuensis::Writer, amanuensis::json::Writer>);
+static_assert(std::is_same_v<amanuensis::WriterOptions, amanuensis::json::WriterOptions>);
 
 // Specialised the old way: JsonTraits, with ToJson and FromJson members.
 struct LegacyPoint {
@@ -77,7 +102,7 @@ DESCRIBE("Compatibility names", {
 
   IT("picks up an old JsonTraits specialisation through SerialTraits", {
     LegacyPoint original = MakeLegacyPoint(3, 4);
-    amanuensis::Value value = amanuensis::ToValue(original);
+    amanuensis::core::Value value = amanuensis::ToValue(original);
     ASSERT_EQUAL(amanuensis::Json::AsInteger(amanuensis::Json::At(value, 1)), 4LL);
 
     LegacyPoint round_tripped = amanuensis::FromValue<LegacyPoint>(value);
@@ -87,7 +112,7 @@ DESCRIBE("Compatibility names", {
 
   IT("forwards ToJson, FromJson and TryFromJson to the new names", {
     std::vector<LegacyPoint> original = MakeLegacyPoints();
-    amanuensis::Value value = amanuensis::ToJson(original);
+    amanuensis::core::Value value = amanuensis::ToJson(original);
     auto round_tripped = amanuensis::FromJson<std::vector<LegacyPoint>>(value);
     ASSERT_EQUAL(round_tripped.size(), 2u);
     ASSERT_EQUAL(round_tripped[1].x, 5LL);

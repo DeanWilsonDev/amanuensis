@@ -7,6 +7,6 @@
 
 namespace amanuensis {
 
-// Intentionally empty — all logic lives in serialisation.hpp.
+// Intentionally empty — all logic lives in the serialization/ headers.
 
 } // namespace amanuensis

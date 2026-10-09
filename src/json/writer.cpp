@@ -1,11 +1,11 @@
-#include <amanuensis/io/writer.hpp>
+#include <amanuensis/json/writer.hpp>
 #include "writer-context.hpp"
 
 #include <fstream>
 
-namespace amanuensis {
+namespace amanuensis::json {
 
-std::string Writer::WriteToString(const Value& value, const WriterOptions& options)
+std::string Writer::WriteToString(const core::Value& value, const WriterOptions& options)
 {
   std::string output;
   WriterContext().WriteValue(output, value, 0, options);
@@ -16,7 +16,7 @@ std::string Writer::WriteToString(const Value& value, const WriterOptions& optio
 }
 
 bool Writer::WriteToFile(
-    const Value& value,
+    const core::Value& value,
     const std::filesystem::path& path,
     const WriterOptions& options
 )
@@ -30,4 +30,4 @@ bool Writer::WriteToFile(
   return outputFile.good();
 }
 
-} // namespace amanuensis
+} // namespace amanuensis::json

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <amanuensis/value.hpp>
+#include <amanuensis/core/value.hpp>
 #include <amanuensis/json.hpp>
 
 namespace amanuensis {
@@ -18,10 +18,10 @@ public:
 
   template <typename FieldType> void Field(const char* jsonKey, const FieldType& fieldValue);
 
-  Value& GetValue() { return object_; }
+  core::Value& GetValue() { return object_; }
 
 private:
-  Value object_;
+  core::Value object_;
 };
 
 } // namespace amanuensis

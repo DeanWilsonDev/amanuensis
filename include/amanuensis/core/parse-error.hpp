@@ -3,11 +3,11 @@
 
 #include <string>
 
-namespace amanuensis {
+namespace amanuensis::core {
 
 struct ParseError {
   std::string message;
   int line;
   int column;
 };
-} // namespace amanuensis
+} // namespace amanuensis::core

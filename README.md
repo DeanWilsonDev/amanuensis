@@ -47,16 +47,17 @@ target_link_libraries(your_target PRIVATE amanuensis)
 Then include the umbrella header:
 
 ```cpp
-#include <amanuensis/amanuensis.hpp>
+#include <amanuensis.hpp>
 ```
 
 Or include individual headers as needed:
 
 ```cpp
-#include <amanuensis/value.hpp>
-#include <amanuensis/io/reader.hpp>
-#include <amanuensis/io/writer.hpp>
-#include <amanuensis/serialisation.hpp>
+#include <amanuensis/core/value.hpp>                   // amanuensis::core::Value
+#include <amanuensis/json.hpp>                         // amanuensis::Json, the operations on a Value
+#include <amanuensis/json/reader.hpp>                  // amanuensis::json::Reader
+#include <amanuensis/json/writer.hpp>                  // amanuensis::json::Writer
+#include <amanuensis/serialization/serialization.hpp>  // ToValue, FromValue, AMANUENSIS_SERIALISABLE
 ```
 
 ---
@@ -66,38 +67,43 @@ Or include individual headers as needed:
 ### Library only
 
 ```bash
-cmake -B build
+cmake -B build -DAMANUENSIS_BUILD_TESTS=OFF
 cmake --build build
 ```
 
 ### With tests
 
-Tests require [Cimmerian](https://github.com/DeanWilsonDev/Cimmerian) to be installed. Tests are enabled by default.
+Tests use [Cimmerian](https://github.com/DeanWilsonDev/Cimmerian), which is a git submodule at `external/cimmerian`. Tests are enabled by default when Amanuensis is the top-level project.
 
 ```bash
-cmake -B build -Damanuensis_BUILD_TESTS=ON
-cmake --build build
-./build/bin/test_amanuensis
-```
-
-To disable tests:
-
-```bash
-cmake -B build -Damanuensis_BUILD_TESTS=OFF
+git submodule update --init
+cmake -B build
+cmake --build build --target test_amanuensis
+./build/test_amanuensis
 ```
 
 ---
 
 ## API
 
-All public symbols live in the `amanuensis` namespace. Until consumers have moved over, `<amanuensis/compat.hpp>` (pulled in by every public header) keeps the old `Amanuensis::` spelling working as a namespace alias, and keeps the old `JsonValue`, `JsonValueType`, `JsonParseResult` and `JsonParseError` names working as aliases of `Value`, `ValueType`, `ParseResult` and `ParseError`. `ToJson`, `FromJson`, `TryFromJson` and `FromJsonResult` forward to `ToValue`, `FromValue`, `TryFromValue` and `FromValueResult`, and an existing `JsonTraits<T>` specialisation with `ToJson`/`FromJson` members is still picked up when there is no `SerialTraits<T>` one. The old header paths (`json-value.hpp`, `io/json-parse-result.hpp`, `io/json-parse-error.hpp`, `serialization/json-traits.hpp` and `serialization/json-traits-std.hpp`) forward to the new ones. Define `AMANUENSIS_NO_COMPAT` to turn all of this off.
+The data model and everything the formats share lives in `amanuensis::core`, and the JSON reader and writer live in `amanuensis::json`. The serialisation layer (`ToValue`, `FromValue`, `SerialTraits`) is in `amanuensis`. For now, the operations on a `Value` are static functions on `amanuensis::Json`.
+
+Until consumers have moved over, `<amanuensis/compat.hpp>` (pulled in by every public header) keeps the old names working:
+
+- the `Amanuensis::` namespace spelling;
+- `JsonValue`, `JsonValueType`, `JsonParseResult` and `JsonParseError`, as aliases of `core::Value`, `core::ValueType`, `core::ParseResult` and `core::ParseError`;
+- `ToJson`, `FromJson`, `TryFromJson` and `FromJsonResult`, which forward to `ToValue`, `FromValue`, `TryFromValue` and `FromValueResult`, and `JsonTraits<T>` specialisations with `ToJson`/`FromJson` members, which are still picked up when there is no `SerialTraits<T>` one;
+- `amanuensis::Reader`, `Writer` and `WriterOptions`, now in `amanuensis::json`, and `amanuensis::OrderedMap`, `ObjectIterator`, `Converter`, `ValueTraits` and the error types, now in `amanuensis::core`;
+- the old header paths, such as `<amanuensis/io/reader.hpp>` and `<amanuensis/json-value.hpp>`, which forward to the new ones.
+
+Define `AMANUENSIS_NO_COMPAT` to turn all of this off.
 
 ### Reading
 
 `Reader` has two static methods and returns a result struct — it never throws on parse failure.
 
 ```cpp
-auto result = amanuensis::Reader::ParseString(R"({"x": 1})");
+auto result = amanuensis::json::Reader::ParseString(R"({"x": 1})");
 
 if (!result.succeeded) {
     std::cerr << result.error.line << ":" << result.error.column
@@ -105,11 +111,11 @@ if (!result.succeeded) {
     return 1;
 }
 
-amanuensis::Value root = result.value;
+amanuensis::core::Value root = result.value;
 ```
 
 ```cpp
-auto result = amanuensis::Reader::ParseFile("config.json");
+auto result = amanuensis::json::Reader::ParseFile("config.json");
 ```
 
 ### Writing
@@ -117,60 +123,72 @@ auto result = amanuensis::Reader::ParseFile("config.json");
 `Writer` has two static methods. `WriteToFile` returns `bool` rather than throwing on I/O failure.
 
 ```cpp
-amanuensis::Value root = amanuensis::Value::MakeObject();
-root.Insert("version", 1);
-root.Insert("name", "example");
+using amanuensis::Json;
+using amanuensis::core::Value;
+
+Value root = Json::MakeObject();
+Json::Insert(root, "version", Value{1LL});
+Json::Insert(root, "name", Value{std::string("example")});
 
 // Pretty-printed (default)
-std::string text = amanuensis::Writer::WriteToString(root);
+std::string text = amanuensis::json::Writer::WriteToString(root);
 
 // Minified
-amanuensis::WriterOptions options;
+amanuensis::json::WriterOptions options;
 options.pretty = false;
-std::string minified = amanuensis::Writer::WriteToString(root, options);
+std::string minified = amanuensis::json::Writer::WriteToString(root, options);
 
 // Write to disk
-bool ok = amanuensis::Writer::WriteToFile(root, "output.json");
+bool ok = amanuensis::json::Writer::WriteToFile(root, "output.json");
 ```
 
 ### The Value type
 
+`core::Value` holds null, a boolean, an integer (`long long`), a double, a string, an array or an object. Objects keep their insertion order.
+
 ```cpp
+using amanuensis::Json;
+using amanuensis::core::Value;
+
 // Construction
-amanuensis::Value null;                        // null
-amanuensis::Value boolean = true;
-amanuensis::Value integer = 42;
-amanuensis::Value number = 3.14;
-amanuensis::Value text = "hello";
-amanuensis::Value array = amanuensis::Value::MakeArray();
-amanuensis::Value object = amanuensis::Value::MakeObject();
+Value null_value;                          // null
+Value boolean{true};
+Value integer{42LL};
+Value number{3.14};
+Value text{std::string("hello")};
+Value array = Json::MakeArray();
+Value object = Json::MakeObject();
 
 // Type inspection
-value.IsNull();
-value.IsBoolean();
-value.IsInteger();
-value.IsDouble();
-value.IsNumber();    // true for Integer or Double
-value.IsString();
-value.IsArray();
-value.IsObject();
+Json::GetType(value);     // amanuensis::core::ValueType
+Json::IsNull(value);
+Json::IsBoolean(value);
+Json::IsInteger(value);
+Json::IsDouble(value);
+Json::IsNumber(value);    // true for Integer or Double
+Json::IsString(value);
+Json::IsArray(value);
+Json::IsObject(value);
 
-// Typed accessors — throw TypeMismatchError on wrong type
-bool        b = value.AsBoolean();
-long long   i = value.AsInteger();
-double      d = value.AsDouble();
-std::string s = value.AsString();
+// Typed accessors — throw amanuensis::core::TypeMismatchError on wrong type
+bool        b = Json::AsBoolean(value);
+long long   i = Json::AsInteger(value);
+double      d = Json::AsDouble(value);
+std::string s = Json::AsString(value);
 
 // Array operations
-array.PushBack(99);
-std::size_t count = array.Size();
-amanuensis::Value& element = array.At(0);
+Json::PushBack(array, Value{99LL});
+std::size_t count = Json::Size(array);
+Value& element = Json::At(array, 0);         // throws IndexOutOfRangeError if out of range
 
 // Object operations — insertion order is preserved
-object.Insert("key", "value");
-bool exists = object.Contains("key");
-amanuensis::Value& v = object.Get("key");        // throws if absent
-const amanuensis::Value* p = object.Find("key"); // nullptr if absent
+Json::Insert(object, "key", Value{std::string("value")});
+bool exists = Json::Contains(object, "key");
+Value& v = Json::Get(object, "key");         // throws KeyNotFoundError if absent
+const Value* p = Json::Find(object, "key");  // nullptr if absent
+for (auto entry = Json::BeginObject(object); entry != Json::EndObject(object); ++entry) {
+    // entry->first is the key, entry->second the value
+}
 ```
 
 ---
@@ -205,11 +223,11 @@ Both directions then work automatically:
 ```cpp
 // Serialise
 PerFunctionCoverage pfc = { "math::Add", 10, 14, 5, 5, 3 };
-amanuensis::Value v = amanuensis::ToValue(pfc);
-amanuensis::Writer::WriteToFile(v, "coverage.json");
+amanuensis::core::Value v = amanuensis::ToValue(pfc);
+amanuensis::json::Writer::WriteToFile(v, "coverage.json");
 
 // Deserialise
-auto result = amanuensis::Reader::ParseFile("coverage.json");
+auto result = amanuensis::json::Reader::ParseFile("coverage.json");
 PerFunctionCoverage roundTripped = amanuensis::FromValue<PerFunctionCoverage>(result.value);
 
 // Non-throwing variant
@@ -247,15 +265,17 @@ For types you do not own (external types), or for types that require a non-objec
 ```cpp
 namespace amanuensis {
 template <> struct SerialTraits<Vec3> {
-    static Value ToValue(const Vec3& v) {
-        auto array = Value::MakeArray();
-        array.PushBack(v.x);
-        array.PushBack(v.y);
-        array.PushBack(v.z);
+    static core::Value ToValue(const Vec3& v) {
+        core::Value array = Json::MakeArray();
+        Json::PushBack(array, core::Value{v.x});
+        Json::PushBack(array, core::Value{v.y});
+        Json::PushBack(array, core::Value{v.z});
         return array;
     }
-    static Vec3 FromValue(const Value& value) {
-        return { value.At(0).AsDouble(), value.At(1).AsDouble(), value.At(2).AsDouble() };
+    static Vec3 FromValue(const core::Value& value) {
+        return { Json::AsDouble(Json::At(value, 0)),
+                 Json::AsDouble(Json::At(value, 1)),
+                 Json::AsDouble(Json::At(value, 2)) };
     }
 };
 } // namespace amanuensis

@@ -11,9 +11,10 @@ namespace amanuensis {
 // -----------------------------------------------------------------------
 
 template <typename ElementType>
-Value SerialTraits<std::vector<ElementType>>::ToValue(const std::vector<ElementType>& elements)
+core::Value
+SerialTraits<std::vector<ElementType>>::ToValue(const std::vector<ElementType>& elements)
 {
-  Value arrayValue = Json::MakeArray();
+  core::Value arrayValue = Json::MakeArray();
   for (const auto& element : elements) {
     Json::PushBack(arrayValue, amanuensis::ToValue<ElementType>(element));
   }
@@ -21,7 +22,7 @@ Value SerialTraits<std::vector<ElementType>>::ToValue(const std::vector<ElementT
 }
 
 template <typename ElementType>
-std::vector<ElementType> SerialTraits<std::vector<ElementType>>::FromValue(const Value& value)
+std::vector<ElementType> SerialTraits<std::vector<ElementType>>::FromValue(const core::Value& value)
 {
   const auto& rawArray = Json::AsArray(value);
   std::vector<ElementType> result;
@@ -33,18 +34,18 @@ std::vector<ElementType> SerialTraits<std::vector<ElementType>>::FromValue(const
 }
 
 template <typename WrappedType>
-Value SerialTraits<std::optional<WrappedType>>::ToValue(
-    const std::optional<WrappedType>& optionalValue
-)
+core::Value
+SerialTraits<std::optional<WrappedType>>::ToValue(const std::optional<WrappedType>& optionalValue)
 {
   if (!optionalValue.has_value()) {
-    return Value(); // null
+    return core::Value(); // null
   }
   return amanuensis::ToValue<WrappedType>(*optionalValue);
 }
 
 template <typename WrappedType>
-std::optional<WrappedType> SerialTraits<std::optional<WrappedType>>::FromValue(const Value& value)
+std::optional<WrappedType>
+SerialTraits<std::optional<WrappedType>>::FromValue(const core::Value& value)
 {
   if (Json::IsNull(value)) {
     return std::nullopt;
@@ -53,11 +54,11 @@ std::optional<WrappedType> SerialTraits<std::optional<WrappedType>>::FromValue(c
 }
 
 template <typename MappedType>
-Value SerialTraits<std::map<std::string, MappedType>>::ToValue(
+core::Value SerialTraits<std::map<std::string, MappedType>>::ToValue(
     const std::map<std::string, MappedType>& entries
 )
 {
-  Value objectValue = Json::MakeObject();
+  core::Value objectValue = Json::MakeObject();
   for (const auto& [key, mappedValue] : entries) {
     Json::Insert(objectValue, key, amanuensis::ToValue<MappedType>(mappedValue));
   }
@@ -66,7 +67,7 @@ Value SerialTraits<std::map<std::string, MappedType>>::ToValue(
 
 template <typename MappedType>
 std::map<std::string, MappedType>
-SerialTraits<std::map<std::string, MappedType>>::FromValue(const Value& value)
+SerialTraits<std::map<std::string, MappedType>>::FromValue(const core::Value& value)
 {
   std::map<std::string, MappedType> result;
   for (auto iterator = Json::BeginObject(value); iterator != Json::EndObject(value); ++iterator) {

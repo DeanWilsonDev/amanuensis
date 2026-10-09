@@ -1,41 +1,8 @@
 #pragma once
 
-#include "amanuensis/value.hpp"
-#include <string>
-#include <vector>
+// Old path, kept until the consumer sweep (see compat.hpp).
+#ifdef AMANUENSIS_NO_COMPAT
+#error "amanuensis/object-iterator.hpp is now amanuensis/core/object-iterator.hpp"
+#endif
 
-namespace amanuensis {
-
-class ObjectIterator {
-public:
-  using UnderlyingIterator = std::vector<std::pair<std::string, Value>>::const_iterator;
-
-  ObjectIterator() = default;
-  explicit ObjectIterator(UnderlyingIterator iterator)
-      : iterator_(iterator)
-  {
-  }
-
-  const std::pair<std::string, Value>& operator*() const { return *iterator_; }
-  const std::pair<std::string, Value>* operator->() const { return &(*iterator_); }
-
-  ObjectIterator& operator++()
-  {
-    ++iterator_;
-    return *this;
-  }
-  ObjectIterator operator++(int)
-  {
-    ObjectIterator previous = *this;
-    ++iterator_;
-    return previous;
-  }
-
-  bool operator==(const ObjectIterator& other) const { return iterator_ == other.iterator_; }
-  bool operator!=(const ObjectIterator& other) const { return iterator_ != other.iterator_; }
-
-private:
-  UnderlyingIterator iterator_;
-};
-
-} // namespace amanuensis
+#include "amanuensis/core/object-iterator.hpp"

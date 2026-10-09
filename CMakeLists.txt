@@ -31,15 +31,15 @@ endif()
 # -------------------------
 add_library(
   amanuensis STATIC
+  src/core/converter.cpp
+  src/core/ordered-map.cpp
+  src/core/value-traits.cpp
   src/json.cpp
-  src/io/reader.cpp
-  src/io/writer.cpp
-  src/io/writer-context.cpp
-  src/io/parser.cpp
-  src/serialization/serialization.cpp
-  src/converter.cpp
-  src/ordered-map.cpp
-  src/value-traits.cpp)
+  src/json/reader.cpp
+  src/json/writer.cpp
+  src/json/writer-context.cpp
+  src/json/parser.cpp
+  src/serialization/serialization.cpp)
 
 target_include_directories(
   amanuensis PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
