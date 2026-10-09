@@ -5,7 +5,7 @@
 #include <string>
 #include <cstdint>
 
-namespace Amanuensis {
+namespace amanuensis {
 
 class Parser {
 public:
@@ -39,4 +39,4 @@ private:
   int column = 1;
 };
 
-} // namespace Amanuensis
+} // namespace amanuensis

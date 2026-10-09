@@ -4,7 +4,7 @@
 #include <amanuensis/serialization/json-traits.hpp>
 #include <amanuensis/serialization/serialize.hpp>
 
-namespace Amanuensis {
+namespace amanuensis {
 
 // -----------------------------------------------------------------------
 // Built-in JsonTraits implementations (template bodies)
@@ -15,7 +15,7 @@ JsonValue JsonTraits<std::vector<ElementType>>::ToJson(const std::vector<Element
 {
   JsonValue arrayJsonValue = Json::MakeArray();
   for (const auto& element : elements) {
-    Json::PushBack(arrayJsonValue, Amanuensis::ToJson<ElementType>(element));
+    Json::PushBack(arrayJsonValue, amanuensis::ToJson<ElementType>(element));
   }
   return arrayJsonValue;
 }
@@ -27,7 +27,7 @@ std::vector<ElementType> JsonTraits<std::vector<ElementType>>::FromJson(const Js
   std::vector<ElementType> result;
   result.reserve(rawArray.size());
   for (const auto& element : rawArray) {
-    result.push_back(Amanuensis::FromJson<ElementType>(element));
+    result.push_back(amanuensis::FromJson<ElementType>(element));
   }
   return result;
 }
@@ -40,7 +40,7 @@ JsonValue JsonTraits<std::optional<WrappedType>>::ToJson(
   if (!optionalJsonValue.has_value()) {
     return JsonValue(); // null
   }
-  return Amanuensis::ToJson<WrappedType>(*optionalJsonValue);
+  return amanuensis::ToJson<WrappedType>(*optionalJsonValue);
 }
 
 template <typename WrappedType>
@@ -49,7 +49,7 @@ std::optional<WrappedType> JsonTraits<std::optional<WrappedType>>::FromJson(cons
   if (Json::IsNull(value)) {
     return std::nullopt;
   }
-  return Amanuensis::FromJson<WrappedType>(value);
+  return amanuensis::FromJson<WrappedType>(value);
 }
 
 template <typename MappedType>
@@ -59,7 +59,7 @@ JsonValue JsonTraits<std::map<std::string, MappedType>>::ToJson(
 {
   JsonValue objectJsonValue = Json::MakeObject();
   for (const auto& [key, mappedJsonValue] : entries) {
-    Json::Insert(objectJsonValue, key, Amanuensis::ToJson<MappedType>(mappedJsonValue));
+    Json::Insert(objectJsonValue, key, amanuensis::ToJson<MappedType>(mappedJsonValue));
   }
   return objectJsonValue;
 }
@@ -70,9 +70,9 @@ JsonTraits<std::map<std::string, MappedType>>::FromJson(const JsonValue& value)
 {
   std::map<std::string, MappedType> result;
   for (auto iterator = Json::BeginObject(value); iterator != Json::EndObject(value); ++iterator) {
-    result[iterator->first] = Amanuensis::FromJson<MappedType>(iterator->second);
+    result[iterator->first] = amanuensis::FromJson<MappedType>(iterator->second);
   }
   return result;
 }
 
-} // namespace Amanuensis
+} // namespace amanuensis

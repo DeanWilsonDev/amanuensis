@@ -6,7 +6,7 @@
 #include "amanuensis/json-value.hpp"
 #include "amanuensis/object-iterator.hpp"
 
-namespace Amanuensis {
+namespace amanuensis {
 
 class Json {
 public:
@@ -44,4 +44,4 @@ public:
   static JsonValue MakeObject();
 };
 
-} // namespace Amanuensis
+} // namespace amanuensis

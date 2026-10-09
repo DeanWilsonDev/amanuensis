@@ -5,8 +5,8 @@
 // the CMake target has a source file to compile, and to verify that the
 // header parses cleanly on its own.
 
-namespace Amanuensis {
+namespace amanuensis {
 
 // Intentionally empty — all logic lives in serialisation.hpp.
 
-} // namespace Amanuensis
+} // namespace amanuensis

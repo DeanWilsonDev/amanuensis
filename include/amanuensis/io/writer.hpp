@@ -4,7 +4,7 @@
 #include <amanuensis/io/writer-options.hpp>
 #include <filesystem>
 
-namespace Amanuensis {
+namespace amanuensis {
 
 class Writer {
 public:
@@ -16,4 +16,4 @@ public:
   );
 };
 
-} // namespace Amanuensis
+} // namespace amanuensis

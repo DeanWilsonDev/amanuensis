@@ -3,7 +3,7 @@
 #include <charconv>
 #include <cmath>
 
-namespace Amanuensis {
+namespace amanuensis {
 
 void WriterContext::WriteIndent(std::string& output, int depth, const WriterOptions& options)
 {
@@ -199,4 +199,4 @@ void WriterContext::WriteJsonValue(
     break;
   }
 }
-} // namespace Amanuensis
+} // namespace amanuensis

@@ -8,12 +8,12 @@
 #include "amanuensis/json-value.hpp"
 #include "amanuensis/ordered-map.hpp"
 
-namespace Amanuensis {
+namespace amanuensis {
 
 template <
     typename TValue,
     typename TValueArray = std::vector<TValue>,
-    typename TValueObject = Amanuensis::OrderedMap<TValue>>
+    typename TValueObject = amanuensis::OrderedMap<TValue>>
 struct ValueTraits {
   using Value = TValue;
   using ValueArray = TValueArray;
@@ -75,4 +75,4 @@ struct ValueTraits {
     std::get<TValueObject>(target.data).Insert(key, std::move(element));
   }
 };
-} // namespace Amanuensis
+} // namespace amanuensis

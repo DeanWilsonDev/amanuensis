@@ -3,12 +3,12 @@
 #include "amanuensis/json-value.hpp"
 #include <optional>
 
-namespace Amanuensis {
+namespace amanuensis {
 
-namespace Detail {
+namespace detail {
 template <typename T> struct IsOptional : std::false_type {};
 template <typename T> struct IsOptional<std::optional<T>> : std::true_type {};
-} // namespace Detail
+} // namespace detail
 
 // -----------------------------------------------------------------------
 // ReadArchive — handed to Serialise functions when converting JsonValue → T
@@ -27,4 +27,4 @@ private:
   const JsonValue& source_;
 };
 
-} // namespace Amanuensis
+} // namespace amanuensis

@@ -1,7 +1,8 @@
 #pragma once
+#include "amanuensis/compat.hpp"
 #include <stdexcept>
 
-namespace Amanuensis {
+namespace amanuensis {
 
 class TypeMismatchError : public std::runtime_error {
 public:
@@ -18,4 +19,4 @@ public:
   using std::out_of_range::out_of_range;
 };
 
-} // namespace Amanuensis
+} // namespace amanuensis

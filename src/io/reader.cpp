@@ -8,7 +8,7 @@
 #include <sstream>
 #include <fstream>
 
-namespace Amanuensis {
+namespace amanuensis {
 
 JsonParseResult Reader::ParseString(std::string_view text)
 {
@@ -31,4 +31,4 @@ JsonParseResult Reader::ParseFile(const std::filesystem::path& path)
   return Parser(fileContent).Parse();
 }
 
-} // namespace Amanuensis
+} // namespace amanuensis

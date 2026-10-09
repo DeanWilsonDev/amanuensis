@@ -20,7 +20,7 @@ struct AdapterValue {
 
 } // namespace
 
-namespace Amanuensis {
+namespace amanuensis {
 
 template <> struct ValueTraits<AdapterValue> {
   static JsonValueType GetType(const AdapterValue& value)
@@ -63,17 +63,17 @@ template <> struct ValueTraits<AdapterValue> {
   }
 };
 
-} // namespace Amanuensis
+} // namespace amanuensis
 
-using ToAdapterConverter = Amanuensis::
-    Converter<Amanuensis::JsonValue, AdapterValue, Amanuensis::ValueTraits<AdapterValue>>;
-using ToJsonConverter = Amanuensis::Converter<AdapterValue, Amanuensis::JsonValue>;
+using ToAdapterConverter = amanuensis::
+    Converter<amanuensis::JsonValue, AdapterValue, amanuensis::ValueTraits<AdapterValue>>;
+using ToJsonConverter = amanuensis::Converter<AdapterValue, amanuensis::JsonValue>;
 
 DESCRIBE("Value conversion", {
   IT("converts recursively to and from an adapter-owned representation", {
     const std::string input =
         R"({"null":null,"bool":true,"integer":42,"double":3.5,"string":"hello","array":[1,false],"object":{"key":"value"}})";
-    auto parsed = Amanuensis::Reader::ParseString(input);
+    auto parsed = amanuensis::Reader::ParseString(input);
     REQUIRE_TRUE(parsed.succeeded);
 
     auto adapted = ToAdapterConverter::ConvertValue(parsed.value);
@@ -85,9 +85,9 @@ DESCRIBE("Value conversion", {
     ASSERT_EQUAL(std::get<AdapterValue::Array>(object[5].second.data).size(), 2u);
 
     auto converted_back = ToJsonConverter::ConvertValue(adapted);
-    Amanuensis::WriterOptions options;
+    amanuensis::WriterOptions options;
     options.pretty = false;
     options.trailingNewline = false;
-    ASSERT_EQUAL(Amanuensis::Writer::WriteToString(converted_back, options), input);
+    ASSERT_EQUAL(amanuensis::Writer::WriteToString(converted_back, options), input);
   });
 });

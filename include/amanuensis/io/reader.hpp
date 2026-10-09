@@ -3,7 +3,7 @@
 #include <filesystem>
 #include "amanuensis/io/json-parse-result.hpp"
 
-namespace Amanuensis {
+namespace amanuensis {
 
 class Reader {
 public:
@@ -12,4 +12,4 @@ public:
   static JsonParseResult ParseFile(const std::filesystem::path& path);
 };
 
-} // namespace Amanuensis
+} // namespace amanuensis

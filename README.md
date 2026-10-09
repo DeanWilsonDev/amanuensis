@@ -90,14 +90,14 @@ cmake -B build -Damanuensis_BUILD_TESTS=OFF
 
 ## API
 
-All public symbols live in the `Amanuensis` namespace.
+All public symbols live in the `amanuensis` namespace. Until consumers have moved over, `<amanuensis/compat.hpp>` (pulled in by every public header) keeps the old `Amanuensis::` spelling working as a namespace alias; define `AMANUENSIS_NO_COMPAT` to turn it off.
 
 ### Reading
 
 `Reader` has two static methods and returns a result struct — it never throws on parse failure.
 
 ```cpp
-auto result = Amanuensis::Reader::ParseString(R"({"x": 1})");
+auto result = amanuensis::Reader::ParseString(R"({"x": 1})");
 
 if (!result.succeeded) {
     std::cerr << result.error.line << ":" << result.error.column
@@ -105,11 +105,11 @@ if (!result.succeeded) {
     return 1;
 }
 
-Amanuensis::Value root = result.value;
+amanuensis::Value root = result.value;
 ```
 
 ```cpp
-auto result = Amanuensis::Reader::ParseFile("config.json");
+auto result = amanuensis::Reader::ParseFile("config.json");
 ```
 
 ### Writing
@@ -117,33 +117,33 @@ auto result = Amanuensis::Reader::ParseFile("config.json");
 `Writer` has two static methods. `WriteToFile` returns `bool` rather than throwing on I/O failure.
 
 ```cpp
-Amanuensis::Value root = Amanuensis::Value::MakeObject();
+amanuensis::Value root = amanuensis::Value::MakeObject();
 root.Insert("version", 1);
 root.Insert("name", "example");
 
 // Pretty-printed (default)
-std::string text = Amanuensis::Writer::WriteToString(root);
+std::string text = amanuensis::Writer::WriteToString(root);
 
 // Minified
-Amanuensis::WriterOptions options;
+amanuensis::WriterOptions options;
 options.pretty = false;
-std::string minified = Amanuensis::Writer::WriteToString(root, options);
+std::string minified = amanuensis::Writer::WriteToString(root, options);
 
 // Write to disk
-bool ok = Amanuensis::Writer::WriteToFile(root, "output.json");
+bool ok = amanuensis::Writer::WriteToFile(root, "output.json");
 ```
 
 ### The Value type
 
 ```cpp
 // Construction
-Amanuensis::Value null;                        // null
-Amanuensis::Value boolean = true;
-Amanuensis::Value integer = 42;
-Amanuensis::Value number = 3.14;
-Amanuensis::Value text = "hello";
-Amanuensis::Value array = Amanuensis::Value::MakeArray();
-Amanuensis::Value object = Amanuensis::Value::MakeObject();
+amanuensis::Value null;                        // null
+amanuensis::Value boolean = true;
+amanuensis::Value integer = 42;
+amanuensis::Value number = 3.14;
+amanuensis::Value text = "hello";
+amanuensis::Value array = amanuensis::Value::MakeArray();
+amanuensis::Value object = amanuensis::Value::MakeObject();
 
 // Type inspection
 value.IsNull();
@@ -164,13 +164,13 @@ std::string s = value.AsString();
 // Array operations
 array.PushBack(99);
 std::size_t count = array.Size();
-Amanuensis::Value& element = array.At(0);
+amanuensis::Value& element = array.At(0);
 
 // Object operations — insertion order is preserved
 object.Insert("key", "value");
 bool exists = object.Contains("key");
-Amanuensis::Value& v = object.Get("key");        // throws if absent
-const Amanuensis::Value* p = object.Find("key"); // nullptr if absent
+amanuensis::Value& v = object.Get("key");        // throws if absent
+const amanuensis::Value* p = object.Find("key"); // nullptr if absent
 ```
 
 ---
@@ -205,15 +205,15 @@ Both directions then work automatically:
 ```cpp
 // Serialise
 PerFunctionCoverage pfc = { "math::Add", 10, 14, 5, 5, 3 };
-Amanuensis::Value v = Amanuensis::ToJson(pfc);
-Amanuensis::Writer::WriteToFile(v, "coverage.json");
+amanuensis::Value v = amanuensis::ToJson(pfc);
+amanuensis::Writer::WriteToFile(v, "coverage.json");
 
 // Deserialise
-auto result = Amanuensis::Reader::ParseFile("coverage.json");
-PerFunctionCoverage roundTripped = Amanuensis::FromJson<PerFunctionCoverage>(result.value);
+auto result = amanuensis::Reader::ParseFile("coverage.json");
+PerFunctionCoverage roundTripped = amanuensis::FromJson<PerFunctionCoverage>(result.value);
 
 // Non-throwing variant
-auto tryResult = Amanuensis::TryFromJson<PerFunctionCoverage>(result.value);
+auto tryResult = amanuensis::TryFromJson<PerFunctionCoverage>(result.value);
 if (!tryResult.succeeded) {
     std::cerr << tryResult.errorMessage << "\n";
 }
@@ -245,7 +245,7 @@ struct RenamedFields {
 For types you do not own (external types), or for types that require a non-object JSON representation.
 
 ```cpp
-namespace Amanuensis {
+namespace amanuensis {
 template <> struct JsonTraits<Vec3> {
     static Value ToJson(const Vec3& v) {
         auto array = Value::MakeArray();
@@ -258,7 +258,7 @@ template <> struct JsonTraits<Vec3> {
         return { value.At(0).AsDouble(), value.At(1).AsDouble(), value.At(2).AsDouble() };
     }
 };
-} // namespace Amanuensis
+} // namespace amanuensis
 ```
 
 ---

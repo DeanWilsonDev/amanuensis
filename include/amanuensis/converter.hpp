@@ -2,7 +2,7 @@
 
 #include "amanuensis/value-traits.hpp"
 
-namespace Amanuensis {
+namespace amanuensis {
 
 template <
     typename SourceValue,
@@ -46,4 +46,4 @@ public:
   }
 };
 
-} // namespace Amanuensis
+} // namespace amanuensis

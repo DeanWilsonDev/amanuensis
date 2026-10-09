@@ -108,7 +108,7 @@ if(AMANUENSIS_BUILD_TESTS)
     test_amanuensis
     test/test-main.cpp test/reader.test.cpp test/writer.test.cpp
     test/round-trip.test.cpp test/value.test.cpp test/serialization.test.cpp
-    test/converter.test.cpp)
+    test/converter.test.cpp test/compat.test.cpp)
   target_link_libraries(test_amanuensis PRIVATE amanuensis cimmerian)
   target_compile_features(test_amanuensis PRIVATE cxx_std_26)
 endif()

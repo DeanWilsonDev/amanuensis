@@ -7,7 +7,7 @@
 #include <vector>
 #include <map>
 
-namespace Amanuensis {
+namespace amanuensis {
 template <typename T> struct JsonTraits; // Mechanism 3 — specialise for external types
 
 // -----------------------------------------------------------------------
@@ -69,4 +69,4 @@ template <typename T>
 struct HasJsonTraits<T, std::void_t<decltype(JsonTraits<T>::ToJson(std::declval<const T&>()))>>
     : std::true_type {};
 
-} // namespace Amanuensis
+} // namespace amanuensis

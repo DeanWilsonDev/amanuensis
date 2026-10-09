@@ -4,7 +4,7 @@
 #include <amanuensis/json-value.hpp>
 #include <string>
 
-namespace Amanuensis {
+namespace amanuensis {
 
 class WriterContext {
 public:
@@ -24,4 +24,4 @@ public:
 
   void WriteJsonValue(std::string& output, const JsonValue& value, int depth, const WriterOptions& options);
 };
-} // namespace Amanuensis
+} // namespace amanuensis

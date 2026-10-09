@@ -3,7 +3,7 @@
 #include <amanuensis/json-value.hpp>
 #include <amanuensis/json.hpp>
 
-namespace Amanuensis {
+namespace amanuensis {
 
 // -----------------------------------------------------------------------
 // WriteArchive — handed to Serialise functions when converting T → JsonValue
@@ -24,4 +24,4 @@ private:
   JsonValue object_;
 };
 
-} // namespace Amanuensis
+} // namespace amanuensis

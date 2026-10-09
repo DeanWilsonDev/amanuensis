@@ -5,7 +5,7 @@
 #include <variant>
 #include "amanuensis/ordered-map.hpp"
 
-namespace Amanuensis {
+namespace amanuensis {
 
 enum class JsonValueType { Null, Boolean, Integer, Double, String, Array, Object };
 
@@ -21,4 +21,4 @@ struct JsonValue {
   DataType data;
 };
 
-} // namespace Amanuensis
+} // namespace amanuensis

@@ -6,7 +6,7 @@
 #include <cstdlib>
 #include <cstdint>
 
-namespace Amanuensis {
+namespace amanuensis {
 
 Parser::Parser(std::string_view input)
     : input(input)
@@ -529,4 +529,4 @@ JsonParseResult Parser::ParseJsonValue()
     return this->MakeError(std::string("Unexpected character '") + current + "'");
   }
 }
-} // namespace Amanuensis
+} // namespace amanuensis

@@ -8,7 +8,7 @@
 #include <vector>
 #include "amanuensis/errors.hpp"
 
-namespace Amanuensis {
+namespace amanuensis {
 
 // The special members are defaulted out of line so they aren't constexpr. An
 // implicit destructor would make Clang instantiate the constexpr ~vector as soon
@@ -82,4 +82,4 @@ template <typename TValue>
 OrderedMap<TValue>& OrderedMap<TValue>::operator=(OrderedMap&&) noexcept = default;
 template <typename TValue> OrderedMap<TValue>::~OrderedMap() = default;
 
-} // namespace Amanuensis
+} // namespace amanuensis

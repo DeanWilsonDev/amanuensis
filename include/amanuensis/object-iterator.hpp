@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-namespace Amanuensis {
+namespace amanuensis {
 
 class ObjectIterator {
 public:
@@ -38,4 +38,4 @@ private:
   UnderlyingIterator iterator_;
 };
 
-} // namespace Amanuensis
+} // namespace amanuensis

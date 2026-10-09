@@ -9,9 +9,9 @@
 #include <optional>
 #include <string>
 
-namespace Amanuensis {
+namespace amanuensis {
 
-namespace Detail {
+namespace detail {
 
 // Detect T::Serialise(Archive&) — intrusive member (Mechanism 2)
 // We test with a dummy archive type.
@@ -36,7 +36,7 @@ struct HasSerialiseFree<
     std::void_t<
         decltype(AmanuensisSerialiseFree(std::declval<T&>(), std::declval<ArchiveProbe&>()))>>
     : std::true_type {};
-} // namespace Detail
+} // namespace detail
 
 // -----------------------------------------------------------------------
 // Core ToJson / FromJson — resolution order:
@@ -51,13 +51,13 @@ template <typename T> JsonValue ToJson(const T& value)
   if constexpr (HasJsonTraits<T>::value) {
     return JsonTraits<T>::ToJson(value);
   }
-  else if constexpr (Detail::HasSerialiseMember<T>::value) {
+  else if constexpr (detail::HasSerialiseMember<T>::value) {
     WriteArchive archive;
     // const_cast is safe: WriteArchive::Field only reads from fieldJsonValue
     const_cast<T&>(value).Serialise(archive);
     return archive.GetJsonValue();
   }
-  else if constexpr (Detail::HasSerialiseFree<T>::value) {
+  else if constexpr (detail::HasSerialiseFree<T>::value) {
     WriteArchive archive;
     AmanuensisSerialiseFree(const_cast<T&>(value), archive);
     return archive.GetJsonValue();
@@ -77,13 +77,13 @@ template <typename T> T FromJson(const JsonValue& value)
   if constexpr (HasJsonTraits<T>::value) {
     return JsonTraits<T>::FromJson(value);
   }
-  else if constexpr (Detail::HasSerialiseMember<T>::value) {
+  else if constexpr (detail::HasSerialiseMember<T>::value) {
     T result{};
     ReadArchive archive(value);
     result.Serialise(archive);
     return result;
   }
-  else if constexpr (Detail::HasSerialiseFree<T>::value) {
+  else if constexpr (detail::HasSerialiseFree<T>::value) {
     T result{};
     ReadArchive archive(value);
     AmanuensisSerialiseFree(result, archive);
@@ -127,7 +127,7 @@ template <typename T> FromJsonResult<T> TryFromJson(const JsonValue& jsonJsonVal
 template <typename FieldType> void ReadArchive::Field(const char* jsonKey, FieldType& fieldJsonValue)
 {
   // std::optional fields: missing or null key → leave empty
-  if constexpr (Detail::IsOptional<FieldType>::value) {
+  if constexpr (detail::IsOptional<FieldType>::value) {
     const JsonValue* found = Json::Find(source_, jsonKey);
     if (found == nullptr || Json::IsNull(*found)) {
       fieldJsonValue = std::nullopt;
@@ -154,4 +154,4 @@ void WriteArchive::Field(const char* jsonKey, const FieldType& fieldValue)
   Json::Insert(object_, std::string(jsonKey), ToJson<FieldType>(fieldValue));
 }
 
-} // namespace Amanuensis
+} // namespace amanuensis

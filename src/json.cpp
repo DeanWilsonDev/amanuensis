@@ -6,7 +6,7 @@
 
 #include <variant>
 
-namespace Amanuensis {
+namespace amanuensis {
 
 static constexpr std::size_t kNullIndex = 0;
 static constexpr std::size_t kBoolIndex = 1;
@@ -250,5 +250,5 @@ JsonValue Json::MakeObject()
   return JsonValue{OrderedMap<JsonValue>{}};
 }
 
-} // namespace Amanuensis
+} // namespace amanuensis
   //

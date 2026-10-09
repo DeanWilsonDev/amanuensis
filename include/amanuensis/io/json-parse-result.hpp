@@ -3,11 +3,11 @@
 #include <amanuensis/json-value.hpp>
 #include <amanuensis/io/json-parse-error.hpp>
 
-namespace Amanuensis {
+namespace amanuensis {
 struct JsonParseResult {
   bool succeeded;
   JsonValue value;
   JsonParseError error;
 };
 
-} // namespace Amanuensis
+} // namespace amanuensis

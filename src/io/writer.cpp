@@ -3,7 +3,7 @@
 
 #include <fstream>
 
-namespace Amanuensis {
+namespace amanuensis {
 
 std::string Writer::WriteToString(const JsonValue& value, const WriterOptions& options)
 {
@@ -30,4 +30,4 @@ bool Writer::WriteToFile(
   return outputFile.good();
 }
 
-} // namespace Amanuensis
+} // namespace amanuensis

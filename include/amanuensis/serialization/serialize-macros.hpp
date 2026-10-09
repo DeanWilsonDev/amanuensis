@@ -1,6 +1,7 @@
 #pragma once
+#include "amanuensis/compat.hpp"
 
-namespace Amanuensis {
+namespace amanuensis {
 
 // -----------------------------------------------------------------------
 // AMANUENSIS_SERIALISABLE macro — Mechanism 1 (the default path)
@@ -135,4 +136,4 @@ namespace Amanuensis {
   ar.Field(#a, instance.a);                                                                        \
   AMANUENSIS_DETAIL_EXPAND(FE_31(ar, __VA_ARGS__))
 
-} // namespace Amanuensis
+} // namespace amanuensis
