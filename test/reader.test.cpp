@@ -1,5 +1,5 @@
 #include "cimmerian/test.hpp"
-#include <amanuensis/io/json-parse-result.hpp>
+#include <amanuensis/io/parse-result.hpp>
 #include <amanuensis/io/reader.hpp>
 #include <amanuensis/io/writer.hpp>
 #include <amanuensis/json.hpp>
@@ -278,8 +278,8 @@ DESCRIBE("Reader", {
 
   DESCRIBE("File I/O", {
     IT("reads and parses a JSON file", {
-      amanuensis::JsonValue object_value = amanuensis::Json::MakeObject();
-      amanuensis::Json::Insert(object_value, "fileTest", amanuensis::JsonValue{ true });
+      amanuensis::Value object_value = amanuensis::Json::MakeObject();
+      amanuensis::Json::Insert(object_value, "fileTest", amanuensis::Value{ true });
       bool write_succeeded =
           amanuensis::Writer::WriteToFile(object_value, "/tmp/amanuensis_reader_test.json");
       REQUIRE_TRUE(write_succeeded);

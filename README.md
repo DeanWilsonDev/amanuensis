@@ -90,7 +90,7 @@ cmake -B build -Damanuensis_BUILD_TESTS=OFF
 
 ## API
 
-All public symbols live in the `amanuensis` namespace. Until consumers have moved over, `<amanuensis/compat.hpp>` (pulled in by every public header) keeps the old `Amanuensis::` spelling working as a namespace alias; define `AMANUENSIS_NO_COMPAT` to turn it off.
+All public symbols live in the `amanuensis` namespace. Until consumers have moved over, `<amanuensis/compat.hpp>` (pulled in by every public header) keeps the old `Amanuensis::` spelling working as a namespace alias, and keeps the old `JsonValue`, `JsonValueType`, `JsonParseResult` and `JsonParseError` names working as aliases of `Value`, `ValueType`, `ParseResult` and `ParseError`. The old header paths (`json-value.hpp`, `io/json-parse-result.hpp` and `io/json-parse-error.hpp`) forward to the new ones. Define `AMANUENSIS_NO_COMPAT` to turn all of this off.
 
 ### Reading
 

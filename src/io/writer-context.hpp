@@ -1,7 +1,7 @@
 #pragma once
 
 #include <amanuensis/io/writer-options.hpp>
-#include <amanuensis/json-value.hpp>
+#include <amanuensis/value.hpp>
 #include <string>
 
 namespace amanuensis {
@@ -13,15 +13,15 @@ public:
   void WriteEscapedString(std::string& output, const std::string& text);
 
   void
-  WriteArray(std::string& output, const JsonValue& arrayJsonValue, int depth, const WriterOptions& options);
+  WriteArray(std::string& output, const Value& arrayValue, int depth, const WriterOptions& options);
 
   void WriteObject(
       std::string& output,
-      const JsonValue& objectJsonValue,
+      const Value& objectValue,
       int depth,
       const WriterOptions& options
   );
 
-  void WriteJsonValue(std::string& output, const JsonValue& value, int depth, const WriterOptions& options);
+  void WriteValue(std::string& output, const Value& value, int depth, const WriterOptions& options);
 };
 } // namespace amanuensis

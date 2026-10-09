@@ -5,7 +5,7 @@
 #include <variant>
 #include <vector>
 #include "amanuensis/errors.hpp"
-#include "amanuensis/json-value.hpp"
+#include "amanuensis/value.hpp"
 #include "amanuensis/ordered-map.hpp"
 
 namespace amanuensis {
@@ -19,23 +19,23 @@ struct ValueTraits {
   using ValueArray = TValueArray;
   using ValueObject = TValueObject;
 
-  static JsonValueType GetType(const TValue& value)
+  static ValueType GetType(const TValue& value)
   {
     switch (value.data.index()) {
     case 0:
-      return JsonValueType::Null;
+      return ValueType::Null;
     case 1:
-      return JsonValueType::Boolean;
+      return ValueType::Boolean;
     case 2:
-      return JsonValueType::Integer;
+      return ValueType::Integer;
     case 3:
-      return JsonValueType::Double;
+      return ValueType::Double;
     case 4:
-      return JsonValueType::String;
+      return ValueType::String;
     case 5:
-      return JsonValueType::Array;
+      return ValueType::Array;
     case 6:
-      return JsonValueType::Object;
+      return ValueType::Object;
     default:
       throw TypeMismatchError("Unsupported value type");
     }

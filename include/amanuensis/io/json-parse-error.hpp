@@ -1,13 +1,8 @@
 #pragma once
-#include "amanuensis/compat.hpp"
 
-#include <string>
+// Old path, kept until the consumer sweep (see compat.hpp).
+#ifdef AMANUENSIS_NO_COMPAT
+#error "amanuensis/io/json-parse-error.hpp is now amanuensis/io/parse-error.hpp"
+#endif
 
-namespace amanuensis {
-
-struct JsonParseError {
-  std::string message;
-  int line;
-  int column;
-};
-} // namespace amanuensis
+#include "amanuensis/io/parse-error.hpp"

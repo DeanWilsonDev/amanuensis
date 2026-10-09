@@ -12,7 +12,7 @@ namespace amanuensis {
 
 // The special members are defaulted out of line so they aren't constexpr. An
 // implicit destructor would make Clang instantiate the constexpr ~vector as soon
-// as libstdc++ 13's std::pair<std::string, JsonValue> asks whether JsonValue is
+// as libstdc++ 13's std::pair<std::string, Value> asks whether Value is
 // default-constructible, while that pair is still incomplete.
 template <typename TValue> class OrderedMap {
 public:

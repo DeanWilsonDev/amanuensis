@@ -1,7 +1,7 @@
 #include "cimmerian/test.hpp"
-#include <amanuensis/json-value.hpp>
+#include <amanuensis/value.hpp>
 #include <amanuensis/json.hpp>
-#include <amanuensis/io/json-parse-result.hpp>
+#include <amanuensis/io/parse-result.hpp>
 #include <amanuensis/io/writer.hpp>
 #include <amanuensis/io/reader.hpp>
 
@@ -11,7 +11,7 @@
 DESCRIBE("Writer", {
   DESCRIBE("Null output", {
     IT("writes null", {
-      amanuensis::JsonValue null_value{std::monostate()};
+      amanuensis::Value null_value{std::monostate()};
       amanuensis::WriterOptions minified_options;
       minified_options.pretty = false;
       minified_options.trailingNewline = false;
@@ -26,7 +26,7 @@ DESCRIBE("Writer", {
       minified_options.pretty = false;
       minified_options.trailingNewline = false;
       std::string output =
-          amanuensis::Writer::WriteToString(amanuensis::JsonValue{true}, minified_options);
+          amanuensis::Writer::WriteToString(amanuensis::Value{true}, minified_options);
       ASSERT_EQUAL(output, std::string("true"));
     });
 
@@ -35,7 +35,7 @@ DESCRIBE("Writer", {
       minified_options.pretty = false;
       minified_options.trailingNewline = false;
       std::string output =
-          amanuensis::Writer::WriteToString(amanuensis::JsonValue{false}, minified_options);
+          amanuensis::Writer::WriteToString(amanuensis::Value{false}, minified_options);
       ASSERT_EQUAL(output, std::string("false"));
     });
   });
@@ -46,7 +46,7 @@ DESCRIBE("Writer", {
       minified_options.pretty = false;
       minified_options.trailingNewline = false;
       std::string output =
-          amanuensis::Writer::WriteToString(amanuensis::JsonValue{42LL}, minified_options);
+          amanuensis::Writer::WriteToString(amanuensis::Value{42LL}, minified_options);
       ASSERT_EQUAL(output, std::string("42"));
     });
 
@@ -55,7 +55,7 @@ DESCRIBE("Writer", {
       minified_options.pretty = false;
       minified_options.trailingNewline = false;
       std::string output =
-          amanuensis::Writer::WriteToString(amanuensis::JsonValue{-99LL}, minified_options);
+          amanuensis::Writer::WriteToString(amanuensis::Value{-99LL}, minified_options);
       ASSERT_EQUAL(output, std::string("-99"));
     });
 
@@ -64,7 +64,7 @@ DESCRIBE("Writer", {
       minified_options.pretty = false;
       minified_options.trailingNewline = false;
       std::string output =
-          amanuensis::Writer::WriteToString(amanuensis::JsonValue{0LL}, minified_options);
+          amanuensis::Writer::WriteToString(amanuensis::Value{0LL}, minified_options);
       ASSERT_EQUAL(output, std::string("0"));
     });
   });
@@ -75,7 +75,7 @@ DESCRIBE("Writer", {
       minified_options.pretty = false;
       minified_options.trailingNewline = false;
       std::string output =
-          amanuensis::Writer::WriteToString(amanuensis::JsonValue{3.14}, minified_options);
+          amanuensis::Writer::WriteToString(amanuensis::Value{3.14}, minified_options);
       ASSERT_TRUE(output.find('.') != std::string::npos || output.find('e') != std::string::npos);
     });
 
@@ -84,9 +84,8 @@ DESCRIBE("Writer", {
       amanuensis::WriterOptions minified_options;
       minified_options.pretty = false;
       minified_options.trailingNewline = false;
-      std::string text = amanuensis::Writer::WriteToString(
-          amanuensis::JsonValue{original_value}, minified_options
-      );
+      std::string text =
+          amanuensis::Writer::WriteToString(amanuensis::Value{original_value}, minified_options);
 
       auto parse_result = amanuensis::Reader::ParseString(text);
       ASSERT_TRUE(parse_result.succeeded);
@@ -99,7 +98,7 @@ DESCRIBE("Writer", {
       minified_options.pretty = false;
       minified_options.trailingNewline = false;
       std::string output =
-          amanuensis::Writer::WriteToString(amanuensis::JsonValue{1.0}, minified_options);
+          amanuensis::Writer::WriteToString(amanuensis::Value{1.0}, minified_options);
       ASSERT_TRUE(output.find('.') != std::string::npos || output.find('e') != std::string::npos);
     });
   });
@@ -110,7 +109,7 @@ DESCRIBE("Writer", {
       minified_options.pretty = false;
       minified_options.trailingNewline = false;
       std::string output = amanuensis::Writer::WriteToString(
-          amanuensis::JsonValue{std::string("hello")}, minified_options
+          amanuensis::Value{std::string("hello")}, minified_options
       );
       ASSERT_EQUAL(output, std::string("\"hello\""));
     });
@@ -120,7 +119,7 @@ DESCRIBE("Writer", {
       minified_options.pretty = false;
       minified_options.trailingNewline = false;
       std::string output = amanuensis::Writer::WriteToString(
-          amanuensis::JsonValue{std::string("a\nb\\c\"d")}, minified_options
+          amanuensis::Value{std::string("a\nb\\c\"d")}, minified_options
       );
       ASSERT_EQUAL(output, std::string("\"a\\nb\\\\c\\\"d\""));
     });
@@ -131,16 +130,16 @@ DESCRIBE("Writer", {
       minified_options.trailingNewline = false;
       std::string input(1, '\x01');
       std::string output =
-          amanuensis::Writer::WriteToString(amanuensis::JsonValue{input}, minified_options);
+          amanuensis::Writer::WriteToString(amanuensis::Value{input}, minified_options);
       ASSERT_EQUAL(output, std::string("\"\\u0001\""));
     });
   });
 
   DESCRIBE("Pretty vs minified", {
     IT("pretty-prints an object with newlines and indentation", {
-      amanuensis::JsonValue object_value = amanuensis::Json::MakeObject();
-      amanuensis::Json::Insert(object_value, "name", amanuensis::JsonValue{std::string("Alice")});
-      amanuensis::Json::Insert(object_value, "age", amanuensis::JsonValue{30LL});
+      amanuensis::Value object_value = amanuensis::Json::MakeObject();
+      amanuensis::Json::Insert(object_value, "name", amanuensis::Value{std::string("Alice")});
+      amanuensis::Json::Insert(object_value, "age", amanuensis::Value{30LL});
 
       std::string pretty_output = amanuensis::Writer::WriteToString(object_value);
       ASSERT_TRUE(pretty_output.find('\n') != std::string::npos);
@@ -149,8 +148,8 @@ DESCRIBE("Writer", {
     });
 
     IT("minifies an object without whitespace", {
-      amanuensis::JsonValue object_value = amanuensis::Json::MakeObject();
-      amanuensis::Json::Insert(object_value, "a", amanuensis::JsonValue{1LL});
+      amanuensis::Value object_value = amanuensis::Json::MakeObject();
+      amanuensis::Json::Insert(object_value, "a", amanuensis::Value{1LL});
 
       amanuensis::WriterOptions minified_options;
       minified_options.pretty = false;
@@ -161,7 +160,7 @@ DESCRIBE("Writer", {
     });
 
     IT("appends trailing newline by default", {
-      std::string output = amanuensis::Writer::WriteToString(amanuensis::JsonValue{42LL});
+      std::string output = amanuensis::Writer::WriteToString(amanuensis::Value{42LL});
       ASSERT_TRUE(!output.empty());
       ASSERT_EQUAL(output.back(), '\n');
     });
@@ -170,7 +169,7 @@ DESCRIBE("Writer", {
       amanuensis::WriterOptions no_newline_options;
       no_newline_options.trailingNewline = false;
       std::string output =
-          amanuensis::Writer::WriteToString(amanuensis::JsonValue{42LL}, no_newline_options);
+          amanuensis::Writer::WriteToString(amanuensis::Value{42LL}, no_newline_options);
       ASSERT_TRUE(output.back() != '\n');
     });
   });
@@ -197,15 +196,15 @@ DESCRIBE("Writer", {
 
   DESCRIBE("File output", {
     IT("writes to a file and returns true on success", {
-      amanuensis::JsonValue object_value = amanuensis::Json::MakeObject();
-      amanuensis::Json::Insert(object_value, "test", amanuensis::JsonValue{true});
+      amanuensis::Value object_value = amanuensis::Json::MakeObject();
+      amanuensis::Json::Insert(object_value, "test", amanuensis::Value{true});
       bool result =
           amanuensis::Writer::WriteToFile(object_value, "/tmp/amanuensis_writer_test.json");
       ASSERT_TRUE(result);
     });
 
     IT("returns false for an invalid file path", {
-      amanuensis::JsonValue object_value = amanuensis::Json::MakeObject();
+      amanuensis::Value object_value = amanuensis::Json::MakeObject();
       bool result =
           amanuensis::Writer::WriteToFile(object_value, "/nonexistent_directory/file.json");
       ASSERT_FALSE(result);

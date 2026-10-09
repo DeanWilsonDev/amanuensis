@@ -1,5 +1,7 @@
 #include <cimmerian/test.hpp>
 #include <amanuensis/json-value.hpp>
+#include <amanuensis/io/json-parse-result.hpp>
+#include <amanuensis/io/json-parse-error.hpp>
 #include <amanuensis/json.hpp>
 #include <amanuensis/io/writer.hpp>
 
@@ -7,8 +9,12 @@
 #include <type_traits>
 
 static_assert(std::is_same_v<Amanuensis::JsonValue, amanuensis::JsonValue>);
+static_assert(std::is_same_v<amanuensis::JsonValue, amanuensis::Value>);
+static_assert(std::is_same_v<amanuensis::JsonValueType, amanuensis::ValueType>);
+static_assert(std::is_same_v<amanuensis::JsonParseResult, amanuensis::ParseResult>);
+static_assert(std::is_same_v<amanuensis::JsonParseError, amanuensis::ParseError>);
 
-DESCRIBE("Compatibility namespace", {
+DESCRIBE("Compatibility names", {
   IT("lets qualified names use the old Amanuensis spelling", {
     Amanuensis::JsonValue object_value = Amanuensis::Json::MakeObject();
     Amanuensis::Json::Insert(object_value, "name", Amanuensis::JsonValue{ std::string("Alice") });

@@ -23,9 +23,9 @@ struct AdapterValue {
 namespace amanuensis {
 
 template <> struct ValueTraits<AdapterValue> {
-  static JsonValueType GetType(const AdapterValue& value)
+  static ValueType GetType(const AdapterValue& value)
   {
-    return static_cast<JsonValueType>(value.data.index());
+    return static_cast<ValueType>(value.data.index());
   }
 
   static bool AsBoolean(const AdapterValue& value) { return std::get<bool>(value.data); }
@@ -65,9 +65,9 @@ template <> struct ValueTraits<AdapterValue> {
 
 } // namespace amanuensis
 
-using ToAdapterConverter = amanuensis::
-    Converter<amanuensis::JsonValue, AdapterValue, amanuensis::ValueTraits<AdapterValue>>;
-using ToJsonConverter = amanuensis::Converter<AdapterValue, amanuensis::JsonValue>;
+using ToAdapterConverter =
+    amanuensis::Converter<amanuensis::Value, AdapterValue, amanuensis::ValueTraits<AdapterValue>>;
+using ToJsonConverter = amanuensis::Converter<AdapterValue, amanuensis::Value>;
 
 DESCRIBE("Value conversion", {
   IT("converts recursively to and from an adapter-owned representation", {

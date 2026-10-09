@@ -1,12 +1,12 @@
 #pragma once
 
-#include <amanuensis/json-value.hpp>
+#include <amanuensis/value.hpp>
 #include <amanuensis/json.hpp>
 
 namespace amanuensis {
 
 // -----------------------------------------------------------------------
-// WriteArchive — handed to Serialise functions when converting T → JsonValue
+// WriteArchive — handed to Serialise functions when converting T → Value
 // -----------------------------------------------------------------------
 
 class WriteArchive {
@@ -16,12 +16,12 @@ public:
   {
   }
 
-  template <typename FieldType> void Field(const char* jsonKey, const FieldType& fieldJsonValue);
+  template <typename FieldType> void Field(const char* jsonKey, const FieldType& fieldValue);
 
-  JsonValue& GetJsonValue() { return object_; }
+  Value& GetValue() { return object_; }
 
 private:
-  JsonValue object_;
+  Value object_;
 };
 
 } // namespace amanuensis

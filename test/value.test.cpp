@@ -1,14 +1,14 @@
 #include <cimmerian/test.hpp>
-#include <amanuensis/json-value.hpp>
+#include <amanuensis/value.hpp>
 #include <amanuensis/json.hpp>
 #include <amanuensis/io/reader.hpp>
 #include <amanuensis/io/writer.hpp>
-#include <amanuensis/io/json-parse-result.hpp>
+#include <amanuensis/io/parse-result.hpp>
 
 #include <string>
 #include <vector>
 
-static std::vector<std::string> CollectKeys(const amanuensis::JsonValue& object_value)
+static std::vector<std::string> CollectKeys(const amanuensis::Value& object_value)
 {
   std::vector<std::string> keys;
   for (auto iterator = amanuensis::Json::BeginObject(object_value);
@@ -22,10 +22,10 @@ static std::vector<std::string> CollectKeys(const amanuensis::JsonValue& object_
 DESCRIBE("Insertion order", {
   DESCRIBE("Programmatic construction", {
     IT("preserves insertion order for three keys", {
-      amanuensis::JsonValue object_value = amanuensis::Json::MakeObject();
-      amanuensis::Json::Insert(object_value, "zebra", amanuensis::JsonValue{ 1LL });
-      amanuensis::Json::Insert(object_value, "apple", amanuensis::JsonValue{ 2LL });
-      amanuensis::Json::Insert(object_value, "mango", amanuensis::JsonValue{ 3LL });
+      amanuensis::Value object_value = amanuensis::Json::MakeObject();
+      amanuensis::Json::Insert(object_value, "zebra", amanuensis::Value{ 1LL });
+      amanuensis::Json::Insert(object_value, "apple", amanuensis::Value{ 2LL });
+      amanuensis::Json::Insert(object_value, "mango", amanuensis::Value{ 3LL });
 
       auto keys = CollectKeys(object_value);
       ASSERT_EQUAL(keys.size(), 3u);
@@ -35,10 +35,10 @@ DESCRIBE("Insertion order", {
     });
 
     IT("overwrites value but preserves position on duplicate key", {
-      amanuensis::JsonValue object_value = amanuensis::Json::MakeObject();
-      amanuensis::Json::Insert(object_value, "first",  amanuensis::JsonValue{ 1LL });
-      amanuensis::Json::Insert(object_value, "second", amanuensis::JsonValue{ 2LL });
-      amanuensis::Json::Insert(object_value, "first",  amanuensis::JsonValue{ 99LL });
+      amanuensis::Value object_value = amanuensis::Json::MakeObject();
+      amanuensis::Json::Insert(object_value, "first",  amanuensis::Value{ 1LL });
+      amanuensis::Json::Insert(object_value, "second", amanuensis::Value{ 2LL });
+      amanuensis::Json::Insert(object_value, "first",  amanuensis::Value{ 99LL });
 
       auto keys = CollectKeys(object_value);
       ASSERT_EQUAL(keys.size(), 2u);

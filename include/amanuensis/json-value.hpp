@@ -1,24 +1,8 @@
 #pragma once
 
-#include <cstddef>
-#include <vector>
-#include <variant>
-#include "amanuensis/ordered-map.hpp"
+// Old path, kept until the consumer sweep (see compat.hpp).
+#ifdef AMANUENSIS_NO_COMPAT
+#error "amanuensis/json-value.hpp is now amanuensis/value.hpp"
+#endif
 
-namespace amanuensis {
-
-enum class JsonValueType { Null, Boolean, Integer, Double, String, Array, Object };
-
-struct JsonValue {
-  using DataType = std::variant<
-      std::monostate,
-      bool,
-      long long,
-      double,
-      std::string,
-      std::vector<JsonValue>,
-      OrderedMap<JsonValue>>;
-  DataType data;
-};
-
-} // namespace amanuensis
+#include "amanuensis/value.hpp"

@@ -16,24 +16,24 @@ public:
   static TargetValue ConvertValue(const SourceValue& source)
   {
     switch (SourceTraits::GetType(source)) {
-    case JsonValueType::Null:
+    case ValueType::Null:
       return TargetTraits::MakeNull();
-    case JsonValueType::Boolean:
+    case ValueType::Boolean:
       return TargetTraits::MakeBoolean(SourceTraits::AsBoolean(source));
-    case JsonValueType::Integer:
+    case ValueType::Integer:
       return TargetTraits::MakeInteger(SourceTraits::AsInteger(source));
-    case JsonValueType::Double:
+    case ValueType::Double:
       return TargetTraits::MakeDouble(SourceTraits::AsDouble(source));
-    case JsonValueType::String:
+    case ValueType::String:
       return TargetTraits::MakeString(SourceTraits::AsString(source));
-    case JsonValueType::Array: {
+    case ValueType::Array: {
       auto target = TargetTraits::MakeArray();
       for (const auto& element : SourceTraits::AsArray(source)) {
         TargetTraits::PushBack(target, ConvertValue(element));
       }
       return target;
     }
-    case JsonValueType::Object: {
+    case ValueType::Object: {
       auto target = TargetTraits::MakeObject();
       for (const auto& [key, element] : SourceTraits::AsObject(source)) {
         TargetTraits::Insert(target, key, ConvertValue(element));

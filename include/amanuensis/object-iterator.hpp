@@ -1,6 +1,6 @@
 #pragma once
 
-#include "amanuensis/json-value.hpp"
+#include "amanuensis/value.hpp"
 #include <string>
 #include <vector>
 
@@ -8,7 +8,7 @@ namespace amanuensis {
 
 class ObjectIterator {
 public:
-  using UnderlyingIterator = std::vector<std::pair<std::string, JsonValue>>::const_iterator;
+  using UnderlyingIterator = std::vector<std::pair<std::string, Value>>::const_iterator;
 
   ObjectIterator() = default;
   explicit ObjectIterator(UnderlyingIterator iterator)
@@ -16,8 +16,8 @@ public:
   {
   }
 
-  const std::pair<std::string, JsonValue>& operator*() const { return *iterator_; }
-  const std::pair<std::string, JsonValue>* operator->() const { return &(*iterator_); }
+  const std::pair<std::string, Value>& operator*() const { return *iterator_; }
+  const std::pair<std::string, Value>* operator->() const { return &(*iterator_); }
 
   ObjectIterator& operator++()
   {

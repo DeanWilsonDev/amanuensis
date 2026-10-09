@@ -11,17 +11,17 @@ namespace amanuensis {
 // -----------------------------------------------------------------------
 
 template <typename ElementType>
-JsonValue JsonTraits<std::vector<ElementType>>::ToJson(const std::vector<ElementType>& elements)
+Value JsonTraits<std::vector<ElementType>>::ToJson(const std::vector<ElementType>& elements)
 {
-  JsonValue arrayJsonValue = Json::MakeArray();
+  Value arrayValue = Json::MakeArray();
   for (const auto& element : elements) {
-    Json::PushBack(arrayJsonValue, amanuensis::ToJson<ElementType>(element));
+    Json::PushBack(arrayValue, amanuensis::ToJson<ElementType>(element));
   }
-  return arrayJsonValue;
+  return arrayValue;
 }
 
 template <typename ElementType>
-std::vector<ElementType> JsonTraits<std::vector<ElementType>>::FromJson(const JsonValue& value)
+std::vector<ElementType> JsonTraits<std::vector<ElementType>>::FromJson(const Value& value)
 {
   const auto& rawArray = Json::AsArray(value);
   std::vector<ElementType> result;
@@ -33,18 +33,18 @@ std::vector<ElementType> JsonTraits<std::vector<ElementType>>::FromJson(const Js
 }
 
 template <typename WrappedType>
-JsonValue JsonTraits<std::optional<WrappedType>>::ToJson(
-    const std::optional<WrappedType>& optionalJsonValue
+Value JsonTraits<std::optional<WrappedType>>::ToJson(
+    const std::optional<WrappedType>& optionalValue
 )
 {
-  if (!optionalJsonValue.has_value()) {
-    return JsonValue(); // null
+  if (!optionalValue.has_value()) {
+    return Value(); // null
   }
-  return amanuensis::ToJson<WrappedType>(*optionalJsonValue);
+  return amanuensis::ToJson<WrappedType>(*optionalValue);
 }
 
 template <typename WrappedType>
-std::optional<WrappedType> JsonTraits<std::optional<WrappedType>>::FromJson(const JsonValue& value)
+std::optional<WrappedType> JsonTraits<std::optional<WrappedType>>::FromJson(const Value& value)
 {
   if (Json::IsNull(value)) {
     return std::nullopt;
@@ -53,20 +53,20 @@ std::optional<WrappedType> JsonTraits<std::optional<WrappedType>>::FromJson(cons
 }
 
 template <typename MappedType>
-JsonValue JsonTraits<std::map<std::string, MappedType>>::ToJson(
+Value JsonTraits<std::map<std::string, MappedType>>::ToJson(
     const std::map<std::string, MappedType>& entries
 )
 {
-  JsonValue objectJsonValue = Json::MakeObject();
-  for (const auto& [key, mappedJsonValue] : entries) {
-    Json::Insert(objectJsonValue, key, amanuensis::ToJson<MappedType>(mappedJsonValue));
+  Value objectValue = Json::MakeObject();
+  for (const auto& [key, mappedValue] : entries) {
+    Json::Insert(objectValue, key, amanuensis::ToJson<MappedType>(mappedValue));
   }
-  return objectJsonValue;
+  return objectValue;
 }
 
 template <typename MappedType>
 std::map<std::string, MappedType>
-JsonTraits<std::map<std::string, MappedType>>::FromJson(const JsonValue& value)
+JsonTraits<std::map<std::string, MappedType>>::FromJson(const Value& value)
 {
   std::map<std::string, MappedType> result;
   for (auto iterator = Json::BeginObject(value); iterator != Json::EndObject(value); ++iterator) {

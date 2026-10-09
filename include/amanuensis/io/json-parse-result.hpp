@@ -1,13 +1,8 @@
 #pragma once
 
-#include <amanuensis/json-value.hpp>
-#include <amanuensis/io/json-parse-error.hpp>
+// Old path, kept until the consumer sweep (see compat.hpp).
+#ifdef AMANUENSIS_NO_COMPAT
+#error "amanuensis/io/json-parse-result.hpp is now amanuensis/io/parse-result.hpp"
+#endif
 
-namespace amanuensis {
-struct JsonParseResult {
-  bool succeeded;
-  JsonValue value;
-  JsonParseError error;
-};
-
-} // namespace amanuensis
+#include "amanuensis/io/parse-result.hpp"
