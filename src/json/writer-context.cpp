@@ -1,6 +1,7 @@
 #include "writer-context.hpp"
 #include "amanuensis/json.hpp"
-#include <charconv>
+#include "core/number-format.hpp"
+#include "core/quoted-string.hpp"
 #include <cmath>
 
 namespace amanuensis::json {
@@ -12,50 +13,6 @@ void WriterContext::WriteIndent(std::string& output, int depth, const WriterOpti
   }
   int totalSpaces = depth * options.indentWidth;
   output.append(static_cast<std::size_t>(totalSpaces), options.indentChar);
-}
-
-void WriterContext::WriteEscapedString(std::string& output, const std::string& text)
-{
-  output.push_back('"');
-  for (char character : text) {
-    switch (character) {
-    case '"':
-      output.append("\\\"");
-      break;
-    case '\\':
-      output.append("\\\\");
-      break;
-    case '\b':
-      output.append("\\b");
-      break;
-    case '\f':
-      output.append("\\f");
-      break;
-    case '\n':
-      output.append("\\n");
-      break;
-    case '\r':
-      output.append("\\r");
-      break;
-    case '\t':
-      output.append("\\t");
-      break;
-    default:
-      if (static_cast<unsigned char>(character) < 0x20) {
-        // Control characters — emit as \u00XX
-        char hexBuffer[8];
-        std::snprintf(
-            hexBuffer, sizeof(hexBuffer), "\\u%04x", static_cast<unsigned char>(character)
-        );
-        output.append(hexBuffer);
-      }
-      else {
-        output.push_back(character);
-      }
-      break;
-    }
-  }
-  output.push_back('"');
 }
 
 void WriterContext::WriteArray(
@@ -114,7 +71,7 @@ void WriterContext::WriteObject(
   for (auto iterator = Json::BeginObject(objectValue); iterator != Json::EndObject(objectValue);
        ++iterator) {
     WriteIndent(output, depth + 1, options);
-    WriteEscapedString(output, iterator->first);
+    core::AppendQuotedString(output, iterator->first);
     output.push_back(':');
     if (options.pretty) {
       output.push_back(' ');
@@ -149,45 +106,24 @@ void WriterContext::WriteValue(
     output.append(Json::AsBoolean(value) ? "true" : "false");
     break;
 
-  case core::ValueType::Integer: {
-    // std::to_string is fine for integers
-    output.append(std::to_string(Json::AsInteger(value)));
+  case core::ValueType::Integer:
+    core::AppendInteger(output, Json::AsInteger(value));
     break;
-  }
 
   case core::ValueType::Double: {
-    // Use enough precision for lossless round-trip.
-    // 17 significant digits is sufficient for IEEE 754 double.
     double doubleValue = Json::AsDouble(value);
     if (std::isnan(doubleValue) || std::isinf(doubleValue)) {
       // JSON has no NaN/Inf — emit null as a safe fallback.
       output.append("null");
     }
     else {
-      char formatBuffer[64];
-      auto [endPointer, errorCode] =
-          std::to_chars(formatBuffer, formatBuffer + sizeof(formatBuffer), doubleValue);
-      std::string_view formatted(formatBuffer, static_cast<std::size_t>(endPointer - formatBuffer));
-
-      // Ensure there's a decimal point so the output parses back as a double,
-      // not as an integer.
-      bool hasDecimalPoint = false;
-      for (char c : formatted) {
-        if (c == '.' || c == 'e' || c == 'E') {
-          hasDecimalPoint = true;
-          break;
-        }
-      }
-      output.append(formatted);
-      if (!hasDecimalPoint) {
-        output.append(".0");
-      }
+      core::AppendDouble(output, doubleValue);
     }
     break;
   }
 
   case core::ValueType::String:
-    WriteEscapedString(output, Json::AsString(value));
+    core::AppendQuotedString(output, Json::AsString(value));
     break;
 
   case core::ValueType::Array:

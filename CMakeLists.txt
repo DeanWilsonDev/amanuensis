@@ -32,6 +32,8 @@ endif()
 add_library(
   amanuensis STATIC
   src/core/converter.cpp
+  src/core/number-format.cpp
+  src/core/quoted-string.cpp
   src/core/ordered-map.cpp
   src/core/value-traits.cpp
   src/json.cpp
@@ -44,6 +46,9 @@ add_library(
 target_include_directories(
   amanuensis PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
                     $<INSTALL_INTERFACE:include>)
+
+# The formats share internal helpers in src/core/, included as "core/...".
+target_include_directories(amanuensis PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
 target_compile_features(amanuensis PUBLIC cxx_std_26)
 set_target_properties(amanuensis PROPERTIES C_EXTENSIONS OFF)

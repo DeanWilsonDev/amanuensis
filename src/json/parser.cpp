@@ -1,22 +1,17 @@
 #include "parser.hpp"
 #include "amanuensis/json.hpp"
+#include "core/quoted-string.hpp"
 
 #include <charconv>
 #include <string_view>
-#include <cstdlib>
-#include <cstdint>
+#include <cctype>
 
 namespace amanuensis::json {
 
 Parser::Parser(std::string_view input)
-    : input(input)
-    , cursor(0)
-    , line(1)
-    , column(1)
+    : cursor(input)
 {
 }
-
-Parser::~Parser() = default;
 
 core::ParseResult Parser::Parse()
 {
@@ -25,43 +20,11 @@ core::ParseResult Parser::Parse()
   if (!result.succeeded)
     return result;
   this->SkipWhitespace();
-  if (!this->IsAtEnd())
-    return this->MakeError(
-        std::string("Unexpected content after JSON value: '") + this->Peek() + "'"
+  if (!cursor.IsAtEnd())
+    return cursor.MakeError(
+        std::string("Unexpected content after JSON value: '") + cursor.Peek() + "'"
     );
   return result;
-}
-
-bool Parser::IsAtEnd() const
-{
-  return this->cursor >= input.size();
-}
-
-char Parser::Peek() const
-{
-  if (IsAtEnd()) {
-    return '\0';
-  }
-  return input[this->cursor];
-}
-
-char Parser::Advance()
-{
-  char current = input[this->cursor];
-  ++this->cursor;
-  if (current == '\n') {
-    ++line;
-    column = 1;
-  }
-  else {
-    ++column;
-  }
-  return current;
-}
-
-core::ParseResult Parser::MakeError(const std::string& message) const
-{
-  return core::ParseResult{false, core::Value(), core::ParseError{message, line, column}};
 }
 
 // -----------------------------------------------------------------------
@@ -70,10 +33,10 @@ core::ParseResult Parser::MakeError(const std::string& message) const
 
 void Parser::SkipWhitespace()
 {
-  while (!this->IsAtEnd()) {
-    char current = this->Peek();
+  while (!cursor.IsAtEnd()) {
+    char current = cursor.Peek();
     if (current == ' ' || current == '\t' || current == '\n' || current == '\r') {
-      this->Advance();
+      cursor.Advance();
     }
     else {
       break;
@@ -89,10 +52,10 @@ core::ParseResult Parser::ParseNull()
 {
   const char* expected = "null";
   for (int i = 0; i < 4; ++i) {
-    if (this->IsAtEnd() || this->Peek() != expected[i]) {
-      return this->MakeError("Invalid literal, expected 'null'");
+    if (cursor.IsAtEnd() || cursor.Peek() != expected[i]) {
+      return cursor.MakeError("Invalid literal, expected 'null'");
     }
-    this->Advance();
+    cursor.Advance();
   }
   return core::ParseResult{true, core::Value(), {}};
 }
@@ -101,10 +64,10 @@ core::ParseResult Parser::ParseTrue()
 {
   const char* expected = "true";
   for (int i = 0; i < 4; ++i) {
-    if (this->IsAtEnd() || this->Peek() != expected[i]) {
-      return this->MakeError("Invalid literal, expected 'true'");
+    if (cursor.IsAtEnd() || cursor.Peek() != expected[i]) {
+      return cursor.MakeError("Invalid literal, expected 'true'");
     }
-    this->Advance();
+    cursor.Advance();
   }
   return core::ParseResult{true, core::Value(true), {}};
 }
@@ -113,10 +76,10 @@ core::ParseResult Parser::ParseFalse()
 {
   const char* expected = "false";
   for (int i = 0; i < 5; ++i) {
-    if (this->IsAtEnd() || this->Peek() != expected[i]) {
-      return this->MakeError("Invalid literal, expected 'false'");
+    if (cursor.IsAtEnd() || cursor.Peek() != expected[i]) {
+      return cursor.MakeError("Invalid literal, expected 'false'");
     }
-    this->Advance();
+    cursor.Advance();
   }
   return core::ParseResult{true, core::Value(false), {}};
 }
@@ -131,63 +94,63 @@ core::ParseResult Parser::ParseFalse()
 
 core::ParseResult Parser::ParseNumber()
 {
-  std::size_t startPosition = this->cursor;
-  int startLine = this->line;
-  int startColumn = this->column;
+  std::size_t startPosition = cursor.Position();
+  int startLine = cursor.Line();
+  int startColumn = cursor.Column();
 
   bool isFloatingPoint = false;
 
   // Optional leading minus
-  if (this->Peek() == '-') {
-    this->Advance();
+  if (cursor.Peek() == '-') {
+    cursor.Advance();
   }
 
   // Integer part
-  if (this->IsAtEnd() || !std::isdigit(static_cast<unsigned char>(this->Peek()))) {
-    return this->MakeError("Expected digit after '-'");
+  if (cursor.IsAtEnd() || !std::isdigit(static_cast<unsigned char>(cursor.Peek()))) {
+    return cursor.MakeError("Expected digit after '-'");
   }
 
-  if (this->Peek() == '0') {
-    this->Advance();
+  if (cursor.Peek() == '0') {
+    cursor.Advance();
     // Leading zero must not be followed by another digit (RFC 8259)
-    if (!this->IsAtEnd() && std::isdigit(static_cast<unsigned char>(this->Peek()))) {
-      return this->MakeError("Leading zeros are not allowed in numbers");
+    if (!cursor.IsAtEnd() && std::isdigit(static_cast<unsigned char>(cursor.Peek()))) {
+      return cursor.MakeError("Leading zeros are not allowed in numbers");
     }
   }
   else {
-    while (!this->IsAtEnd() && std::isdigit(static_cast<unsigned char>(this->Peek()))) {
-      this->Advance();
+    while (!cursor.IsAtEnd() && std::isdigit(static_cast<unsigned char>(cursor.Peek()))) {
+      cursor.Advance();
     }
   }
 
   // Fractional part
-  if (!this->IsAtEnd() && this->Peek() == '.') {
+  if (!cursor.IsAtEnd() && cursor.Peek() == '.') {
     isFloatingPoint = true;
-    this->Advance();
-    if (this->IsAtEnd() || !std::isdigit(static_cast<unsigned char>(this->Peek()))) {
-      return this->MakeError("Expected digit after decimal point");
+    cursor.Advance();
+    if (cursor.IsAtEnd() || !std::isdigit(static_cast<unsigned char>(cursor.Peek()))) {
+      return cursor.MakeError("Expected digit after decimal point");
     }
-    while (!this->IsAtEnd() && std::isdigit(static_cast<unsigned char>(this->Peek()))) {
-      this->Advance();
+    while (!cursor.IsAtEnd() && std::isdigit(static_cast<unsigned char>(cursor.Peek()))) {
+      cursor.Advance();
     }
   }
 
   // Exponent part
-  if (!this->IsAtEnd() && (this->Peek() == 'e' || this->Peek() == 'E')) {
+  if (!cursor.IsAtEnd() && (cursor.Peek() == 'e' || cursor.Peek() == 'E')) {
     isFloatingPoint = true;
-    this->Advance();
-    if (!this->IsAtEnd() && (this->Peek() == '+' || this->Peek() == '-')) {
-      this->Advance();
+    cursor.Advance();
+    if (!cursor.IsAtEnd() && (cursor.Peek() == '+' || cursor.Peek() == '-')) {
+      cursor.Advance();
     }
-    if (this->IsAtEnd() || !std::isdigit(static_cast<unsigned char>(this->Peek()))) {
-      return this->MakeError("Expected digit in exponent");
+    if (cursor.IsAtEnd() || !std::isdigit(static_cast<unsigned char>(cursor.Peek()))) {
+      return cursor.MakeError("Expected digit in exponent");
     }
-    while (!this->IsAtEnd() && std::isdigit(static_cast<unsigned char>(this->Peek()))) {
-      this->Advance();
+    while (!cursor.IsAtEnd() && std::isdigit(static_cast<unsigned char>(cursor.Peek()))) {
+      cursor.Advance();
     }
   }
 
-  std::string_view numberText = this->input.substr(startPosition, this->cursor - startPosition);
+  std::string_view numberText = cursor.Slice(startPosition);
 
   if (isFloatingPoint) {
     // Parse as double
@@ -230,171 +193,23 @@ core::ParseResult Parser::ParseNumber()
 }
 
 // -----------------------------------------------------------------------
-// Strings — handles all RFC 8259 escape sequences including \uXXXX.
+// Strings — shared with every format, see core/quoted-string.hpp.
 // -----------------------------------------------------------------------
-
-int Parser::HexDigitValue(char character)
-{
-  if (character >= '0' && character <= '9')
-    return character - '0';
-  if (character >= 'a' && character <= 'f')
-    return 10 + (character - 'a');
-  if (character >= 'A' && character <= 'F')
-    return 10 + (character - 'A');
-  return -1;
-}
-
-bool Parser::ParseFourHexDigits(uint16_t& outCodeUnit)
-{
-  uint16_t codeUnit = 0;
-  for (int i = 0; i < 4; ++i) {
-    if (this->IsAtEnd()) {
-      return false;
-    }
-    int digitValue = HexDigitValue(this->Peek());
-    if (digitValue < 0) {
-      return false;
-    }
-    codeUnit = static_cast<uint16_t>((codeUnit << 4) | static_cast<uint16_t>(digitValue));
-    this->Advance();
-  }
-  outCodeUnit = codeUnit;
-  return true;
-}
-
-// Encode a Unicode code point as UTF-8 and append to the output string.
-static void EncodeUtf8(std::string& output, uint32_t codePoint)
-{
-  if (codePoint <= 0x7F) {
-    output.push_back(static_cast<char>(codePoint));
-  }
-  else if (codePoint <= 0x7FF) {
-    output.push_back(static_cast<char>(0xC0 | (codePoint >> 6)));
-    output.push_back(static_cast<char>(0x80 | (codePoint & 0x3F)));
-  }
-  else if (codePoint <= 0xFFFF) {
-    output.push_back(static_cast<char>(0xE0 | (codePoint >> 12)));
-    output.push_back(static_cast<char>(0x80 | ((codePoint >> 6) & 0x3F)));
-    output.push_back(static_cast<char>(0x80 | (codePoint & 0x3F)));
-  }
-  else if (codePoint <= 0x10FFFF) {
-    output.push_back(static_cast<char>(0xF0 | (codePoint >> 18)));
-    output.push_back(static_cast<char>(0x80 | ((codePoint >> 12) & 0x3F)));
-    output.push_back(static_cast<char>(0x80 | ((codePoint >> 6) & 0x3F)));
-    output.push_back(static_cast<char>(0x80 | (codePoint & 0x3F)));
-  }
-}
 
 core::ParseResult Parser::ParseString()
 {
-  if (this->IsAtEnd() || this->Peek() != '"') {
-    return this->MakeError("Expected '\"' at start of string");
-  }
-  this->Advance(); // consume opening quote
-
-  std::string result;
-  while (true) {
-    if (this->IsAtEnd()) {
-      return this->MakeError("Unterminated string literal");
-    }
-
-    char current = this->Peek();
-
-    if (current == '"') {
-      this->Advance(); // consume closing quote
-      return core::ParseResult{true, core::Value(std::move(result)), {}};
-    }
-
-    if (static_cast<unsigned char>(current) < 0x20) {
-      return this->MakeError("Unescaped control character in string");
-    }
-
-    if (current == '\\') {
-      this->Advance(); // consume backslash
-      if (this->IsAtEnd()) {
-        return this->MakeError("Unterminated escape sequence");
-      }
-      char escapeCharacter = this->Advance();
-      switch (escapeCharacter) {
-      case '"':
-        result.push_back('"');
-        break;
-      case '\\':
-        result.push_back('\\');
-        break;
-      case '/':
-        result.push_back('/');
-        break;
-      case 'b':
-        result.push_back('\b');
-        break;
-      case 'f':
-        result.push_back('\f');
-        break;
-      case 'n':
-        result.push_back('\n');
-        break;
-      case 'r':
-        result.push_back('\r');
-        break;
-      case 't':
-        result.push_back('\t');
-        break;
-      case 'u': {
-        uint16_t highCodeUnit = 0;
-        if (!ParseFourHexDigits(highCodeUnit)) {
-          return this->MakeError("Invalid \\u escape sequence");
-        }
-        // Check for surrogate pair
-        if (highCodeUnit >= 0xD800 && highCodeUnit <= 0xDBFF) {
-          // High surrogate — expect \uXXXX low surrogate
-          if (this->IsAtEnd() || this->Peek() != '\\') {
-            return this->MakeError("Expected low surrogate after high surrogate");
-          }
-          this->Advance();
-          if (this->IsAtEnd() || this->Peek() != 'u') {
-            return this->MakeError("Expected \\u for low surrogate");
-          }
-          this->Advance();
-          uint16_t lowCodeUnit = 0;
-          if (!ParseFourHexDigits(lowCodeUnit)) {
-            return this->MakeError("Invalid low surrogate \\u escape");
-          }
-          if (lowCodeUnit < 0xDC00 || lowCodeUnit > 0xDFFF) {
-            return this->MakeError("Invalid low surrogate value");
-          }
-          uint32_t fullCodePoint = 0x10000 +
-                                   ((static_cast<uint32_t>(highCodeUnit) - 0xD800) << 10) +
-                                   (static_cast<uint32_t>(lowCodeUnit) - 0xDC00);
-          EncodeUtf8(result, fullCodePoint);
-        }
-        else if (highCodeUnit >= 0xDC00 && highCodeUnit <= 0xDFFF) {
-          return this->MakeError("Unexpected low surrogate without preceding high surrogate");
-        }
-        else {
-          EncodeUtf8(result, highCodeUnit);
-        }
-        break;
-      }
-      default:
-        return this->MakeError(std::string("Invalid escape sequence '\\") + escapeCharacter + "'");
-      }
-    }
-    else {
-      result.push_back(this->Advance());
-    }
-  }
+  return core::ParseQuotedString(cursor);
 }
 
 core::ParseResult Parser::ParseArray()
 {
-  this->Advance(); // consume '['
+  cursor.Advance(); // consume '['
   SkipWhitespace();
 
   core::Value arrayValue = Json::MakeArray();
 
-  if (!this->IsAtEnd() && this->Peek() == ']') {
-    this->Advance();
+  if (!cursor.IsAtEnd() && cursor.Peek() == ']') {
+    cursor.Advance();
     return core::ParseResult{true, std::move(arrayValue), {}};
   }
 
@@ -409,47 +224,47 @@ core::ParseResult Parser::ParseArray()
 
     this->SkipWhitespace();
 
-    if (this->IsAtEnd()) {
-      return this->MakeError("Unterminated array");
+    if (cursor.IsAtEnd()) {
+      return cursor.MakeError("Unterminated array");
     }
 
-    if (this->Peek() == ']') {
-      this->Advance();
+    if (cursor.Peek() == ']') {
+      cursor.Advance();
       return core::ParseResult{true, std::move(arrayValue), {}};
     }
 
-    if (this->Peek() != ',') {
-      return this->MakeError(
-          std::string("Expected ',' or ']' in array, got '") + this->Peek() + "'"
+    if (cursor.Peek() != ',') {
+      return cursor.MakeError(
+          std::string("Expected ',' or ']' in array, got '") + cursor.Peek() + "'"
       );
     }
-    this->Advance(); // consume ','
+    cursor.Advance(); // consume ','
 
     // RFC 8259: no trailing commas
     this->SkipWhitespace();
-    if (!this->IsAtEnd() && this->Peek() == ']') {
-      return this->MakeError("Trailing comma in array");
+    if (!cursor.IsAtEnd() && cursor.Peek() == ']') {
+      return cursor.MakeError("Trailing comma in array");
     }
   }
 }
 
 core::ParseResult Parser::ParseObject()
 {
-  this->Advance(); // consume '{'
+  cursor.Advance(); // consume '{'
   this->SkipWhitespace();
 
   core::Value objectValue = Json::MakeObject();
 
-  if (!this->IsAtEnd() && this->Peek() == '}') {
-    this->Advance();
+  if (!cursor.IsAtEnd() && cursor.Peek() == '}') {
+    cursor.Advance();
     return core::ParseResult{true, std::move(objectValue), {}};
   }
 
   while (true) {
     this->SkipWhitespace();
 
-    if (this->IsAtEnd() || this->Peek() != '"') {
-      return this->MakeError("Expected string key in object");
+    if (cursor.IsAtEnd() || cursor.Peek() != '"') {
+      return cursor.MakeError("Expected string key in object");
     }
 
     auto keyResult = this->ParseString();
@@ -460,10 +275,10 @@ core::ParseResult Parser::ParseObject()
 
     this->SkipWhitespace();
 
-    if (this->IsAtEnd() || this->Peek() != ':') {
-      return this->MakeError("Expected ':' after object key");
+    if (cursor.IsAtEnd() || cursor.Peek() != ':') {
+      return cursor.MakeError("Expected ':' after object key");
     }
-    this->Advance(); // consume ':'
+    cursor.Advance(); // consume ':'
 
     this->SkipWhitespace();
 
@@ -476,26 +291,26 @@ core::ParseResult Parser::ParseObject()
 
     this->SkipWhitespace();
 
-    if (this->IsAtEnd()) {
-      return this->MakeError("Unterminated object");
+    if (cursor.IsAtEnd()) {
+      return cursor.MakeError("Unterminated object");
     }
 
-    if (this->Peek() == '}') {
-      this->Advance();
+    if (cursor.Peek() == '}') {
+      cursor.Advance();
       return core::ParseResult{true, std::move(objectValue), {}};
     }
 
-    if (this->Peek() != ',') {
-      return this->MakeError(
-          std::string("Expected ',' or '}' in object, got '") + this->Peek() + "'"
+    if (cursor.Peek() != ',') {
+      return cursor.MakeError(
+          std::string("Expected ',' or '}' in object, got '") + cursor.Peek() + "'"
       );
     }
-    this->Advance(); // consume ','
+    cursor.Advance(); // consume ','
 
     // RFC 8259: no trailing commas
     this->SkipWhitespace();
-    if (!this->IsAtEnd() && this->Peek() == '}') {
-      return this->MakeError("Trailing comma in object");
+    if (!cursor.IsAtEnd() && cursor.Peek() == '}') {
+      return cursor.MakeError("Trailing comma in object");
     }
   }
 }
@@ -504,11 +319,11 @@ core::ParseResult Parser::ParseValue()
 {
   this->SkipWhitespace();
 
-  if (this->IsAtEnd()) {
-    return this->MakeError("Unexpected end of input");
+  if (cursor.IsAtEnd()) {
+    return cursor.MakeError("Unexpected end of input");
   }
 
-  char current = this->Peek();
+  char current = cursor.Peek();
 
   switch (current) {
   case 'n':
@@ -527,7 +342,7 @@ core::ParseResult Parser::ParseValue()
     if (current == '-' || (current >= '0' && current <= '9')) {
       return this->ParseNumber();
     }
-    return this->MakeError(std::string("Unexpected character '") + current + "'");
+    return cursor.MakeError(std::string("Unexpected character '") + current + "'");
   }
 }
 } // namespace amanuensis::json

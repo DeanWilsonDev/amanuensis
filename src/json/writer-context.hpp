@@ -10,8 +10,6 @@ class WriterContext {
 public:
   void WriteIndent(std::string& output, int depth, const WriterOptions& options);
 
-  void WriteEscapedString(std::string& output, const std::string& text);
-
   void WriteArray(
       std::string& output,
       const core::Value& arrayValue,
