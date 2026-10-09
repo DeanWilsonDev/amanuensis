@@ -90,7 +90,7 @@ cmake -B build -Damanuensis_BUILD_TESTS=OFF
 
 ## API
 
-All public symbols live in the `amanuensis` namespace. Until consumers have moved over, `<amanuensis/compat.hpp>` (pulled in by every public header) keeps the old `Amanuensis::` spelling working as a namespace alias, and keeps the old `JsonValue`, `JsonValueType`, `JsonParseResult` and `JsonParseError` names working as aliases of `Value`, `ValueType`, `ParseResult` and `ParseError`. The old header paths (`json-value.hpp`, `io/json-parse-result.hpp` and `io/json-parse-error.hpp`) forward to the new ones. Define `AMANUENSIS_NO_COMPAT` to turn all of this off.
+All public symbols live in the `amanuensis` namespace. Until consumers have moved over, `<amanuensis/compat.hpp>` (pulled in by every public header) keeps the old `Amanuensis::` spelling working as a namespace alias, and keeps the old `JsonValue`, `JsonValueType`, `JsonParseResult` and `JsonParseError` names working as aliases of `Value`, `ValueType`, `ParseResult` and `ParseError`. `ToJson`, `FromJson`, `TryFromJson` and `FromJsonResult` forward to `ToValue`, `FromValue`, `TryFromValue` and `FromValueResult`, and an existing `JsonTraits<T>` specialisation with `ToJson`/`FromJson` members is still picked up when there is no `SerialTraits<T>` one. The old header paths (`json-value.hpp`, `io/json-parse-result.hpp`, `io/json-parse-error.hpp`, `serialization/json-traits.hpp` and `serialization/json-traits-std.hpp`) forward to the new ones. Define `AMANUENSIS_NO_COMPAT` to turn all of this off.
 
 ### Reading
 
@@ -177,7 +177,7 @@ const amanuensis::Value* p = object.Find("key"); // nullptr if absent
 
 ## User-type Serialisation
 
-Amanuensis provides `ToJson<T>` and `FromJson<T>` for user types that opt in via one of three mechanisms.
+Amanuensis provides `ToValue<T>` and `FromValue<T>` for user types that opt in via one of three mechanisms.
 
 ### Mechanism 1 — `AMANUENSIS_SERIALISABLE` macro (recommended for most types)
 
@@ -205,15 +205,15 @@ Both directions then work automatically:
 ```cpp
 // Serialise
 PerFunctionCoverage pfc = { "math::Add", 10, 14, 5, 5, 3 };
-amanuensis::Value v = amanuensis::ToJson(pfc);
+amanuensis::Value v = amanuensis::ToValue(pfc);
 amanuensis::Writer::WriteToFile(v, "coverage.json");
 
 // Deserialise
 auto result = amanuensis::Reader::ParseFile("coverage.json");
-PerFunctionCoverage roundTripped = amanuensis::FromJson<PerFunctionCoverage>(result.value);
+PerFunctionCoverage roundTripped = amanuensis::FromValue<PerFunctionCoverage>(result.value);
 
 // Non-throwing variant
-auto tryResult = amanuensis::TryFromJson<PerFunctionCoverage>(result.value);
+auto tryResult = amanuensis::TryFromValue<PerFunctionCoverage>(result.value);
 if (!tryResult.succeeded) {
     std::cerr << tryResult.errorMessage << "\n";
 }
@@ -240,21 +240,21 @@ struct RenamedFields {
 };
 ```
 
-### Mechanism 3 — `JsonTraits<T>` specialisation
+### Mechanism 3 — `SerialTraits<T>` specialisation
 
 For types you do not own (external types), or for types that require a non-object JSON representation.
 
 ```cpp
 namespace amanuensis {
-template <> struct JsonTraits<Vec3> {
-    static Value ToJson(const Vec3& v) {
+template <> struct SerialTraits<Vec3> {
+    static Value ToValue(const Vec3& v) {
         auto array = Value::MakeArray();
         array.PushBack(v.x);
         array.PushBack(v.y);
         array.PushBack(v.z);
         return array;
     }
-    static Vec3 FromJson(const Value& value) {
+    static Vec3 FromValue(const Value& value) {
         return { value.At(0).AsDouble(), value.At(1).AsDouble(), value.At(2).AsDouble() };
     }
 };

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <amanuensis/value.hpp>
-#include <amanuensis/serialization/json-traits.hpp>
+#include <amanuensis/serialization/serial-traits.hpp>
 #include <amanuensis/serialization/write-archive.hpp>
 #include <amanuensis/serialization/read-archive.hpp>
 #include <amanuensis/errors.hpp>
@@ -39,17 +39,17 @@ struct HasSerialiseFree<
 } // namespace detail
 
 // -----------------------------------------------------------------------
-// Core ToJson / FromJson — resolution order:
-//   1. JsonTraits<T> specialisation
+// Core ToValue / FromValue — resolution order:
+//   1. SerialTraits<T> specialisation
 //   2. Intrusive Serialise member
 //   3. Free AmanuensisSerialiseFree function (macro-generated)
 //   4. Compile error
 // -----------------------------------------------------------------------
 
-template <typename T> Value ToJson(const T& value)
+template <typename T> Value ToValue(const T& value)
 {
-  if constexpr (HasJsonTraits<T>::value) {
-    return JsonTraits<T>::ToJson(value);
+  if constexpr (HasSerialTraits<T>::value) {
+    return SerialTraits<T>::ToValue(value);
   }
   else if constexpr (detail::HasSerialiseMember<T>::value) {
     WriteArchive archive;
@@ -64,18 +64,18 @@ template <typename T> Value ToJson(const T& value)
   }
   else {
     static_assert(
-        HasJsonTraits<T>::value, "Type has no Amanuensis serialisation. Opt in via: "
-                                 "(1) AMANUENSIS_SERIALISABLE macro, "
-                                 "(2) intrusive Serialise member, or "
-                                 "(3) JsonTraits<T> specialisation."
+        HasSerialTraits<T>::value, "Type has no Amanuensis serialisation. Opt in via: "
+                                   "(1) AMANUENSIS_SERIALISABLE macro, "
+                                   "(2) intrusive Serialise member, or "
+                                   "(3) SerialTraits<T> specialisation."
     );
   }
 }
 
-template <typename T> T FromJson(const Value& value)
+template <typename T> T FromValue(const Value& value)
 {
-  if constexpr (HasJsonTraits<T>::value) {
-    return JsonTraits<T>::FromJson(value);
+  if constexpr (HasSerialTraits<T>::value) {
+    return SerialTraits<T>::FromValue(value);
   }
   else if constexpr (detail::HasSerialiseMember<T>::value) {
     T result{};
@@ -91,34 +91,52 @@ template <typename T> T FromJson(const Value& value)
   }
   else {
     static_assert(
-        HasJsonTraits<T>::value, "Type has no Amanuensis deserialisation. Opt in via: "
-                                 "(1) AMANUENSIS_SERIALISABLE macro, "
-                                 "(2) intrusive Serialise member, or "
-                                 "(3) JsonTraits<T> specialisation."
+        HasSerialTraits<T>::value, "Type has no Amanuensis deserialisation. Opt in via: "
+                                   "(1) AMANUENSIS_SERIALISABLE macro, "
+                                   "(2) intrusive Serialise member, or "
+                                   "(3) SerialTraits<T> specialisation."
     );
   }
 }
 
 // -----------------------------------------------------------------------
-// TryFromJson — non-throwing variant
+// TryFromValue — non-throwing variant
 // -----------------------------------------------------------------------
 
-template <typename T> struct FromJsonResult {
+template <typename T> struct FromValueResult {
   bool succeeded;
   T value;
   std::string errorMessage;
 };
 
-template <typename T> FromJsonResult<T> TryFromJson(const Value& jsonValue)
+template <typename T> FromValueResult<T> TryFromValue(const Value& jsonValue)
 {
   try {
-    T result = FromJson<T>(jsonValue);
-    return FromJsonResult<T>{true, std::move(result), {}};
+    T result = FromValue<T>(jsonValue);
+    return FromValueResult<T>{true, std::move(result), {}};
   }
   catch (const std::exception& error) {
-    return FromJsonResult<T>{false, T{}, error.what()};
+    return FromValueResult<T>{false, T{}, error.what()};
   }
 }
+
+#ifndef AMANUENSIS_NO_COMPAT
+// Old names, kept until the consumer sweep (see compat.hpp).
+template <typename T> using FromJsonResult = FromValueResult<T>;
+
+template <typename T> Value ToJson(const T& value)
+{
+  return ToValue<T>(value);
+}
+template <typename T> T FromJson(const Value& value)
+{
+  return FromValue<T>(value);
+}
+template <typename T> FromValueResult<T> TryFromJson(const Value& value)
+{
+  return TryFromValue<T>(value);
+}
+#endif
 
 // -----------------------------------------------------------------------
 // ReadArchive::Field — deserialise a single field from the source object
@@ -133,14 +151,14 @@ template <typename FieldType> void ReadArchive::Field(const char* jsonKey, Field
       fieldValue = std::nullopt;
       return;
     }
-    fieldValue = FromJson<typename FieldType::value_type>(*found);
+    fieldValue = FromValue<typename FieldType::value_type>(*found);
   }
   else {
     const Value* found = Json::Find(source_, jsonKey);
     if (found == nullptr) {
       throw KeyNotFoundError(std::string("Missing required field: \"") + jsonKey + "\"");
     }
-    fieldValue = FromJson<FieldType>(*found);
+    fieldValue = FromValue<FieldType>(*found);
   }
 }
 
@@ -151,7 +169,7 @@ template <typename FieldType> void ReadArchive::Field(const char* jsonKey, Field
 template <typename FieldType>
 void WriteArchive::Field(const char* jsonKey, const FieldType& fieldValue)
 {
-  Json::Insert(object_, std::string(jsonKey), ToJson<FieldType>(fieldValue));
+  Json::Insert(object_, std::string(jsonKey), ToValue<FieldType>(fieldValue));
 }
 
 } // namespace amanuensis

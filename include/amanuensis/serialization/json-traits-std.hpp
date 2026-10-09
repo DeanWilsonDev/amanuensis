@@ -1,78 +1,8 @@
-
 #pragma once
 
-#include <amanuensis/serialization/json-traits.hpp>
-#include <amanuensis/serialization/serialize.hpp>
+// Old path, kept until the consumer sweep (see compat.hpp).
+#ifdef AMANUENSIS_NO_COMPAT
+#error "amanuensis/serialization/json-traits-std.hpp is now amanuensis/serialization/serial-traits-std.hpp"
+#endif
 
-namespace amanuensis {
-
-// -----------------------------------------------------------------------
-// Built-in JsonTraits implementations (template bodies)
-// -----------------------------------------------------------------------
-
-template <typename ElementType>
-Value JsonTraits<std::vector<ElementType>>::ToJson(const std::vector<ElementType>& elements)
-{
-  Value arrayValue = Json::MakeArray();
-  for (const auto& element : elements) {
-    Json::PushBack(arrayValue, amanuensis::ToJson<ElementType>(element));
-  }
-  return arrayValue;
-}
-
-template <typename ElementType>
-std::vector<ElementType> JsonTraits<std::vector<ElementType>>::FromJson(const Value& value)
-{
-  const auto& rawArray = Json::AsArray(value);
-  std::vector<ElementType> result;
-  result.reserve(rawArray.size());
-  for (const auto& element : rawArray) {
-    result.push_back(amanuensis::FromJson<ElementType>(element));
-  }
-  return result;
-}
-
-template <typename WrappedType>
-Value JsonTraits<std::optional<WrappedType>>::ToJson(
-    const std::optional<WrappedType>& optionalValue
-)
-{
-  if (!optionalValue.has_value()) {
-    return Value(); // null
-  }
-  return amanuensis::ToJson<WrappedType>(*optionalValue);
-}
-
-template <typename WrappedType>
-std::optional<WrappedType> JsonTraits<std::optional<WrappedType>>::FromJson(const Value& value)
-{
-  if (Json::IsNull(value)) {
-    return std::nullopt;
-  }
-  return amanuensis::FromJson<WrappedType>(value);
-}
-
-template <typename MappedType>
-Value JsonTraits<std::map<std::string, MappedType>>::ToJson(
-    const std::map<std::string, MappedType>& entries
-)
-{
-  Value objectValue = Json::MakeObject();
-  for (const auto& [key, mappedValue] : entries) {
-    Json::Insert(objectValue, key, amanuensis::ToJson<MappedType>(mappedValue));
-  }
-  return objectValue;
-}
-
-template <typename MappedType>
-std::map<std::string, MappedType>
-JsonTraits<std::map<std::string, MappedType>>::FromJson(const Value& value)
-{
-  std::map<std::string, MappedType> result;
-  for (auto iterator = Json::BeginObject(value); iterator != Json::EndObject(value); ++iterator) {
-    result[iterator->first] = amanuensis::FromJson<MappedType>(iterator->second);
-  }
-  return result;
-}
-
-} // namespace amanuensis
+#include "amanuensis/serialization/serial-traits-std.hpp"

@@ -1,6 +1,6 @@
 #include "serialize.hpp"
 #include "serialize-macros.hpp"
-#include "json-traits.hpp"
-#include "json-traits-std.hpp"
+#include "serial-traits.hpp"
+#include "serial-traits-std.hpp"
 #include "read-archive.hpp"
 #include "write-archive.hpp"
