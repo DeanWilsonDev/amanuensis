@@ -56,10 +56,31 @@ template <> struct SerialTraits<long long> {
   static long long FromValue(const core::Value& value) { return Json::AsInteger(value); }
 };
 
+namespace detail {
+// A Double, or an Integer such as a hand-typed 1, as a double. Anything else
+// throws TypeMismatchError.
+inline double AsFloatingPoint(const core::Value& value)
+{
+  if (Json::IsInteger(value)) {
+    return static_cast<double>(Json::AsInteger(value));
+  }
+  return Json::AsDouble(value);
+}
+} // namespace detail
+
 // double
 template <> struct SerialTraits<double> {
   static core::Value ToValue(const double& value) { return core::Value(value); }
-  static double FromValue(const core::Value& value) { return Json::AsDouble(value); }
+  static double FromValue(const core::Value& value) { return detail::AsFloatingPoint(value); }
+};
+
+// float, held in a Value as the double it converts to exactly
+template <> struct SerialTraits<float> {
+  static core::Value ToValue(const float& value) { return core::Value(static_cast<double>(value)); }
+  static float FromValue(const core::Value& value)
+  {
+    return static_cast<float>(detail::AsFloatingPoint(value));
+  }
 };
 
 // std::string
