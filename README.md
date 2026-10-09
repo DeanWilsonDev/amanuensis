@@ -191,6 +191,23 @@ for (auto entry = Json::BeginObject(object); entry != Json::EndObject(object); +
 }
 ```
 
+### Merging, comparing and hashing values
+
+`amanuensis::core` has three format-neutral operations on whole values:
+
+```cpp
+using amanuensis::core::Value;
+
+// Objects merge key by key; arrays and everything else replace whole.
+Value entity = amanuensis::core::Overlay(prefab, overrides);
+
+// The key paths where entity differs from prefab, such as {"position", "x"}.
+std::vector<amanuensis::core::KeyPath> changed = amanuensis::core::Diff(prefab, entity);
+
+// FNV-1a 64 over a fixed encoding: the same on every compiler, and key order doesn't matter.
+std::uint64_t hash = amanuensis::core::StableHash(prefab);
+```
+
 ---
 
 ## User-type Serialisation
