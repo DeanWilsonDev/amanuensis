@@ -30,7 +30,7 @@ The library is deliberately minimal. It covers the subset of JSON that real firs
 - Streaming / incremental parsing
 - Binary formats (BSON, CBOR, MessagePack)
 - Runtime-reflection-based automatic serialisation (C++ does not support it; C++26 static reflection may make this viable in the future)
-- JSON5, JSONC, or other relaxed dialects — Amanuensis is strict RFC 8259
+- JSON5, JSONC, or other relaxed dialects — the JSON reader and writer stay strict RFC 8259. Human-edited entity files get Calamus instead, a separate format (see `amanuensis-json-library/calamus-format.md`), not a looser JSON
 - Performance parity with SIMD-optimised parsers like simdjson
 
 ---
@@ -438,6 +438,8 @@ Parse-error tests use Cimmerian's `ASSERT_FALSE(result.succeeded)` followed by p
 **Three tiers of serialisation opt-in, unified by an Archive abstraction.** The library supports three ways to make a user type serialisable: a one-line `AMANUENSIS_SERIALISABLE` macro (the default), an intrusive `Serialise` member method (for flexibility), and a `SerialTraits` specialisation (for external types). All three route through the same internal `Archive` type, so adding a new tier or migrating between them does not change the underlying mechanism. The macro tier is deliberately the shortest path because it covers the common case where the JSON key can match the C++ field name — which is most cases in first-party projects. Consumers who need more control upgrade to the method tier at the cost of a few more lines per type. External types use the traits tier, which is also how the library internally teaches `ToValue`/`FromValue` about standard-library containers so consumers never need to write conversions for `std::vector`, `std::optional`, and similar.
 
 **Strict RFC 8259.** No comments, no trailing commas, no unquoted keys. Human-edited configs that need those features are better served by YAML or TOML, not by a relaxed JSON dialect that makes the library harder to reason about.
+
+This still holds with Calamus. Calamus is a separate dialect with its own reader and writer in `amanuensis::calamus`, and it shares the `core` value model, cursor, string rules and number formatting with JSON. Nothing about Calamus loosens what `amanuensis::json::Reader` accepts.
 
 ---
 
