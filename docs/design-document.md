@@ -439,7 +439,7 @@ Parse-error tests use Cimmerian's `ASSERT_FALSE(result.succeeded)` followed by p
 
 **Strict RFC 8259.** No comments, no trailing commas, no unquoted keys. Human-edited configs that need those features are better served by YAML or TOML, not by a relaxed JSON dialect that makes the library harder to reason about.
 
-This still holds with Calamus. Calamus is a separate dialect with its own reader and writer in `amanuensis::calamus`, and it shares the `core` value model, cursor, string rules and number formatting with JSON. Nothing about Calamus loosens what `amanuensis::json::Reader` accepts.
+This still holds with Calamus. Calamus is a separate dialect with its own reader and writer in `amanuensis::calamus`, and it shares the `core` value model, cursor, string rules and number formatting with JSON. Nothing about Calamus loosens what `amanuensis::json::Reader` accepts. The format is specified in `calamus-spec.md`.
 
 ---
 
