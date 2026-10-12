@@ -4,3 +4,4 @@
 #include "serial-traits-std.hpp"
 #include "read-archive.hpp"
 #include "write-archive.hpp"
+#include "atomic.hpp"

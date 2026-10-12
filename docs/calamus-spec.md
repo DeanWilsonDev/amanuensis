@@ -179,7 +179,13 @@ The writer is given the entity and its base, and canonicalises both. It then:
 
 #### Atomic objects
 
-Some objects only make sense as a whole, such as a quaternion or a colour. Whether an object is atomic comes from the entity's C++ types, not from the file, through a hook on the traits (a separate task). When any line inside an atomic object is marked, the writer marks every line in it. Otherwise a prefab change could combine new and old components into an invalid rotation.
+Some objects only make sense as a whole, such as a quaternion or a colour. When any line inside an atomic object is marked, the writer marks every line in it, at any depth. Otherwise a prefab change could combine new and old components into an invalid rotation. A change that only drops a key the base has doesn't count, since nothing is written for it.
+
+Whether an object is atomic comes from the entity's C++ types, not from the file:
+
+- A type is declared atomic with `AMANUENSIS_ATOMIC(Type)`, next to its `AMANUENSIS_SERIALISABLE`.
+- `amanuensis::AtomicPaths(entity)` lists the key paths where `ToValue` puts the entity's atomic objects. It follows struct fields, `std::optional` and `std::map<std::string, T>`, but not arrays (already whole) or the insides of a `SerialTraits` specialisation.
+- The writer takes those paths in `calamus::WriterOptions::atomic`, and `calamus::Heal` needs the same options.
 
 ### Recorded defaults
 

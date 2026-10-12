@@ -1,6 +1,7 @@
 #pragma once
 
 #include "amanuensis/calamus/reader.hpp"
+#include "amanuensis/calamus/writer-options.hpp"
 #include "amanuensis/core/parse-error.hpp"
 #include "amanuensis/core/value.hpp"
 
@@ -24,8 +25,14 @@ struct HealResult {
 // produces a diff. A change to the base alone never rewrites the file; it
 // waits for the next save.
 //
+// options must be the ones the file is saved with. Without its atomic paths,
+// healing would drop the marks on an atomic object's unchanged components
+// and rewrite the file. For atomic objects in plain struct fields,
+// AtomicPaths of the base's C++ object gives the same paths as the entity's.
+//
 // For tooling such as an editor. Deciding when to call it is the caller's
 // policy, and a shipped build never should.
-HealResult Heal(const std::filesystem::path& path, const core::Value& base);
+HealResult
+Heal(const std::filesystem::path& path, const core::Value& base, const WriterOptions& options = {});
 
 } // namespace amanuensis::calamus

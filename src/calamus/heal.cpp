@@ -13,7 +13,8 @@ static HealResult Fail(core::ParseError error, LoadResult load = {})
   return HealResult{false, false, std::move(load), std::move(error)};
 }
 
-HealResult Heal(const std::filesystem::path& path, const core::Value& base)
+HealResult
+Heal(const std::filesystem::path& path, const core::Value& base, const WriterOptions& options)
 {
   std::ifstream inputFile(path, std::ios::binary);
   if (!inputFile.is_open()) {
@@ -33,7 +34,7 @@ HealResult Heal(const std::filesystem::path& path, const core::Value& base)
     return HealResult{true, false, std::move(load), {}};
   }
 
-  WriteResult written = Writer::WriteToString(read.document.header, load.value, base);
+  WriteResult written = Writer::WriteToString(read.document.header, load.value, base, options);
   if (!written.succeeded) {
     return Fail(core::ParseError{written.error, 0, 0}, std::move(load));
   }

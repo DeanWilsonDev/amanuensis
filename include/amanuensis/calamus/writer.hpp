@@ -1,6 +1,7 @@
 #pragma once
 
 #include "amanuensis/calamus/header.hpp"
+#include "amanuensis/calamus/writer-options.hpp"
 #include "amanuensis/core/value.hpp"
 
 #include <filesystem>
@@ -25,14 +26,19 @@ public:
   //
   // Fails without throwing, naming the field, on NaN or infinity, which have
   // no syntax, and on a header the reader would reject.
-  static WriteResult
-  WriteToString(const Header& header, const core::Value& entity, const core::Value& base);
+  static WriteResult WriteToString(
+      const Header& header,
+      const core::Value& entity,
+      const core::Value& base,
+      const WriterOptions& options = {}
+  );
 
   static WriteResult WriteToFile(
       const Header& header,
       const core::Value& entity,
       const core::Value& base,
-      const std::filesystem::path& path
+      const std::filesystem::path& path,
+      const WriterOptions& options = {}
   );
 };
 

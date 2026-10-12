@@ -249,7 +249,19 @@ if (!written.succeeded) {
 }
 ```
 
-The same input always gives the same text, so a caller healing a file compares `written.text` with the file on disk and writes only if they differ. Calamus can't remove a field, so keys that only the base has are left out, and they come back from the base on the next load.
+Some objects only make sense as a whole, such as a quaternion. Declare their types atomic, and the writer marks every component when any one of them differs, so a prefab change can't mix new and old components:
+
+```cpp
+AMANUENSIS_SERIALISABLE(Quaternion, x, y, z, w);
+AMANUENSIS_ATOMIC(Quaternion);
+
+amanuensis::calamus::WriterOptions options;
+options.atomic = amanuensis::AtomicPaths(door);  // where ToValue(door) puts each atomic object
+auto written = amanuensis::calamus::Writer::WriteToString(
+    header, amanuensis::ToValue(door), amanuensis::ToValue(prefab), options);
+```
+
+Pass the same options to `Heal`. The same input always gives the same text, so a caller healing a file compares `written.text` with the file on disk and writes only if they differ. Calamus can't remove a field, so keys that only the base has are left out, and they come back from the base on the next load.
 
 ---
 

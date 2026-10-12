@@ -7,6 +7,7 @@
 #include "core/number-format.hpp"
 #include "core/quoted-string.hpp"
 
+#include <algorithm>
 #include <charconv>
 #include <cmath>
 #include <cstdint>
@@ -34,19 +35,43 @@ struct Changes {
   std::set<core::KeyPath> containing;
 };
 
-bool EntityHas(const core::Value& entity, const core::KeyPath& path)
+// The value at path, or nullptr when some key on the way is missing or isn't
+// an Object.
+const core::Value* FindPath(const core::Value& entity, const core::KeyPath& path)
 {
   const core::Value* current = &entity;
   for (const std::string& key : path) {
     const auto* object = std::get_if<Object>(&current->data);
     if (object == nullptr || (current = object->Find(key)) == nullptr) {
-      return false;
+      return nullptr;
     }
   }
-  return true;
+  return current;
 }
 
-Changes FindChanges(const core::Value& canonicalBase, const core::Value& canonicalEntity)
+bool EntityHas(const core::Value& entity, const core::KeyPath& path)
+{
+  return FindPath(entity, path) != nullptr;
+}
+
+// The Object at path, or nullptr when there's none.
+const core::Value* FindObject(const core::Value& entity, const core::KeyPath& path)
+{
+  const core::Value* found = FindPath(entity, path);
+  return found != nullptr && std::holds_alternative<Object>(found->data) ? found : nullptr;
+}
+
+// Whether path starts with prefix, or is prefix.
+bool IsUnder(const core::KeyPath& path, const core::KeyPath& prefix)
+{
+  return path.size() >= prefix.size() && std::equal(prefix.begin(), prefix.end(), path.begin());
+}
+
+Changes FindChanges(
+    const core::Value& canonicalBase,
+    const core::Value& canonicalEntity,
+    const std::vector<core::KeyPath>& atomic
+)
 {
   Changes changes;
   for (core::KeyPath& path : core::Diff(canonicalBase, canonicalEntity)) {
@@ -58,6 +83,18 @@ Changes FindChanges(const core::Value& canonicalBase, const core::Value& canonic
       changes.containing.insert(core::KeyPath(path.begin(), path.begin() + length));
     }
     changes.whole.insert(std::move(path));
+  }
+
+  // An atomic object with a change inside it changes as a whole. Paths with
+  // the same prefix sort together, so the first one at or after the atomic
+  // path is under it if any is.
+  for (const core::KeyPath& atomicPath : atomic) {
+    const core::Value* object = FindObject(canonicalEntity, atomicPath);
+    auto firstUnder = changes.whole.lower_bound(atomicPath);
+    if (object != nullptr && firstUnder != changes.whole.end() &&
+        IsUnder(*firstUnder, atomicPath)) {
+      changes.whole.insert(atomicPath);
+    }
   }
   return changes;
 }
@@ -257,8 +294,12 @@ WriteResult Fail(std::string error)
 
 } // namespace
 
-WriteResult
-Writer::WriteToString(const Header& header, const core::Value& entity, const core::Value& base)
+WriteResult Writer::WriteToString(
+    const Header& header,
+    const core::Value& entity,
+    const core::Value& base,
+    const WriterOptions& options
+)
 {
   const auto* entityObject = std::get_if<Object>(&entity.data);
   if (entityObject == nullptr) {
@@ -272,7 +313,7 @@ Writer::WriteToString(const Header& header, const core::Value& entity, const cor
   }
 
   core::Value canonicalBase = Canonicalise(base);
-  Changes changes = FindChanges(canonicalBase, Canonicalise(entity));
+  Changes changes = FindChanges(canonicalBase, Canonicalise(entity), options.atomic);
 
   std::string body;
   BodyWriter bodyWriter(body, changes);
@@ -303,10 +344,11 @@ WriteResult Writer::WriteToFile(
     const Header& header,
     const core::Value& entity,
     const core::Value& base,
-    const std::filesystem::path& path
+    const std::filesystem::path& path,
+    const WriterOptions& options
 )
 {
-  WriteResult result = WriteToString(header, entity, base);
+  WriteResult result = WriteToString(header, entity, base, options);
   if (!result.succeeded) {
     return result;
   }
