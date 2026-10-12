@@ -25,7 +25,6 @@ static_assert(std::is_same_v<amanuensis::JsonParseResult, amanuensis::core::Pars
 static_assert(std::is_same_v<amanuensis::JsonParseError, amanuensis::core::ParseError>);
 static_assert(std::is_same_v<amanuensis::FromJsonResult<int>, amanuensis::FromValueResult<int>>);
 
-// Names that moved from amanuensis into amanuensis::core and amanuensis::json.
 static_assert(std::is_same_v<amanuensis::OrderedMap<int>, amanuensis::core::OrderedMap<int>>);
 static_assert(std::is_same_v<amanuensis::ObjectIterator, amanuensis::core::ObjectIterator>);
 static_assert(std::is_same_v<amanuensis::TypeMismatchError, amanuensis::core::TypeMismatchError>);
@@ -43,7 +42,6 @@ static_assert(std::is_same_v<amanuensis::Reader, amanuensis::json::Reader>);
 static_assert(std::is_same_v<amanuensis::Writer, amanuensis::json::Writer>);
 static_assert(std::is_same_v<amanuensis::WriterOptions, amanuensis::json::WriterOptions>);
 
-// Specialised the old way: JsonTraits, with ToJson and FromJson members.
 struct LegacyPoint {
   long long x, y;
 };

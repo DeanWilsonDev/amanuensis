@@ -26,12 +26,10 @@ struct Field {
   int line = 0;
 };
 
-// A Calamus file as written, before it is applied over its base.
 struct Document {
   Header header;
   // Every body line's value with the marks ignored. The root is an Object.
   core::Value body;
-  // The fields, in document order.
   std::vector<Field> fields;
 };
 
@@ -41,18 +39,14 @@ struct ReadResult {
   core::ParseError error;
 };
 
-// What Load made of a document. Each list holds key paths in document order.
-// See the decision table in docs/calamus-spec.md, "Load".
+// Each list holds key paths in document order.
 struct LoadResult {
-  // The entity: the base with the overrides applied.
   core::Value value;
 
-  // The fields that override the base. They're the ones the writer will mark.
   std::vector<core::KeyPath> overrides;
 
-  // A person's edit to this file (promoted or reset) means regenerating it may
-  // change its text. The caller regenerates it and writes it only if the text
-  // differs. Changes to the base never set this; they wait for the next save.
+  // Set only by a person's edit (promoted or reset). Changes to the base never
+  // set it; they wait for the next save.
   bool needsRewrite = false;
 
   // Whether @base_hash matches the base, or is absent.
@@ -82,17 +76,14 @@ struct LoadResult {
 
 class Reader {
 public:
-  // Read the syntax only, so the caller can find the base the header names.
-  // Every error stops the read and reports a line and column. Never throws on
-  // bad input.
+  // Reads the syntax only, so the caller can find the base the header names
+  // before calling Load.
   static ReadResult ParseString(std::string_view text);
   static ReadResult ParseFile(const std::filesystem::path& path);
 
-  // Applies a document's fields over its base: the prefab, or the type's
-  // default when there's no @base. Marked fields override the base and
-  // unmarked ones follow it, healing hand edits through @base_hash. Values are
-  // compared and hashed canonically, so a float field matches its base after
-  // a round trip through text. Never writes anything.
+  // base is the prefab, or the type's default when there's no @base. Values are
+  // compared and hashed canonically, so a float field matches its base after a
+  // round trip through text.
   static LoadResult Load(const Document& document, const core::Value& base);
 };
 

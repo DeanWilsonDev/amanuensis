@@ -84,7 +84,7 @@ core::ParseResult Parser::ParseFalse()
 }
 
 // -----------------------------------------------------------------------
-// Numbers — shared with every format, see core/number-format.hpp.
+// Numbers
 // -----------------------------------------------------------------------
 
 core::ParseResult Parser::ParseNumber()
@@ -93,7 +93,7 @@ core::ParseResult Parser::ParseNumber()
 }
 
 // -----------------------------------------------------------------------
-// Strings — shared with every format, see core/quoted-string.hpp.
+// Strings
 // -----------------------------------------------------------------------
 
 core::ParseResult Parser::ParseString()

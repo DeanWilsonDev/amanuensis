@@ -36,8 +36,6 @@ public:
     }
   }
 
-  // Removes key, keeping the other entries in order. Returns whether it was
-  // there.
   bool Erase(const std::string& key)
   {
     auto found_entry = key_to_index_.find(key);

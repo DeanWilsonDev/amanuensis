@@ -7,9 +7,8 @@
 
 namespace amanuensis::core {
 
-// Whole-value comparison for everything Diff doesn't recurse into. Objects
-// inside arrays ignore key order, and doubles compare by bit pattern, the
-// same as StableHash.
+// Objects inside arrays ignore key order, and doubles compare by bit pattern,
+// the same as StableHash.
 static bool Equal(const Value& left, const Value& right)
 {
   if (left.data.index() != right.data.index()) {
@@ -53,7 +52,7 @@ static bool Equal(const Value& left, const Value& right)
   if (const auto* leftString = std::get_if<std::string>(&left.data)) {
     return *leftString == std::get<std::string>(right.data);
   }
-  return true; // both Null
+  return true;
 }
 
 static void CollectChanges(

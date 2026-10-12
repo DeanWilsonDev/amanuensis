@@ -9,9 +9,6 @@
 #ifndef AMANUENSIS_NO_COMPAT
 namespace amanuensis {
 
-// Old name, kept until the consumer sweep (see compat.hpp). The operations on
-// a Value are now its member functions: Json::Get(value, key) is
-// value.Get(key), and Json::MakeObject() is core::Value::MakeObject().
 class Json {
 public:
   static core::ValueType GetType(const core::Value& value) { return value.GetType(); }

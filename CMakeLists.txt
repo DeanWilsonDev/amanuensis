@@ -57,7 +57,6 @@ target_include_directories(
   amanuensis PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
                     $<INSTALL_INTERFACE:include>)
 
-# The formats share internal helpers in src/core/, included as "core/...".
 target_include_directories(amanuensis PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
 target_compile_features(amanuensis PUBLIC cxx_std_26)
@@ -129,7 +128,6 @@ if(AMANUENSIS_BUILD_TESTS)
     test/calamus-conformance.test.cpp test/calamus-heal.test.cpp
     test/calamus-atomic.test.cpp test/migration.test.cpp)
   target_link_libraries(test_amanuensis PRIVATE amanuensis cimmerian)
-  # The tests reach the formats' shared helpers in src/core/ directly.
   target_include_directories(test_amanuensis PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
   target_compile_features(test_amanuensis PRIVATE cxx_std_26)
   # No -Wpedantic: Cimmerian's test macros use __COUNTER__, which clang 22

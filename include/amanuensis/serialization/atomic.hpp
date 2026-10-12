@@ -11,22 +11,11 @@
 
 namespace amanuensis {
 
-// -----------------------------------------------------------------------
-// Atomic types
-//
-// Some objects only make sense as a whole, such as a quaternion or a colour.
-// When any component of one differs from the base, the Calamus writer marks
-// every component, so a change to the base can't combine new and old
-// components into an invalid value. Declare a type atomic next to its
-// AMANUENSIS_SERIALISABLE, in the type's own namespace:
+// Declare a type atomic next to its AMANUENSIS_SERIALISABLE, in the type's own
+// namespace:
 //
 //   AMANUENSIS_SERIALISABLE(Quaternion, x, y, z, w)
 //   AMANUENSIS_ATOMIC(Quaternion)
-//
-// Then AtomicPaths(entity) lists where the atomic objects are, for
-// calamus::WriterOptions::atomic.
-// -----------------------------------------------------------------------
-
 #define AMANUENSIS_ATOMIC(TypeName)                                                                \
   [[maybe_unused]] constexpr bool AmanuensisIsAtomic(const TypeName*)                              \
   {                                                                                                \
@@ -105,10 +94,9 @@ void CollectAtomicPaths(const T& value, core::KeyPath& path, std::vector<core::K
 
 } // namespace detail
 
-// The key paths, in field order, where ToValue(value) puts an object whose
-// type is declared AMANUENSIS_ATOMIC. Paths go through struct fields,
-// std::optional and std::map<std::string, T>. They never go into arrays,
-// which are marked whole, or inside a SerialTraits specialisation.
+// Paths go through struct fields, std::optional and std::map<std::string, T>.
+// They never go into arrays, which are marked whole, or inside a SerialTraits
+// specialisation.
 template <typename T> std::vector<core::KeyPath> AtomicPaths(const T& value)
 {
   std::vector<core::KeyPath> found;

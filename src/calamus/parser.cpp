@@ -20,12 +20,7 @@ namespace {
 using Array = std::vector<core::Value>;
 using Object = core::OrderedMap<core::Value>;
 
-// The error, if there was one.
 using MaybeError = std::optional<core::ParseError>;
-
-// -----------------------------------------------------------------------
-// Lines
-// -----------------------------------------------------------------------
 
 // One non-blank line of the input, without its line ending or trailing
 // whitespace. Each line is read with its own Cursor, so a Cursor's columns
@@ -38,7 +33,6 @@ struct SourceLine {
 
 struct SourceText {
   std::vector<SourceLine> lines;
-  // Where the input ends, for errors about something missing.
   int endLine = 1;
   int endColumn = 1;
 };
@@ -84,10 +78,6 @@ MaybeError SplitLines(std::string_view input, SourceText& source)
   }
 }
 
-// -----------------------------------------------------------------------
-// Tokens shared by the header and the body
-// -----------------------------------------------------------------------
-
 bool IsHexDigit(char character)
 {
   return (character >= '0' && character <= '9') || (character >= 'a' && character <= 'f') ||
@@ -120,7 +110,6 @@ core::ParseError ErrorHere(std::string message, const SourceLine& line, const co
   return ErrorAt(std::move(message), line, cursor.Column());
 }
 
-// An error from a helper that read the line with its own Cursor.
 core::ParseError OnLine(core::ParseError error, const SourceLine& line)
 {
   error.line = line.number;
@@ -128,10 +117,6 @@ core::ParseError OnLine(core::ParseError error, const SourceLine& line)
 }
 
 const char* CommentError = "Comments aren't supported in Calamus v1";
-
-// -----------------------------------------------------------------------
-// Values: scalars and inline arrays, one line at most
-// -----------------------------------------------------------------------
 
 core::ParseResult ParseValue(core::Cursor& cursor);
 
@@ -227,10 +212,6 @@ core::ParseResult ParseValue(core::Cursor& cursor)
   return cursor.MakeError(std::string("Unexpected character '") + current + "'");
 }
 
-// -----------------------------------------------------------------------
-// Header
-// -----------------------------------------------------------------------
-
 struct HeaderState {
   Header header;
   bool hasVersion = false;
@@ -258,7 +239,7 @@ std::optional<std::uint64_t> ParseHex(std::string_view text, std::size_t maxDigi
 MaybeError ParseHeaderLine(const SourceLine& line, HeaderState& state)
 {
   core::Cursor cursor(line.text);
-  cursor.Advance(); // consume '@'
+  cursor.Advance();
 
   std::string name(ReadIdentifier(cursor));
   if (name.empty()) {
@@ -349,10 +330,6 @@ MaybeError ParseHeaderLine(const SourceLine& line, HeaderState& state)
   return std::nullopt;
 }
 
-// -----------------------------------------------------------------------
-// Body lines
-// -----------------------------------------------------------------------
-
 enum class LineKind {
   Field,     // key : value
   Block,     // key:
@@ -410,7 +387,6 @@ MaybeError ParseBodyLine(const SourceLine& line, BodyLine& bodyLine)
   core::Cursor cursor(line.text);
   bodyLine.number = line.number;
 
-  // Marker column
   char marker = cursor.Peek();
   if (marker == '@') {
     return ErrorAt("Header lines must come before the body", line, 1);
@@ -435,7 +411,6 @@ MaybeError ParseBodyLine(const SourceLine& line, BodyLine& bodyLine)
   }
   cursor.Advance();
 
-  // Indentation
   int spaces = 0;
   while (cursor.Peek() == ' ' || cursor.Peek() == '\t') {
     if (cursor.Peek() == '\t') {
@@ -452,7 +427,6 @@ MaybeError ParseBodyLine(const SourceLine& line, BodyLine& bodyLine)
   }
   bodyLine.depth = spaces / 2;
 
-  // Items
   if (cursor.Peek() == '-') {
     cursor.Advance();
     if (cursor.IsAtEnd()) {
@@ -472,7 +446,6 @@ MaybeError ParseBodyLine(const SourceLine& line, BodyLine& bodyLine)
     return ParseLineEnd(cursor, line, bodyLine, "the value");
   }
 
-  // Key
   bodyLine.keyColumn = cursor.Column();
   if (cursor.Peek() == '"') {
     auto keyResult = core::ParseQuotedString(cursor);
@@ -512,12 +485,6 @@ MaybeError ParseBodyLine(const SourceLine& line, BodyLine& bodyLine)
   return ParseLineEnd(cursor, line, bodyLine, "the value");
 }
 
-// -----------------------------------------------------------------------
-// Blocks
-// -----------------------------------------------------------------------
-
-// Builds the body's Value from its lines, and collects the fields whose marks
-// the reader honours.
 class TreeBuilder {
 public:
   TreeBuilder(std::vector<BodyLine>& lines, std::vector<Field>& fields)
@@ -534,8 +501,8 @@ public:
   }
 
 private:
-  // Reads the lines at depth into container. A Null container takes its kind
-  // from its first line: fields make an Object, '-' items an Array.
+  // A Null container takes its kind from its first line: fields make an Object,
+  // '-' items an Array.
   MaybeError ReadChildren(int depth, core::Value& container, core::KeyPath& path, bool insideArray)
   {
     while (index_ < lines_.size() && lines_[index_].depth >= depth) {
@@ -599,7 +566,7 @@ private:
     return std::nullopt;
   }
 
-  // Reads the lines under a block line. A block with none is an empty Object.
+  // A block with no lines under it is an empty Object.
   MaybeError ReadBlock(int depth, core::Value& block, core::KeyPath& path, bool insideArray)
   {
     block = core::Value();
@@ -612,8 +579,6 @@ private:
     return std::nullopt;
   }
 
-  // A block line holds a whole field value, and so has its mark honoured, when
-  // its block is an array or an empty object.
   static bool IsWholeValueBlock(const core::Value& block)
   {
     const auto* object = std::get_if<Object>(&block.data);

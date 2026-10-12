@@ -17,12 +17,9 @@ struct WriteResult {
 
 class Writer {
 public:
-  // Writes entity, which must be an Object, as Calamus text over its base: the
-  // prefab, or the type's default when there's no @base. The writer marks the
-  // fields that differ from the base, records the base value each marked
-  // field overrides after '|', and sets @base_hash from the base, ignoring
-  // header.baseHash. Keys only the base has are left out, since Calamus can't
-  // remove a field. The same input always gives the same text.
+  // base is the prefab, or the type's default when there's no @base. @base_hash
+  // comes from base, and header.baseHash is ignored. Keys only the base has are
+  // left out, since Calamus can't remove a field.
   //
   // Fails without throwing, naming the field, on NaN or infinity, which have
   // no syntax, and on a header the reader would reject.

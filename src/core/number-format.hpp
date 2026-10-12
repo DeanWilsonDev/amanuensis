@@ -7,12 +7,8 @@
 
 namespace amanuensis::core {
 
-// Numbers are read and written the same way in every format.
-//
-// Reading uses JSON's grammar: an optional '-', then digits with no leading
-// zero, an optional fraction and an optional exponent. A '.' or an exponent
-// makes a Double, anything else an Integer. An integer that overflows
-// long long reads as a Double.
+// Reading uses JSON's grammar. A '.' or an exponent makes a Double, anything
+// else an Integer, and an integer that overflows long long reads as a Double.
 //
 // Writing: integers are plain decimal. Doubles use std::to_chars' shortest
 // form, which reads back bit-identical, with ".0" added when that form has

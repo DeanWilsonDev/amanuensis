@@ -5,18 +5,13 @@
 
 namespace amanuensis {
 
-// -----------------------------------------------------------------------
-// Data versions and migration
-//
-// A type's data version goes up when its layout changes, such as a renamed
-// field or a new unit. Declare the current version next to
-// AMANUENSIS_SERIALISABLE, in the type's own namespace, with a function that
-// upgrades data by one version, found by ADL like AMANUENSIS_SERIALISABLE's:
+// Declare the current version next to AMANUENSIS_SERIALISABLE, in the type's
+// own namespace, with a function found by ADL that upgrades data by one
+// version:
 //
 //   AMANUENSIS_SERIALISABLE(Door, position, angle);
 //   AMANUENSIS_VERSION(Door, 3);
 //
-//   // Called once per step: fromVersion -> fromVersion + 1.
 //   void AmanuensisMigrate(Door*, amanuensis::core::Value& value, int fromVersion)
 //   {
 //     if (fromVersion == 1 && value.Contains("pos")) {
@@ -29,8 +24,6 @@ namespace amanuensis {
 // A type without AMANUENSIS_VERSION is at version 1. A step may be given only
 // part of the data, such as a Calamus file's overrides, so it should cope
 // with missing keys.
-// -----------------------------------------------------------------------
-
 #define AMANUENSIS_VERSION(TypeName, number)                                                       \
   [[maybe_unused]] constexpr int AmanuensisVersion(const TypeName*)                                \
   {                                                                                                \
@@ -58,10 +51,8 @@ concept HasMigrate = requires(T* pointer, core::Value& value, int fromVersion) {
 
 } // namespace detail
 
-// T's current data version: its AMANUENSIS_VERSION, or 1.
 template <typename T> inline constexpr int CurrentVersion = detail::VersionOf<T>();
 
-// Upgrades value by one version of T, through T's AmanuensisMigrate.
 template <typename T> void MigrateStep(core::Value& value, int fromVersion)
 {
   if constexpr (detail::HasMigrate<T>) {
@@ -75,9 +66,6 @@ template <typename T> void MigrateStep(core::Value& value, int fromVersion)
   }
 }
 
-// Brings value, which holds T's data at fromVersion, up to T's current
-// version. Never throws: a newer version or a failing step comes back as an
-// error.
 template <typename T> core::MigrateResult Migrate(core::Value& value, int fromVersion)
 {
   return core::Migrate(value, fromVersion, CurrentVersion<T>, MigrateStep<T>);

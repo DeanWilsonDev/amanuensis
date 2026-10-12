@@ -10,11 +10,9 @@ namespace amanuensis {
 #ifdef AMANUENSIS_NO_COMPAT
 template <typename T> struct SerialTraits; // Mechanism 3 — specialise for external types
 #else
-// Mechanism 3 — specialise for external types. Until the consumer sweep (see
-// compat.hpp), the primary template forwards to an old JsonTraits<T>
-// specialisation, so one written against the old names still works. FromValue
-// deduces its return type so that a T no function can return, such as an
-// array, still gets the "no serialisation" static_assert and nothing else.
+// FromValue deduces its return type so that a T no function can return, such
+// as an array, still gets the "no serialisation" static_assert and nothing
+// else.
 template <typename T> struct SerialTraits {
   static core::Value ToValue(const T& value)
     requires requires(const T& source) { JsonTraits<T>::ToJson(source); }
@@ -53,8 +51,6 @@ template <> struct SerialTraits<long long> {
 };
 
 namespace detail {
-// A Double, or an Integer such as a hand-typed 1, as a double. Anything else
-// throws TypeMismatchError.
 inline double AsFloatingPoint(const core::Value& value)
 {
   if (value.IsInteger()) {
@@ -70,7 +66,7 @@ template <> struct SerialTraits<double> {
   static double FromValue(const core::Value& value) { return detail::AsFloatingPoint(value); }
 };
 
-// float, held in a Value as the double it converts to exactly
+// float
 template <> struct SerialTraits<float> {
   static core::Value ToValue(const float& value) { return core::Value(static_cast<double>(value)); }
   static float FromValue(const core::Value& value)
@@ -111,7 +107,6 @@ struct HasSerialTraits<T, std::void_t<decltype(SerialTraits<T>::ToValue(std::dec
     : std::true_type {};
 
 #ifndef AMANUENSIS_NO_COMPAT
-// Old name, kept until the consumer sweep (see compat.hpp).
 template <typename T> using HasJsonTraits = HasSerialTraits<T>;
 #endif
 

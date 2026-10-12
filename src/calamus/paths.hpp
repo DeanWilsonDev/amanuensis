@@ -9,8 +9,6 @@
 
 namespace amanuensis::calamus {
 
-// The value at path, or nullptr when some key on the way is missing or isn't
-// an Object.
 inline const core::Value* FindPath(const core::Value& root, const core::KeyPath& path)
 {
   const core::Value* current = &root;

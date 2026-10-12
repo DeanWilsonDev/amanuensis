@@ -46,14 +46,12 @@ static calamus::Header DoorHeader()
   return header;
 }
 
-// The text, or the error.
 static std::string Write(const core::Value& entity, const core::Value& base)
 {
   auto result = calamus::Writer::WriteToString(DoorHeader(), entity, base);
   return result.succeeded ? result.text : "error: " + result.error;
 }
 
-// The text after the header and its blank line.
 static std::string BodyOf(const core::Value& entity, const core::Value& base)
 {
   std::string text = Write(entity, base);
@@ -61,7 +59,6 @@ static std::string BodyOf(const core::Value& entity, const core::Value& base)
   return bodyStart == std::string::npos ? text : text.substr(bodyStart + 2);
 }
 
-// Writes entity over base, reads it back and loads it over the same base.
 static calamus::LoadResult RoundTrip(const core::Value& entity, const core::Value& base)
 {
   auto written = calamus::Writer::WriteToString(DoorHeader(), entity, base);

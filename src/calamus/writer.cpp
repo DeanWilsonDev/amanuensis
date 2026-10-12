@@ -26,8 +26,6 @@ namespace {
 using Array = std::vector<core::Value>;
 using Object = core::OrderedMap<core::Value>;
 
-// Where the entity differs from its base, from core::Diff over the canonical
-// values.
 struct Changes {
   // The paths Diff reported. Every line at or under one is marked.
   std::set<core::KeyPath> whole;
@@ -41,14 +39,12 @@ bool EntityHas(const core::Value& entity, const core::KeyPath& path)
   return FindPath(entity, path) != nullptr;
 }
 
-// The Object at path, or nullptr when there's none.
 const core::Value* FindObject(const core::Value& entity, const core::KeyPath& path)
 {
   const core::Value* found = FindPath(entity, path);
   return found != nullptr && std::holds_alternative<Object>(found->data) ? found : nullptr;
 }
 
-// Whether path starts with prefix, or is prefix.
 bool IsUnder(const core::KeyPath& path, const core::KeyPath& prefix)
 {
   return path.size() >= prefix.size() && std::equal(prefix.begin(), prefix.end(), path.begin());
@@ -72,9 +68,8 @@ Changes FindChanges(
     changes.whole.insert(std::move(path));
   }
 
-  // An atomic object with a change inside it changes as a whole. Paths with
-  // the same prefix sort together, so the first one at or after the atomic
-  // path is under it if any is.
+  // Paths with the same prefix sort together, so the first one at or after the
+  // atomic path is under it if any is.
   for (const core::KeyPath& atomicPath : atomic) {
     const core::Value* object = FindObject(canonicalEntity, atomicPath);
     auto firstUnder = changes.whole.lower_bound(atomicPath);
@@ -86,7 +81,6 @@ Changes FindChanges(
   return changes;
 }
 
-// Scalars, and arrays that hold no Object at any depth, fit on one line.
 bool IsInline(const core::Value& value)
 {
   if (std::holds_alternative<Object>(value.data)) {
@@ -132,8 +126,8 @@ void AppendHex(std::string& output, std::uint64_t value)
   output.append(digits, endPointer);
 }
 
-// Writes the body one line at a time. Marks come from Changes outside arrays;
-// inside an array every line takes the array's mark.
+// Marks come from Changes outside arrays; inside an array every line takes the
+// array's mark.
 class BodyWriter {
 public:
   BodyWriter(std::string& output, const Changes& changes)
@@ -144,8 +138,8 @@ public:
 
   const std::string& Error() const { return error_; }
 
-  // base is the base value at this object's path, or nullptr when the base has
-  // none or the object is inside an array. markAll marks every line.
+  // base is nullptr when the base has no value at this object's path, or the
+  // object is inside an array.
   bool WriteObject(
       const Object& object,
       const core::Value* base,
@@ -228,7 +222,6 @@ private:
     output_.append(static_cast<std::size_t>(depth) * 2, ' ');
   }
 
-  // A scalar or inline array. where says whose value it is, for the error.
   bool AppendValue(const core::Value& value, const char* where)
   {
     if (std::holds_alternative<std::monostate>(value.data)) {

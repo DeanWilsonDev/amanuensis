@@ -1,7 +1,3 @@
-// Holds the Calamus reader and writer to docs/calamus-spec.md, end to end
-// through text. Each hole from the spec's "Holes from the review" table has
-// its own group; the load table's rows are in calamus-load.test.cpp, and every
-// parse error's line and column in calamus-reader.test.cpp.
 
 #include <cimmerian/test.hpp>
 #include "calamus/canonical.hpp"
@@ -52,14 +48,13 @@ static calamus::Header DoorHeader()
   return header;
 }
 
-// The text, or the error.
 static std::string Write(const core::Value& entity, const core::Value& base)
 {
   auto result = calamus::Writer::WriteToString(DoorHeader(), entity, base);
   return result.succeeded ? result.text : "error: " + result.error;
 }
 
-// Loads text over base. A parse error comes back as the loaded value.
+// A parse error comes back as the loaded value.
 static calamus::LoadResult Load(const std::string& text, const core::Value& base)
 {
   auto read = calamus::Reader::ParseString(text);
@@ -71,7 +66,6 @@ static calamus::LoadResult Load(const std::string& text, const core::Value& base
   return calamus::Reader::Load(read.document, base);
 }
 
-// What a caller healing the file would write: the loaded entity, regenerated.
 static std::string Heal(const std::string& text, const core::Value& base)
 {
   return Write(Load(text, base).value, base);
@@ -86,7 +80,6 @@ static std::string Replace(std::string text, std::string_view from, std::string_
   return text;
 }
 
-// Clears the marker column on every body line.
 static std::string StripMarks(std::string text)
 {
   bool lineStart = true;
@@ -161,7 +154,6 @@ static const core::Value Door = Json(R"({
   "light": {"intensity": 1.0}
 })");
 
-// The prefab after someone edits it.
 static const core::Value EditedPrefab = Json(R"({
   "position": {"x": 10.0, "y": 0.0, "z": 0.0},
   "name": "wooden door",
@@ -170,11 +162,8 @@ static const core::Value EditedPrefab = Json(R"({
   "light": {"intensity": 1.0}
 })");
 
-// -----------------------------------------------------------------------
-// Random entities, from a fixed seed. std::mt19937_64's output is fixed by
-// the standard; the distributions aren't, so they're done by hand.
-// -----------------------------------------------------------------------
-
+// std::mt19937_64's output is fixed by the standard; the distributions aren't,
+// so they're done by hand.
 class RandomValues {
 public:
   explicit RandomValues(std::uint64_t seed)
@@ -198,12 +187,10 @@ public:
     case 4:
       return core::Value{static_cast<double>(static_cast<long long>(Below(4001)) - 2000) / 8.0};
     case 5: {
-      // Any finite double, including subnormals and -0.0.
       double value = std::bit_cast<double>(engine_());
       return core::Value{std::isfinite(value) ? value : 0.5};
     }
     case 6: {
-      // Any finite float, as a float field's ToValue gives it.
       float value = std::bit_cast<float>(static_cast<std::uint32_t>(engine_()));
       return core::Value{std::isfinite(value) ? static_cast<double>(value) : 0.25};
     }
@@ -263,7 +250,6 @@ public:
     return core::Value{std::move(object)};
   }
 
-  // base with some values changed, replaced, removed or added.
   core::Value Mutate(const core::Value& base, int depth)
   {
     const auto* object = std::get_if<Object>(&base.data);
@@ -274,7 +260,7 @@ public:
     for (const auto& [key, value] : object->GetEntries()) {
       std::uint64_t choice = Below(8);
       if (choice == 0) {
-        continue; // removed
+        continue;
       }
       if (choice == 1) {
         mutated.Insert(key, Any(depth));
@@ -327,15 +313,12 @@ DESCRIBE("Calamus conformance", {
 
         ASSERT_TRUE(BlockMarksMatch(written));
 
-        // Regenerating the loaded entity is a fixed point.
         std::string regenerated = Write(loaded.value, base);
         ASSERT_EQUAL(Heal(regenerated, base), regenerated);
         if (Canonical(expected) == Canonical(entity)) {
           ASSERT_EQUAL(regenerated, written);
         }
 
-        // Every '*' removed by hand: each override is a hand edit again, and
-        // healing puts the marks back.
         calamus::LoadResult unmarked = Load(StripMarks(regenerated), base);
         ASSERT_EQUAL(Canonical(unmarked.value), Canonical(loaded.value));
         ASSERT_EQUAL(unmarked.promoted.size(), loaded.overrides.size());

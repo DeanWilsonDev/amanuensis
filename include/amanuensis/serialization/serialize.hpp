@@ -121,7 +121,6 @@ template <typename T> FromValueResult<T> TryFromValue(const core::Value& jsonVal
 }
 
 #ifndef AMANUENSIS_NO_COMPAT
-// Old names, kept until the consumer sweep (see compat.hpp).
 template <typename T> using FromJsonResult = FromValueResult<T>;
 
 template <typename T> core::Value ToJson(const T& value)

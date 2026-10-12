@@ -37,10 +37,6 @@ ReadResult Reader::ParseFile(const std::filesystem::path& path)
   return ParseDocument(fileContent);
 }
 
-// -----------------------------------------------------------------------
-// Load
-// -----------------------------------------------------------------------
-
 static bool Same(const core::Value& left, const core::Value& right)
 {
   return core::Diff(left, right).empty();

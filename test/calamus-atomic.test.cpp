@@ -113,7 +113,6 @@ static calamus::WriterOptions Atomic(std::vector<core::KeyPath> paths)
   return options;
 }
 
-// The body: the text after the header and its blank line.
 static std::string BodyOf(
     const core::Value& entity,
     const core::Value& base,

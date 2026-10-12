@@ -40,20 +40,18 @@ static std::string HashLine(std::uint64_t hash)
   return buffer;
 }
 
-// A header whose @base_hash matches base, so the base hasn't changed.
 static std::string Unchanged(const core::Value& base)
 {
   return "@version 1\n@type Door\n" + HashLine(core::StableHash(calamus::Canonicalise(base))) +
          "\n";
 }
 
-// A header whose @base_hash matches some other base, so the base has changed.
 static const std::string Changed = "@version 1\n@type Door\n@base_hash 0123456789abcdef\n\n";
 
 static const std::string Unhashed = "@version 1\n@type Door\n\n";
 
-// Loads text over base. A parse error comes back as the loaded value, so a
-// test that compares the value shows it.
+// A parse error comes back as the loaded value, so a test that compares the
+// value shows it.
 static calamus::LoadResult Load(const std::string& text, const core::Value& base)
 {
   auto read = calamus::Reader::ParseString(text);
@@ -65,7 +63,6 @@ static calamus::LoadResult Load(const std::string& text, const core::Value& base
   return calamus::Reader::Load(read.document, base);
 }
 
-// Each path dotted, separated by spaces.
 static std::string Paths(const std::vector<core::KeyPath>& paths)
 {
   std::string joined;
@@ -92,7 +89,6 @@ static std::uint64_t Bits(double value)
   return std::bit_cast<std::uint64_t>(value);
 }
 
-// {"x": 0.1f}, as a float field's ToValue gives it.
 static core::Value FloatBase()
 {
   core::Value base = Json(R"({"x":0.0})");

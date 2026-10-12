@@ -281,8 +281,6 @@ DESCRIBE("Migration", {
       ASSERT_EQUAL(door.position.x, 4.0);
       ASSERT_EQUAL(door.angle, std::numbers::pi / 2.0);
 
-      // The next save writes the current version, which loads with nothing to
-      // migrate.
       std::string saved =
           calamus::Writer::WriteToString(read.document.header, loaded.value, base).text;
       ASSERT_TRUE(saved.starts_with("@version 3\n"));

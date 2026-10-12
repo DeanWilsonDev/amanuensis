@@ -18,7 +18,6 @@ static std::string Minified(const core::Value& value)
   return amanuensis::json::Writer::WriteToString(value, options);
 }
 
-// The body as minified JSON, or the error.
 static std::string BodyOf(std::string_view body)
 {
   auto result = calamus::Reader::ParseString(Header + std::string(body));
@@ -28,7 +27,6 @@ static std::string BodyOf(std::string_view body)
   return Minified(result.document.body);
 }
 
-// "line:column message", or "ok" when the text reads.
 static std::string ErrorOf(std::string_view text)
 {
   auto result = calamus::Reader::ParseString(text);
@@ -44,7 +42,6 @@ static std::string BodyErrorOf(std::string_view body)
   return ErrorOf(Header + std::string(body));
 }
 
-// Each field as its dotted path, with a '*' when it's marked.
 static std::string FieldsOf(std::string_view body)
 {
   auto result = calamus::Reader::ParseString(Header + std::string(body));
