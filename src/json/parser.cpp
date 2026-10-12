@@ -1,10 +1,9 @@
 #include "parser.hpp"
 #include "amanuensis/json.hpp"
+#include "core/number-format.hpp"
 #include "core/quoted-string.hpp"
 
-#include <charconv>
 #include <string_view>
-#include <cctype>
 
 namespace amanuensis::json {
 
@@ -85,111 +84,12 @@ core::ParseResult Parser::ParseFalse()
 }
 
 // -----------------------------------------------------------------------
-// Numbers
-//
-// Strategy: identify the span of characters that form the number literal,
-// then decide whether it's integer or double based on the presence of
-// '.', 'e', or 'E'.  Parse accordingly.
+// Numbers — shared with every format, see core/number-format.hpp.
 // -----------------------------------------------------------------------
 
 core::ParseResult Parser::ParseNumber()
 {
-  std::size_t startPosition = cursor.Position();
-  int startLine = cursor.Line();
-  int startColumn = cursor.Column();
-
-  bool isFloatingPoint = false;
-
-  // Optional leading minus
-  if (cursor.Peek() == '-') {
-    cursor.Advance();
-  }
-
-  // Integer part
-  if (cursor.IsAtEnd() || !std::isdigit(static_cast<unsigned char>(cursor.Peek()))) {
-    return cursor.MakeError("Expected digit after '-'");
-  }
-
-  if (cursor.Peek() == '0') {
-    cursor.Advance();
-    // Leading zero must not be followed by another digit (RFC 8259)
-    if (!cursor.IsAtEnd() && std::isdigit(static_cast<unsigned char>(cursor.Peek()))) {
-      return cursor.MakeError("Leading zeros are not allowed in numbers");
-    }
-  }
-  else {
-    while (!cursor.IsAtEnd() && std::isdigit(static_cast<unsigned char>(cursor.Peek()))) {
-      cursor.Advance();
-    }
-  }
-
-  // Fractional part
-  if (!cursor.IsAtEnd() && cursor.Peek() == '.') {
-    isFloatingPoint = true;
-    cursor.Advance();
-    if (cursor.IsAtEnd() || !std::isdigit(static_cast<unsigned char>(cursor.Peek()))) {
-      return cursor.MakeError("Expected digit after decimal point");
-    }
-    while (!cursor.IsAtEnd() && std::isdigit(static_cast<unsigned char>(cursor.Peek()))) {
-      cursor.Advance();
-    }
-  }
-
-  // Exponent part
-  if (!cursor.IsAtEnd() && (cursor.Peek() == 'e' || cursor.Peek() == 'E')) {
-    isFloatingPoint = true;
-    cursor.Advance();
-    if (!cursor.IsAtEnd() && (cursor.Peek() == '+' || cursor.Peek() == '-')) {
-      cursor.Advance();
-    }
-    if (cursor.IsAtEnd() || !std::isdigit(static_cast<unsigned char>(cursor.Peek()))) {
-      return cursor.MakeError("Expected digit in exponent");
-    }
-    while (!cursor.IsAtEnd() && std::isdigit(static_cast<unsigned char>(cursor.Peek()))) {
-      cursor.Advance();
-    }
-  }
-
-  std::string_view numberText = cursor.Slice(startPosition);
-
-  if (isFloatingPoint) {
-    // Parse as double
-    double doubleValue = 0.0;
-    auto [endPointer, errorCode] =
-        std::from_chars(numberText.data(), numberText.data() + numberText.size(), doubleValue);
-    if (errorCode != std::errc()) {
-      return core::ParseResult{
-          false, core::Value(),
-          core::ParseError{"Failed to parse floating-point number", startLine, startColumn}
-      };
-    }
-    return core::ParseResult{true, core::Value(doubleValue), {}};
-  }
-  else {
-    // Try integer first; fall back to double on overflow
-    long long integerValue = 0;
-    auto [endPointer, errorCode] =
-        std::from_chars(numberText.data(), numberText.data() + numberText.size(), integerValue);
-    if (errorCode == std::errc::result_out_of_range) {
-      // Overflow — fall back to double silently, as per design doc
-      double fallbackDouble = 0.0;
-      auto [dblEnd, dblErr] =
-          std::from_chars(numberText.data(), numberText.data() + numberText.size(), fallbackDouble);
-      if (dblErr != std::errc()) {
-        return core::ParseResult{
-            false, core::Value(),
-            core::ParseError{"Failed to parse number (overflow)", startLine, startColumn}
-        };
-      }
-      return core::ParseResult{true, core::Value(fallbackDouble), {}};
-    }
-    if (errorCode != std::errc()) {
-      return core::ParseResult{
-          false, core::Value(), core::ParseError{"Failed to parse integer", startLine, startColumn}
-      };
-    }
-    return core::ParseResult{true, core::Value(integerValue), {}};
-  }
+  return core::ParseNumber(cursor);
 }
 
 // -----------------------------------------------------------------------

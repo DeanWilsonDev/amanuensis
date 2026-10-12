@@ -140,6 +140,69 @@ DESCRIBE("Shared text helpers", {
     });
   });
 
+  DESCRIBE("Number reading", {
+    IT("reads digits alone as an Integer and leaves the cursor after them", {
+      core::Cursor cursor("-42 rest");
+      auto result = core::ParseNumber(cursor);
+      REQUIRE_TRUE(result.succeeded);
+      ASSERT_TRUE(amanuensis::Json::IsInteger(result.value));
+      ASSERT_EQUAL(amanuensis::Json::AsInteger(result.value), -42LL);
+      ASSERT_EQUAL(cursor.Peek(), ' ');
+    });
+
+    IT("reads a '.' or an exponent as a Double", {
+      core::Cursor fraction("1.0");
+      auto fractionResult = core::ParseNumber(fraction);
+      REQUIRE_TRUE(fractionResult.succeeded);
+      ASSERT_TRUE(amanuensis::Json::IsDouble(fractionResult.value));
+      ASSERT_EQUAL(amanuensis::Json::AsDouble(fractionResult.value), 1.0);
+
+      core::Cursor exponent("2e3");
+      auto exponentResult = core::ParseNumber(exponent);
+      REQUIRE_TRUE(exponentResult.succeeded);
+      ASSERT_TRUE(amanuensis::Json::IsDouble(exponentResult.value));
+      ASSERT_EQUAL(amanuensis::Json::AsDouble(exponentResult.value), 2000.0);
+    });
+
+    IT("reads an integer that overflows long long as a Double", {
+      core::Cursor cursor("9223372036854775808");
+      auto result = core::ParseNumber(cursor);
+      REQUIRE_TRUE(result.succeeded);
+      ASSERT_TRUE(amanuensis::Json::IsDouble(result.value));
+      ASSERT_EQUAL(amanuensis::Json::AsDouble(result.value), 9223372036854775808.0);
+    });
+
+    IT("rejects a leading zero at its line and column", {
+      core::Cursor cursor("\n012");
+      cursor.Advance();
+      auto result = core::ParseNumber(cursor);
+      ASSERT_FALSE(result.succeeded);
+      ASSERT_EQUAL(result.error.message, std::string("Leading zeros are not allowed in numbers"));
+      ASSERT_EQUAL(result.error.line, 2);
+      ASSERT_EQUAL(result.error.column, 2);
+    });
+
+    IT("rejects a '.' with no digits after it", {
+      core::Cursor cursor("1.");
+      auto result = core::ParseNumber(cursor);
+      ASSERT_FALSE(result.succeeded);
+      ASSERT_EQUAL(result.error.message, std::string("Expected digit after decimal point"));
+      ASSERT_EQUAL(result.error.column, 3);
+    });
+
+    IT("reads back what it writes", {
+      std::string written = FormatDouble(0.1);
+      core::Cursor cursor(written);
+      auto result = core::ParseNumber(cursor);
+      REQUIRE_TRUE(result.succeeded);
+      ASSERT_EQUAL(
+          std::bit_cast<std::uint64_t>(amanuensis::Json::AsDouble(result.value)),
+          std::bit_cast<std::uint64_t>(0.1)
+      );
+      ASSERT_TRUE(cursor.IsAtEnd());
+    });
+  });
+
   DESCRIBE("Number formatting", {
     IT("writes integers in plain decimal", {
       ASSERT_EQUAL(FormatInteger(0), std::string("0"));
