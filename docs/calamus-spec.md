@@ -147,7 +147,7 @@ Marks anywhere else are informational, and the writer regenerates them: on a blo
 
 ### Load
 
-The reader is given the file and the canonical base. It reads every honoured line as a *(key path, value, marked)* entry, then decides each one:
+The reader is given the file and the base, and canonicalises the base. It reads every honoured line as a *(key path, value, marked)* entry, then decides each one. A line *differs* from the base when applying it would change the base, so an empty block over an object the base has is equal to it **(proposed)**:
 
 | Line | Compared with the base | `@base_hash` | Result | Reported as | Sets `needsRewrite` |
 | --- | --- | --- | --- | --- | --- |
@@ -165,7 +165,7 @@ The loaded value is `core::Overlay(base, overrides)`. Keys the file doesn't ment
 - **Marked fields the base doesn't have** are kept as additions, not rejected, and listed in `additions` so tooling can flag an override of nothing **(proposed)**. This replaces the review's "error with line and column" (hole 8): it lets objects with open-ended keys, such as a `std::map` field, gain entries. It also doesn't stop a level loading because a prefab dropped a field.
 - **`needsRewrite`** is set only by things a person did to this file (`promoted`, `reset`). Changes to the base (`refreshed`, `stale`, a stale `@base_hash`, override review) wait for the next save, so one prefab edit doesn't rewrite every entity that uses it **(proposed)**. A missing `@id` doesn't set it either: Umbra assigns the ID and writes the file back itself.
 - **`needsRewrite` means "regenerating may change the text"**, not "the file is wrong". The caller regenerates the text and writes it only if it differs from the file on disk. A clean file therefore never produces a diff. One expected case is an atomic object: the writer marks its components that equal the base, so a reload reports them as `reset`, and regenerating gives identical text, so nothing is written.
-- **Override review.** A marked line can carry the base value it overrides, after `|` (see [Recorded defaults](#recorded-defaults)). When that recorded default differs from the current canonical base, the base has moved under the override. The field is listed in `moved` so a designer can check the override still makes sense.
+- **Override review.** A marked line can carry the base value it overrides, after `|` (see [Recorded defaults](#recorded-defaults)). When that recorded default differs from the current canonical base, or the base no longer has the field, the base has moved under the override. The field is listed in `moved` so a designer can check the override still makes sense.
 - **The reader never writes.** Writing a healed file back is the caller's decision, and shipped builds never do it.
 
 ### Write
@@ -258,3 +258,4 @@ These were made while writing the spec and the reader:
 11. **A future `@calamus N` header** for syntax versions, which v1 readers reject.
 12. **A leading BOM** is skipped on read.
 13. **Only field lines carry a recorded default.** A `|` on a `- value` item line is an error, since the writer never puts one there.
+14. **A field differs from the base when applying it would change the base.** An empty block over an object the base has is then equal to it, since keys the file doesn't mention come from the base.

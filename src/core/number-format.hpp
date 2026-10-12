@@ -28,4 +28,8 @@ void AppendInteger(std::string& output, long long value);
 // value must be finite. Each format decides how to write NaN and infinity.
 void AppendDouble(std::string& output, double value);
 
+// The shortest form that reads back as the same float, with the same ".0"
+// rule. value must be finite.
+void AppendFloat(std::string& output, float value);
+
 } // namespace amanuensis::core

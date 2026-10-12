@@ -127,7 +127,8 @@ void AppendInteger(std::string& output, long long value)
   output.append(formatBuffer, static_cast<std::size_t>(endPointer - formatBuffer));
 }
 
-void AppendDouble(std::string& output, double value)
+template <typename TFloatingPoint>
+static void AppendShortest(std::string& output, TFloatingPoint value)
 {
   char formatBuffer[64];
   auto [endPointer, errorCode] =
@@ -138,6 +139,16 @@ void AppendDouble(std::string& output, double value)
   if (formatted.find_first_of(".eE") == std::string_view::npos) {
     output.append(".0");
   }
+}
+
+void AppendDouble(std::string& output, double value)
+{
+  AppendShortest(output, value);
+}
+
+void AppendFloat(std::string& output, float value)
+{
+  AppendShortest(output, value);
 }
 
 } // namespace amanuensis::core

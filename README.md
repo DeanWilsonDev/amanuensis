@@ -57,6 +57,7 @@ Or include individual headers as needed:
 #include <amanuensis/json.hpp>                         // amanuensis::Json, the operations on a Value
 #include <amanuensis/json/reader.hpp>                  // amanuensis::json::Reader
 #include <amanuensis/json/writer.hpp>                  // amanuensis::json::Writer
+#include <amanuensis/calamus/reader.hpp>               // amanuensis::calamus::Reader
 #include <amanuensis/serialization/serialization.hpp>  // ToValue, FromValue, AMANUENSIS_SERIALISABLE
 ```
 
@@ -86,7 +87,7 @@ cmake --build build
 
 ## API
 
-The data model and everything the formats share lives in `amanuensis::core`, and the JSON reader and writer live in `amanuensis::json`. The serialisation layer (`ToValue`, `FromValue`, `SerialTraits`) is in `amanuensis`. For now, the operations on a `Value` are static functions on `amanuensis::Json`.
+The data model and everything the formats share lives in `amanuensis::core`, the JSON reader and writer live in `amanuensis::json`, and the Calamus reader lives in `amanuensis::calamus`. The serialisation layer (`ToValue`, `FromValue`, `SerialTraits`) is in `amanuensis`. For now, the operations on a `Value` are static functions on `amanuensis::Json`.
 
 Until consumers have moved over, `<amanuensis/compat.hpp>` (pulled in by every public header) keeps the old names working:
 
@@ -207,6 +208,27 @@ std::vector<amanuensis::core::KeyPath> changed = amanuensis::core::Diff(prefab, 
 // FNV-1a 64 over a fixed encoding: the same on every compiler, and key order doesn't matter.
 std::uint64_t hash = amanuensis::core::StableHash(prefab);
 ```
+
+### Reading Calamus
+
+Calamus is a line-based entity format with one field per line, where a `*` in the first column marks the fields that override the entity's base. [docs/calamus-spec.md](docs/calamus-spec.md) defines it. Reading happens in two steps, because the header names the base and the caller has to resolve it:
+
+```cpp
+auto read = amanuensis::calamus::Reader::ParseFile("entities/door_01.calamus");
+if (!read.succeeded) {
+    std::cerr << read.error.line << ":" << read.error.column << " — " << read.error.message << "\n";
+    return 1;
+}
+
+// @version, @type, and optionally @id, @base and @base_hash.
+const amanuensis::calamus::Header& header = read.document.header;
+amanuensis::core::Value prefab = FindPrefab(header.base, header.type);  // the caller's own lookup
+
+auto loaded = amanuensis::calamus::Reader::Load(read.document, prefab);
+amanuensis::core::Value entity = loaded.value;  // the prefab with the marked fields applied
+```
+
+`Load` never writes. When a person has edited the file by hand, for example by changing a value without adding its `*`, it sets `needsRewrite` and lists the field under `promoted` or `reset`. The caller can then regenerate the text and write it if it changed. Changes to the base are reported as `refreshed`, `stale` and `moved`, and they wait for the next save.
 
 ---
 

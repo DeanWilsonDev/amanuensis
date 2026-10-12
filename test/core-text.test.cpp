@@ -226,6 +226,18 @@ DESCRIBE("Shared text helpers", {
       ASSERT_EQUAL(FormatDouble(1e-7), std::string("1e-07"));
     });
 
+    IT("writes a float in the shortest form that reads back as that float", {
+      std::string output;
+      core::AppendFloat(output, 0.1f);
+      ASSERT_EQUAL(output, std::string("0.1"));
+      output.clear();
+      core::AppendFloat(output, 2.0f);
+      ASSERT_EQUAL(output, std::string("2.0"));
+      output.clear();
+      core::AppendFloat(output, 1e20f);
+      ASSERT_EQUAL(output, std::string("1e+20"));
+    });
+
     IT("reads back bit-identical", {
       ASSERT_TRUE(ReadsBackIdentical(0.1));
       ASSERT_TRUE(ReadsBackIdentical(-0.0));
