@@ -84,7 +84,7 @@ After the header, every non-blank line is a body line:
 ```
 
 - **Marker column.** Column 1 is `*` or a space, and column 2 is a space. Toggling the marker is a one-character change that never shifts alignment.
-- **Indent.** After those two columns, two spaces per level. Tabs are an error, and so is an odd number of spaces or a line more than one level deeper than its parent.
+- **Indent.** After those two columns, two spaces per level. Tabs are an error, and so is an odd number of spaces, a line more than one level deeper than its parent, or a line indented under one that doesn't open a block.
 - **Content** is one of:
 
 | Content | Line kind | Means |
@@ -189,6 +189,7 @@ Some objects only make sense as a whole, such as a quaternion or a colour. Wheth
 
 - The writer adds ` | <base value>` to a marked field line when the base has a scalar or inline array at that path. It doesn't add one to array blocks, to lines inside arrays, or to additions.
 - **Informational only.** The reader never loads the value after `|`. It must still be a valid scalar or inline array, and it's used only for the override review. Deleting from `|` to the end of the line removes it.
+- Only a field line can carry one. A `|` after an item line's value is an error **(proposed)**.
 - An unmarked line with a recorded default, left behind by deleting the `*`, is allowed. Its value is promoted or ignored like any other unmarked line, and the next save drops the default.
 - **Resetting a field.** Copy the recorded default over the value, or delete the line. Either way the field equals the base, so it follows the base, and the next save drops the `*`.
 
@@ -203,10 +204,14 @@ Every error stops the load and reports a message with a line and column, through
 | Tabs aren't allowed in indentation | |
 | Indentation must be a multiple of two spaces | |
 | Indented more than one level under the line above | |
+| Only a block line can have lines indented under it | `x : 1` with `y : 2` indented under it |
 | Duplicate key | The second `x` in one object |
 | A block can't mix fields and `-` items | |
 | `-` items can only appear inside an array block | |
 | Comments aren't supported in Calamus v1 | `x : 1  # note` |
+| Strings must be quoted | `name : door` |
+| Objects can't be written inline | `light : {}` |
+| A recorded default can only follow a field's value | `- 1 \| 0` |
 | A carriage return not followed by a line feed | |
 | Unknown, repeated or late header line, or a missing `@version` or `@type` | |
 | Invalid header value | `@id xyz` |
@@ -238,7 +243,7 @@ These stay in Umbra: finding and loading prefabs and resolving prefab chains (ha
 
 ## Rulings to review
 
-These were made while writing the spec:
+These were made while writing the spec and the reader:
 
 1. **Canonical values** (hole 4). Compare and hash canonicalised values, or `float` fields mismatch their base after every round trip.
 2. **Marked fields the base lacks are additions**, not errors (hole 8). They support map-like objects and don't block loading.
@@ -252,3 +257,4 @@ These were made while writing the spec:
 10. **Header values:** `@type` as a bare name, `@id` as 1 to 16 hex digits, and `@base_hash` as exactly 16.
 11. **A future `@calamus N` header** for syntax versions, which v1 readers reject.
 12. **A leading BOM** is skipped on read.
+13. **Only field lines carry a recorded default.** A `|` on a `- value` item line is an error, since the writer never puts one there.
