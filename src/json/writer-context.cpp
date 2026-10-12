@@ -1,5 +1,5 @@
 #include "writer-context.hpp"
-#include "amanuensis/json.hpp"
+#include "amanuensis/core/value.hpp"
 #include "core/number-format.hpp"
 #include "core/quoted-string.hpp"
 #include <cmath>
@@ -22,7 +22,7 @@ void WriterContext::WriteArray(
     const WriterOptions& options
 )
 {
-  const auto& elements = Json::AsArray(arrayValue);
+  const auto& elements = arrayValue.AsArray();
   if (elements.empty()) {
     output.append("[]");
     return;
@@ -55,7 +55,7 @@ void WriterContext::WriteObject(
     const WriterOptions& options
 )
 {
-  if (Json::Size(objectValue) == 0) {
+  if (objectValue.Size() == 0) {
     output.append("{}");
     return;
   }
@@ -66,10 +66,9 @@ void WriterContext::WriteObject(
   }
 
   std::size_t entryIndex = 0;
-  std::size_t totalEntries = Json::Size(objectValue);
+  std::size_t totalEntries = objectValue.Size();
 
-  for (auto iterator = Json::BeginObject(objectValue); iterator != Json::EndObject(objectValue);
-       ++iterator) {
+  for (auto iterator = objectValue.BeginObject(); iterator != objectValue.EndObject(); ++iterator) {
     WriteIndent(output, depth + 1, options);
     core::AppendQuotedString(output, iterator->first);
     output.push_back(':');
@@ -97,21 +96,21 @@ void WriterContext::WriteValue(
     const WriterOptions& options
 )
 {
-  switch (Json::GetType(value)) {
+  switch (value.GetType()) {
   case core::ValueType::Null:
     output.append("null");
     break;
 
   case core::ValueType::Boolean:
-    output.append(Json::AsBoolean(value) ? "true" : "false");
+    output.append(value.AsBoolean() ? "true" : "false");
     break;
 
   case core::ValueType::Integer:
-    core::AppendInteger(output, Json::AsInteger(value));
+    core::AppendInteger(output, value.AsInteger());
     break;
 
   case core::ValueType::Double: {
-    double doubleValue = Json::AsDouble(value);
+    double doubleValue = value.AsDouble();
     if (std::isnan(doubleValue) || std::isinf(doubleValue)) {
       // JSON has no NaN/Inf — emit null as a safe fallback.
       output.append("null");
@@ -123,7 +122,7 @@ void WriterContext::WriteValue(
   }
 
   case core::ValueType::String:
-    core::AppendQuotedString(output, Json::AsString(value));
+    core::AppendQuotedString(output, value.AsString());
     break;
 
   case core::ValueType::Array:

@@ -146,15 +146,15 @@ template <typename FieldType> void ReadArchive::Field(const char* jsonKey, Field
 {
   // std::optional fields: missing or null key → leave empty
   if constexpr (detail::IsOptional<FieldType>::value) {
-    const core::Value* found = Json::Find(source_, jsonKey);
-    if (found == nullptr || Json::IsNull(*found)) {
+    const core::Value* found = source_.Find(jsonKey);
+    if (found == nullptr || found->IsNull()) {
       fieldValue = std::nullopt;
       return;
     }
     fieldValue = FromValue<typename FieldType::value_type>(*found);
   }
   else {
-    const core::Value* found = Json::Find(source_, jsonKey);
+    const core::Value* found = source_.Find(jsonKey);
     if (found == nullptr) {
       throw core::KeyNotFoundError(std::string("Missing required field: \"") + jsonKey + "\"");
     }
@@ -169,7 +169,7 @@ template <typename FieldType> void ReadArchive::Field(const char* jsonKey, Field
 template <typename FieldType>
 void WriteArchive::Field(const char* jsonKey, const FieldType& fieldValue)
 {
-  Json::Insert(object_, std::string(jsonKey), ToValue<FieldType>(fieldValue));
+  object_.Insert(std::string(jsonKey), ToValue<FieldType>(fieldValue));
 }
 
 } // namespace amanuensis

@@ -2,7 +2,7 @@
 #include <amanuensis/core/diff.hpp>
 #include <amanuensis/core/overlay.hpp>
 #include <amanuensis/core/stable-hash.hpp>
-#include <amanuensis/json.hpp>
+#include <amanuensis/core/value.hpp>
 #include <amanuensis/json/reader.hpp>
 #include <amanuensis/json/writer.hpp>
 

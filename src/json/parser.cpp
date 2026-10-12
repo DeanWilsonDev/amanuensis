@@ -1,5 +1,5 @@
 #include "parser.hpp"
-#include "amanuensis/json.hpp"
+#include "amanuensis/core/value.hpp"
 #include "core/number-format.hpp"
 #include "core/quoted-string.hpp"
 
@@ -106,7 +106,7 @@ core::ParseResult Parser::ParseArray()
   cursor.Advance(); // consume '['
   SkipWhitespace();
 
-  core::Value arrayValue = Json::MakeArray();
+  core::Value arrayValue = core::Value::MakeArray();
 
   if (!cursor.IsAtEnd() && cursor.Peek() == ']') {
     cursor.Advance();
@@ -120,7 +120,7 @@ core::ParseResult Parser::ParseArray()
     if (!elementResult.succeeded) {
       return elementResult;
     }
-    Json::PushBack(arrayValue, std::move(elementResult.value));
+    arrayValue.PushBack(std::move(elementResult.value));
 
     this->SkipWhitespace();
 
@@ -153,7 +153,7 @@ core::ParseResult Parser::ParseObject()
   cursor.Advance(); // consume '{'
   this->SkipWhitespace();
 
-  core::Value objectValue = Json::MakeObject();
+  core::Value objectValue = core::Value::MakeObject();
 
   if (!cursor.IsAtEnd() && cursor.Peek() == '}') {
     cursor.Advance();
@@ -171,7 +171,7 @@ core::ParseResult Parser::ParseObject()
     if (!keyResult.succeeded) {
       return keyResult;
     }
-    std::string key = Json::AsString(keyResult.value);
+    std::string key = keyResult.value.AsString();
 
     this->SkipWhitespace();
 
@@ -187,7 +187,7 @@ core::ParseResult Parser::ParseObject()
       return valueResult;
     }
 
-    Json::Insert(objectValue, std::move(key), std::move(valueResult.value));
+    objectValue.Insert(std::move(key), std::move(valueResult.value));
 
     this->SkipWhitespace();
 

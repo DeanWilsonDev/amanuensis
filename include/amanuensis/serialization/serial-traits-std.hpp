@@ -14,9 +14,9 @@ template <typename ElementType>
 core::Value
 SerialTraits<std::vector<ElementType>>::ToValue(const std::vector<ElementType>& elements)
 {
-  core::Value arrayValue = Json::MakeArray();
+  core::Value arrayValue = core::Value::MakeArray();
   for (const auto& element : elements) {
-    Json::PushBack(arrayValue, amanuensis::ToValue<ElementType>(element));
+    arrayValue.PushBack(amanuensis::ToValue<ElementType>(element));
   }
   return arrayValue;
 }
@@ -24,7 +24,7 @@ SerialTraits<std::vector<ElementType>>::ToValue(const std::vector<ElementType>& 
 template <typename ElementType>
 std::vector<ElementType> SerialTraits<std::vector<ElementType>>::FromValue(const core::Value& value)
 {
-  const auto& rawArray = Json::AsArray(value);
+  const auto& rawArray = value.AsArray();
   std::vector<ElementType> result;
   result.reserve(rawArray.size());
   for (const auto& element : rawArray) {
@@ -47,7 +47,7 @@ template <typename WrappedType>
 std::optional<WrappedType>
 SerialTraits<std::optional<WrappedType>>::FromValue(const core::Value& value)
 {
-  if (Json::IsNull(value)) {
+  if (value.IsNull()) {
     return std::nullopt;
   }
   return amanuensis::FromValue<WrappedType>(value);
@@ -58,9 +58,9 @@ core::Value SerialTraits<std::map<std::string, MappedType>>::ToValue(
     const std::map<std::string, MappedType>& entries
 )
 {
-  core::Value objectValue = Json::MakeObject();
+  core::Value objectValue = core::Value::MakeObject();
   for (const auto& [key, mappedValue] : entries) {
-    Json::Insert(objectValue, key, amanuensis::ToValue<MappedType>(mappedValue));
+    objectValue.Insert(key, amanuensis::ToValue<MappedType>(mappedValue));
   }
   return objectValue;
 }
@@ -70,7 +70,7 @@ std::map<std::string, MappedType>
 SerialTraits<std::map<std::string, MappedType>>::FromValue(const core::Value& value)
 {
   std::map<std::string, MappedType> result;
-  for (auto iterator = Json::BeginObject(value); iterator != Json::EndObject(value); ++iterator) {
+  for (auto iterator = value.BeginObject(); iterator != value.EndObject(); ++iterator) {
     result[iterator->first] = amanuensis::FromValue<MappedType>(iterator->second);
   }
   return result;

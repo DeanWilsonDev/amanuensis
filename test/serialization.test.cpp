@@ -3,7 +3,7 @@
 #include <amanuensis/json/reader.hpp>
 #include <amanuensis/json/writer.hpp>
 #include <amanuensis/core/parse-result.hpp>
-#include <amanuensis/json.hpp>
+#include <amanuensis/core/value.hpp>
 
 #include <cmath>
 #include <map>
@@ -54,18 +54,15 @@ namespace amanuensis {
 template <> struct SerialTraits<Vec3> {
   static core::Value ToValue(const Vec3& vector)
   {
-    core::Value array_value = Json::MakeArray();
-    Json::PushBack(array_value, core::Value{vector.x});
-    Json::PushBack(array_value, core::Value{vector.y});
-    Json::PushBack(array_value, core::Value{vector.z});
+    core::Value array_value = amanuensis::core::Value::MakeArray();
+    array_value.PushBack(core::Value{vector.x});
+    array_value.PushBack(core::Value{vector.y});
+    array_value.PushBack(core::Value{vector.z});
     return array_value;
   }
   static Vec3 FromValue(const core::Value& value)
   {
-    return {
-        Json::AsDouble(Json::At(value, 0)), Json::AsDouble(Json::At(value, 1)),
-        Json::AsDouble(Json::At(value, 2))
-    };
+    return {value.At(0).AsDouble(), value.At(1).AsDouble(), value.At(2).AsDouble()};
   }
 };
 } // namespace amanuensis
@@ -197,24 +194,13 @@ DESCRIBE("Serialisation", {
       auto original = MakeTestCoverage();
       amanuensis::core::Value json_value = amanuensis::ToValue(original);
 
-      ASSERT_TRUE(amanuensis::Json::IsObject(json_value));
-      ASSERT_EQUAL(
-          amanuensis::Json::AsString(amanuensis::Json::Get(json_value, "qualifiedName")),
-          std::string("math::Add")
-      );
-      ASSERT_EQUAL(
-          amanuensis::Json::AsInteger(amanuensis::Json::Get(json_value, "startLine")), 10LL
-      );
-      ASSERT_EQUAL(amanuensis::Json::AsInteger(amanuensis::Json::Get(json_value, "endLine")), 14LL);
-      ASSERT_EQUAL(
-          amanuensis::Json::AsInteger(amanuensis::Json::Get(json_value, "linesTotal")), 5LL
-      );
-      ASSERT_EQUAL(
-          amanuensis::Json::AsInteger(amanuensis::Json::Get(json_value, "linesCovered")), 5LL
-      );
-      ASSERT_EQUAL(
-          amanuensis::Json::AsInteger(amanuensis::Json::Get(json_value, "executionCount")), 3LL
-      );
+      ASSERT_TRUE(json_value.IsObject());
+      ASSERT_EQUAL(json_value.Get("qualifiedName").AsString(), std::string("math::Add"));
+      ASSERT_EQUAL(json_value.Get("startLine").AsInteger(), 10LL);
+      ASSERT_EQUAL(json_value.Get("endLine").AsInteger(), 14LL);
+      ASSERT_EQUAL(json_value.Get("linesTotal").AsInteger(), 5LL);
+      ASSERT_EQUAL(json_value.Get("linesCovered").AsInteger(), 5LL);
+      ASSERT_EQUAL(json_value.Get("executionCount").AsInteger(), 3LL);
     });
 
     IT("deserialises JSON back to a struct", {
@@ -233,9 +219,9 @@ DESCRIBE("Serialisation", {
     IT("uses C++ field names as JSON keys", {
       auto original = MakeMinimalCoverage();
       amanuensis::core::Value json_value = amanuensis::ToValue(original);
-      ASSERT_TRUE(amanuensis::Json::Contains(json_value, "qualifiedName"));
-      ASSERT_TRUE(amanuensis::Json::Contains(json_value, "startLine"));
-      ASSERT_TRUE(amanuensis::Json::Contains(json_value, "endLine"));
+      ASSERT_TRUE(json_value.Contains("qualifiedName"));
+      ASSERT_TRUE(json_value.Contains("startLine"));
+      ASSERT_TRUE(json_value.Contains("endLine"));
     });
   });
 
@@ -244,22 +230,17 @@ DESCRIBE("Serialisation", {
       auto original = MakeRenamedFields();
       amanuensis::core::Value json_value = amanuensis::ToValue(original);
 
-      ASSERT_TRUE(amanuensis::Json::Contains(json_value, "display_name"));
-      ASSERT_TRUE(amanuensis::Json::Contains(json_value, "item_count"));
-      ASSERT_FALSE(amanuensis::Json::Contains(json_value, "name"));
-      ASSERT_FALSE(amanuensis::Json::Contains(json_value, "count"));
+      ASSERT_TRUE(json_value.Contains("display_name"));
+      ASSERT_TRUE(json_value.Contains("item_count"));
+      ASSERT_FALSE(json_value.Contains("name"));
+      ASSERT_FALSE(json_value.Contains("count"));
     });
 
     IT("serialises with renamed keys", {
       auto original = MakeRenamedFields();
       amanuensis::core::Value json_value = amanuensis::ToValue(original);
-      ASSERT_EQUAL(
-          amanuensis::Json::AsString(amanuensis::Json::Get(json_value, "display_name")),
-          std::string("Widget")
-      );
-      ASSERT_EQUAL(
-          amanuensis::Json::AsInteger(amanuensis::Json::Get(json_value, "item_count")), 42LL
-      );
+      ASSERT_EQUAL(json_value.Get("display_name").AsString(), std::string("Widget"));
+      ASSERT_EQUAL(json_value.Get("item_count").AsInteger(), 42LL);
     });
 
     IT("deserialises with renamed keys", {
@@ -276,8 +257,8 @@ DESCRIBE("Serialisation", {
     IT("serialises to an array", {
       auto original = MakeSimpleVec3();
       amanuensis::core::Value json_value = amanuensis::ToValue(original);
-      ASSERT_TRUE(amanuensis::Json::IsArray(json_value));
-      ASSERT_EQUAL(amanuensis::Json::Size(json_value), 3u);
+      ASSERT_TRUE(json_value.IsArray());
+      ASSERT_EQUAL(json_value.Size(), 3u);
     });
 
     IT("round-trips through ToValue and FromValue", {
@@ -301,7 +282,7 @@ DESCRIBE("Serialisation", {
     });
 
     IT("fails on missing required fields without throwing", {
-      amanuensis::core::Value empty_object = amanuensis::Json::MakeObject();
+      amanuensis::core::Value empty_object = amanuensis::core::Value::MakeObject();
       auto try_result = amanuensis::TryFromValue<PerFunctionCoverage>(empty_object);
       ASSERT_FALSE(try_result.succeeded);
       ASSERT_FALSE(try_result.errorMessage.empty());
@@ -311,7 +292,7 @@ DESCRIBE("Serialisation", {
   DESCRIBE("Built-in SerialTraits: floating point", {
     IT("round-trips a float exactly through a Value", {
       amanuensis::core::Value json_value = amanuensis::ToValue(0.1f);
-      ASSERT_TRUE(amanuensis::Json::IsDouble(json_value));
+      ASSERT_TRUE(json_value.IsDouble());
       ASSERT_EQUAL(amanuensis::FromValue<float>(json_value), 0.1f);
     });
 
@@ -352,10 +333,10 @@ DESCRIBE("Serialisation", {
     IT("serialises a vector of ints", {
       auto original = MakeIntVector();
       amanuensis::core::Value json_value = amanuensis::ToValue(original);
-      ASSERT_TRUE(amanuensis::Json::IsArray(json_value));
-      ASSERT_EQUAL(amanuensis::Json::Size(json_value), 3u);
-      ASSERT_EQUAL(amanuensis::Json::AsInteger(amanuensis::Json::At(json_value, 0)), 10LL);
-      ASSERT_EQUAL(amanuensis::Json::AsInteger(amanuensis::Json::At(json_value, 2)), 30LL);
+      ASSERT_TRUE(json_value.IsArray());
+      ASSERT_EQUAL(json_value.Size(), 3u);
+      ASSERT_EQUAL(json_value.At(0).AsInteger(), 10LL);
+      ASSERT_EQUAL(json_value.At(2).AsInteger(), 30LL);
     });
 
     IT("deserialises a vector of ints", {
@@ -370,15 +351,15 @@ DESCRIBE("Serialisation", {
     IT("handles an empty vector", {
       std::vector<int> empty_vector;
       amanuensis::core::Value json_value = amanuensis::ToValue(empty_vector);
-      ASSERT_TRUE(amanuensis::Json::IsArray(json_value));
-      ASSERT_EQUAL(amanuensis::Json::Size(json_value), 0u);
+      ASSERT_TRUE(json_value.IsArray());
+      ASSERT_EQUAL(json_value.Size(), 0u);
     });
 
     IT("serialises a vector of user types", {
       auto vectors = MakeVec3Vector();
       amanuensis::core::Value json_value = amanuensis::ToValue(vectors);
-      ASSERT_EQUAL(amanuensis::Json::Size(json_value), 2u);
-      ASSERT_EQUAL(amanuensis::Json::Size(amanuensis::Json::At(json_value, 0)), 3u);
+      ASSERT_EQUAL(json_value.Size(), 2u);
+      ASSERT_EQUAL(json_value.At(0).Size(), 3u);
     });
   });
 
@@ -386,14 +367,14 @@ DESCRIBE("Serialisation", {
     IT("serialises a present optional", {
       std::optional<int> present = 42;
       amanuensis::core::Value json_value = amanuensis::ToValue(present);
-      ASSERT_TRUE(amanuensis::Json::IsInteger(json_value));
-      ASSERT_EQUAL(amanuensis::Json::AsInteger(json_value), 42LL);
+      ASSERT_TRUE(json_value.IsInteger());
+      ASSERT_EQUAL(json_value.AsInteger(), 42LL);
     });
 
     IT("serialises an absent optional as null", {
       std::optional<int> absent = std::nullopt;
       amanuensis::core::Value json_value = amanuensis::ToValue(absent);
-      ASSERT_TRUE(amanuensis::Json::IsNull(json_value));
+      ASSERT_TRUE(json_value.IsNull());
     });
 
     IT("deserialises a present optional", {
@@ -414,9 +395,9 @@ DESCRIBE("Serialisation", {
     IT("serialises a string-keyed map", {
       auto original = MakeStringIntMap();
       amanuensis::core::Value json_value = amanuensis::ToValue(original);
-      ASSERT_TRUE(amanuensis::Json::IsObject(json_value));
-      ASSERT_EQUAL(amanuensis::Json::AsInteger(amanuensis::Json::Get(json_value, "alpha")), 1LL);
-      ASSERT_EQUAL(amanuensis::Json::AsInteger(amanuensis::Json::Get(json_value, "beta")), 2LL);
+      ASSERT_TRUE(json_value.IsObject());
+      ASSERT_EQUAL(json_value.Get("alpha").AsInteger(), 1LL);
+      ASSERT_EQUAL(json_value.Get("beta").AsInteger(), 2LL);
     });
 
     IT("deserialises a string-keyed map", {

@@ -42,9 +42,9 @@ add_library(
   src/core/overlay.cpp
   src/core/quoted-string.cpp
   src/core/stable-hash.cpp
+  src/core/value.cpp
   src/core/ordered-map.cpp
   src/core/value-traits.cpp
-  src/json.cpp
   src/json/reader.cpp
   src/json/writer.cpp
   src/json/writer-context.cpp

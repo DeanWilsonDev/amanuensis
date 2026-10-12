@@ -2,7 +2,7 @@
 #include <amanuensis/core/parse-result.hpp>
 #include <amanuensis/json/reader.hpp>
 #include <amanuensis/json/writer.hpp>
-#include <amanuensis/json.hpp>
+#include <amanuensis/core/value.hpp>
 
 #include <cmath>
 #include <string>
@@ -16,21 +16,21 @@ DESCRIBE("Reader", {
     IT("parses null", {
       auto result = amanuensis::json::Reader::ParseString("null");
       ASSERT_TRUE(result.succeeded);
-      ASSERT_TRUE(amanuensis::Json::IsNull(result.value));
+      ASSERT_TRUE(result.value.IsNull());
     });
 
     IT("parses true", {
       auto result = amanuensis::json::Reader::ParseString("true");
       ASSERT_TRUE(result.succeeded);
-      ASSERT_TRUE(amanuensis::Json::IsBoolean(result.value));
-      ASSERT_EQUAL(amanuensis::Json::AsBoolean(result.value), true);
+      ASSERT_TRUE(result.value.IsBoolean());
+      ASSERT_EQUAL(result.value.AsBoolean(), true);
     });
 
     IT("parses false", {
       auto result = amanuensis::json::Reader::ParseString("false");
       ASSERT_TRUE(result.succeeded);
-      ASSERT_TRUE(amanuensis::Json::IsBoolean(result.value));
-      ASSERT_EQUAL(amanuensis::Json::AsBoolean(result.value), false);
+      ASSERT_TRUE(result.value.IsBoolean());
+      ASSERT_EQUAL(result.value.AsBoolean(), false);
     });
   });
 
@@ -38,49 +38,49 @@ DESCRIBE("Reader", {
     IT("parses a positive integer", {
       auto result = amanuensis::json::Reader::ParseString("42");
       ASSERT_TRUE(result.succeeded);
-      ASSERT_TRUE(amanuensis::Json::IsInteger(result.value));
-      ASSERT_EQUAL(amanuensis::Json::AsInteger(result.value), 42LL);
+      ASSERT_TRUE(result.value.IsInteger());
+      ASSERT_EQUAL(result.value.AsInteger(), 42LL);
     });
 
     IT("parses a negative integer", {
       auto result = amanuensis::json::Reader::ParseString("-7");
       ASSERT_TRUE(result.succeeded);
-      ASSERT_TRUE(amanuensis::Json::IsInteger(result.value));
-      ASSERT_EQUAL(amanuensis::Json::AsInteger(result.value), -7LL);
+      ASSERT_TRUE(result.value.IsInteger());
+      ASSERT_EQUAL(result.value.AsInteger(), -7LL);
     });
 
     IT("parses zero as integer", {
       auto result = amanuensis::json::Reader::ParseString("0");
       ASSERT_TRUE(result.succeeded);
-      ASSERT_TRUE(amanuensis::Json::IsInteger(result.value));
-      ASSERT_EQUAL(amanuensis::Json::AsInteger(result.value), 0LL);
+      ASSERT_TRUE(result.value.IsInteger());
+      ASSERT_EQUAL(result.value.AsInteger(), 0LL);
     });
 
     IT("parses a decimal number as double", {
       auto result = amanuensis::json::Reader::ParseString("3.14");
       ASSERT_TRUE(result.succeeded);
-      ASSERT_TRUE(amanuensis::Json::IsDouble(result.value));
-      ASSERT_TRUE(std::abs(amanuensis::Json::AsDouble(result.value) - 3.14) < 1e-15);
+      ASSERT_TRUE(result.value.IsDouble());
+      ASSERT_TRUE(std::abs(result.value.AsDouble() - 3.14) < 1e-15);
     });
 
     IT("parses a number with exponent as double", {
       auto result = amanuensis::json::Reader::ParseString("1e10");
       ASSERT_TRUE(result.succeeded);
-      ASSERT_TRUE(amanuensis::Json::IsDouble(result.value));
+      ASSERT_TRUE(result.value.IsDouble());
     });
 
     IT("parses a number with negative exponent as double", {
       auto result = amanuensis::json::Reader::ParseString("5e-3");
       ASSERT_TRUE(result.succeeded);
-      ASSERT_TRUE(amanuensis::Json::IsDouble(result.value));
-      ASSERT_TRUE(std::abs(amanuensis::Json::AsDouble(result.value) - 0.005) < 1e-15);
+      ASSERT_TRUE(result.value.IsDouble());
+      ASSERT_TRUE(std::abs(result.value.AsDouble() - 0.005) < 1e-15);
     });
 
     IT("parses a number with decimal and exponent as double", {
       auto result = amanuensis::json::Reader::ParseString("1.5e2");
       ASSERT_TRUE(result.succeeded);
-      ASSERT_TRUE(amanuensis::Json::IsDouble(result.value));
-      ASSERT_TRUE(std::abs(amanuensis::Json::AsDouble(result.value) - 150.0) < 1e-10);
+      ASSERT_TRUE(result.value.IsDouble());
+      ASSERT_TRUE(std::abs(result.value.AsDouble() - 150.0) < 1e-10);
     });
 
     IT("rejects leading zeros", {
@@ -91,7 +91,7 @@ DESCRIBE("Reader", {
     IT("falls back to double on integer overflow", {
       auto result = amanuensis::json::Reader::ParseString("99999999999999999999999");
       ASSERT_TRUE(result.succeeded);
-      ASSERT_TRUE(amanuensis::Json::IsDouble(result.value));
+      ASSERT_TRUE(result.value.IsDouble());
     });
   });
 
@@ -99,56 +99,56 @@ DESCRIBE("Reader", {
     IT("parses a simple string", {
       auto result = amanuensis::json::Reader::ParseString("\"hello world\"");
       ASSERT_TRUE(result.succeeded);
-      ASSERT_TRUE(amanuensis::Json::IsString(result.value));
-      ASSERT_EQUAL(amanuensis::Json::AsString(result.value), std::string("hello world"));
+      ASSERT_TRUE(result.value.IsString());
+      ASSERT_EQUAL(result.value.AsString(), std::string("hello world"));
     });
 
     IT("parses an empty string", {
       auto result = amanuensis::json::Reader::ParseString("\"\"");
       ASSERT_TRUE(result.succeeded);
-      ASSERT_EQUAL(amanuensis::Json::AsString(result.value), std::string(""));
+      ASSERT_EQUAL(result.value.AsString(), std::string(""));
     });
 
     IT("parses escape sequence: newline", {
       auto result = amanuensis::json::Reader::ParseString("\"line1\\nline2\"");
       ASSERT_TRUE(result.succeeded);
-      ASSERT_EQUAL(amanuensis::Json::AsString(result.value), std::string("line1\nline2"));
+      ASSERT_EQUAL(result.value.AsString(), std::string("line1\nline2"));
     });
 
     IT("parses escape sequence: tab", {
       auto result = amanuensis::json::Reader::ParseString("\"a\\tb\"");
       ASSERT_TRUE(result.succeeded);
-      ASSERT_EQUAL(amanuensis::Json::AsString(result.value), std::string("a\tb"));
+      ASSERT_EQUAL(result.value.AsString(), std::string("a\tb"));
     });
 
     IT("parses escape sequence: backslash", {
       auto result = amanuensis::json::Reader::ParseString("\"a\\\\b\"");
       ASSERT_TRUE(result.succeeded);
-      ASSERT_EQUAL(amanuensis::Json::AsString(result.value), std::string("a\\b"));
+      ASSERT_EQUAL(result.value.AsString(), std::string("a\\b"));
     });
 
     IT("parses escape sequence: double quote", {
       auto result = amanuensis::json::Reader::ParseString("\"say \\\"hi\\\"\"");
       ASSERT_TRUE(result.succeeded);
-      ASSERT_EQUAL(amanuensis::Json::AsString(result.value), std::string("say \"hi\""));
+      ASSERT_EQUAL(result.value.AsString(), std::string("say \"hi\""));
     });
 
     IT("parses escape sequence: forward slash", {
       auto result = amanuensis::json::Reader::ParseString("\"a\\/b\"");
       ASSERT_TRUE(result.succeeded);
-      ASSERT_EQUAL(amanuensis::Json::AsString(result.value), std::string("a/b"));
+      ASSERT_EQUAL(result.value.AsString(), std::string("a/b"));
     });
 
     IT("parses Unicode escape \\u0041 as 'A'", {
       auto result = amanuensis::json::Reader::ParseString("\"\\u0041\"");
       ASSERT_TRUE(result.succeeded);
-      ASSERT_EQUAL(amanuensis::Json::AsString(result.value), std::string("A"));
+      ASSERT_EQUAL(result.value.AsString(), std::string("A"));
     });
 
     IT("parses Unicode surrogate pair for emoji", {
       auto result = amanuensis::json::Reader::ParseString("\"\\uD83D\\uDE00\"");
       ASSERT_TRUE(result.succeeded);
-      ASSERT_EQUAL(amanuensis::Json::AsString(result.value).size(), 4u);
+      ASSERT_EQUAL(result.value.AsString().size(), 4u);
     });
   });
 
@@ -156,34 +156,34 @@ DESCRIBE("Reader", {
     IT("parses an empty array", {
       auto result = amanuensis::json::Reader::ParseString("[]");
       ASSERT_TRUE(result.succeeded);
-      ASSERT_TRUE(amanuensis::Json::IsArray(result.value));
-      ASSERT_EQUAL(amanuensis::Json::Size(result.value), 0u);
+      ASSERT_TRUE(result.value.IsArray());
+      ASSERT_EQUAL(result.value.Size(), 0u);
     });
 
     IT("parses an array of integers", {
       auto result = amanuensis::json::Reader::ParseString("[1, 2, 3]");
       ASSERT_TRUE(result.succeeded);
-      ASSERT_EQUAL(amanuensis::Json::Size(result.value), 3u);
-      ASSERT_EQUAL(amanuensis::Json::AsInteger(amanuensis::Json::At(result.value, 0)), 1LL);
-      ASSERT_EQUAL(amanuensis::Json::AsInteger(amanuensis::Json::At(result.value, 2)), 3LL);
+      ASSERT_EQUAL(result.value.Size(), 3u);
+      ASSERT_EQUAL(result.value.At(0).AsInteger(), 1LL);
+      ASSERT_EQUAL(result.value.At(2).AsInteger(), 3LL);
     });
 
     IT("parses an array of mixed types", {
       auto result = amanuensis::json::Reader::ParseString("[1, \"two\", true, null]");
       ASSERT_TRUE(result.succeeded);
-      ASSERT_EQUAL(amanuensis::Json::Size(result.value), 4u);
-      ASSERT_TRUE(amanuensis::Json::IsInteger(amanuensis::Json::At(result.value, 0)));
-      ASSERT_TRUE(amanuensis::Json::IsString(amanuensis::Json::At(result.value, 1)));
-      ASSERT_TRUE(amanuensis::Json::IsBoolean(amanuensis::Json::At(result.value, 2)));
-      ASSERT_TRUE(amanuensis::Json::IsNull(amanuensis::Json::At(result.value, 3)));
+      ASSERT_EQUAL(result.value.Size(), 4u);
+      ASSERT_TRUE(result.value.At(0).IsInteger());
+      ASSERT_TRUE(result.value.At(1).IsString());
+      ASSERT_TRUE(result.value.At(2).IsBoolean());
+      ASSERT_TRUE(result.value.At(3).IsNull());
     });
 
     IT("parses nested arrays", {
       auto result = amanuensis::json::Reader::ParseString("[[1, 2], [3, 4]]");
       ASSERT_TRUE(result.succeeded);
-      ASSERT_EQUAL(amanuensis::Json::Size(result.value), 2u);
-      ASSERT_EQUAL(amanuensis::Json::AsInteger(amanuensis::Json::At(amanuensis::Json::At(result.value, 0), 1)), 2LL);
-      ASSERT_EQUAL(amanuensis::Json::AsInteger(amanuensis::Json::At(amanuensis::Json::At(result.value, 1), 0)), 3LL);
+      ASSERT_EQUAL(result.value.Size(), 2u);
+      ASSERT_EQUAL(result.value.At(0).At(1).AsInteger(), 2LL);
+      ASSERT_EQUAL(result.value.At(1).At(0).AsInteger(), 3LL);
     });
   });
 
@@ -191,31 +191,21 @@ DESCRIBE("Reader", {
     IT("parses an empty object", {
       auto result = amanuensis::json::Reader::ParseString("{}");
       ASSERT_TRUE(result.succeeded);
-      ASSERT_TRUE(amanuensis::Json::IsObject(result.value));
-      ASSERT_EQUAL(amanuensis::Json::Size(result.value), 0u);
+      ASSERT_TRUE(result.value.IsObject());
+      ASSERT_EQUAL(result.value.Size(), 0u);
     });
 
     IT("parses an object with string and integer values", {
       auto result = amanuensis::json::Reader::ParseString("{\"x\": 10, \"y\": 20}");
       ASSERT_TRUE(result.succeeded);
-      ASSERT_EQUAL(amanuensis::Json::AsInteger(amanuensis::Json::Get(result.value, "x")), 10LL);
-      ASSERT_EQUAL(amanuensis::Json::AsInteger(amanuensis::Json::Get(result.value, "y")), 20LL);
+      ASSERT_EQUAL(result.value.Get("x").AsInteger(), 10LL);
+      ASSERT_EQUAL(result.value.Get("y").AsInteger(), 20LL);
     });
 
     IT("parses a deeply nested structure", {
       auto result = amanuensis::json::Reader::ParseString("{\"a\": {\"b\": {\"c\": [1, {\"d\": true}]}}}");
       ASSERT_TRUE(result.succeeded);
-      ASSERT_TRUE(amanuensis::Json::AsBoolean(
-        amanuensis::Json::Get(
-          amanuensis::Json::At(
-            amanuensis::Json::Get(
-              amanuensis::Json::Get(
-                amanuensis::Json::Get(result.value, "a"),
-              "b"),
-            "c"),
-          1),
-        "d")
-      ));
+      ASSERT_TRUE(result.value.Get("a").Get("b").Get("c").At(1).Get("d").AsBoolean());
     });
   });
 
@@ -278,15 +268,15 @@ DESCRIBE("Reader", {
 
   DESCRIBE("File I/O", {
     IT("reads and parses a JSON file", {
-      amanuensis::core::Value object_value = amanuensis::Json::MakeObject();
-      amanuensis::Json::Insert(object_value, "fileTest", amanuensis::core::Value{ true });
+      amanuensis::core::Value object_value = amanuensis::core::Value::MakeObject();
+      object_value.Insert("fileTest", amanuensis::core::Value{true});
       bool write_succeeded =
           amanuensis::json::Writer::WriteToFile(object_value, "/tmp/amanuensis_reader_test.json");
       REQUIRE_TRUE(write_succeeded);
 
       auto result = amanuensis::json::Reader::ParseFile("/tmp/amanuensis_reader_test.json");
       ASSERT_TRUE(result.succeeded);
-      ASSERT_TRUE(amanuensis::Json::AsBoolean(amanuensis::Json::Get(result.value, "fileTest")));
+      ASSERT_TRUE(result.value.Get("fileTest").AsBoolean());
     });
 
     IT("returns error for nonexistent file", {

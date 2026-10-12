@@ -1,6 +1,5 @@
 #include <cimmerian/test.hpp>
 #include <amanuensis/core/value.hpp>
-#include <amanuensis/json.hpp>
 #include <amanuensis/json/reader.hpp>
 #include <amanuensis/json/writer.hpp>
 #include <amanuensis/core/parse-result.hpp>
@@ -11,8 +10,7 @@
 static std::vector<std::string> CollectKeys(const amanuensis::core::Value& object_value)
 {
   std::vector<std::string> keys;
-  for (auto iterator = amanuensis::Json::BeginObject(object_value);
-       iterator != amanuensis::Json::EndObject(object_value);
+  for (auto iterator = object_value.BeginObject(); iterator != object_value.EndObject();
        ++iterator) {
     keys.push_back(iterator->first);
   }
@@ -22,10 +20,10 @@ static std::vector<std::string> CollectKeys(const amanuensis::core::Value& objec
 DESCRIBE("Insertion order", {
   DESCRIBE("Programmatic construction", {
     IT("preserves insertion order for three keys", {
-      amanuensis::core::Value object_value = amanuensis::Json::MakeObject();
-      amanuensis::Json::Insert(object_value, "zebra", amanuensis::core::Value{ 1LL });
-      amanuensis::Json::Insert(object_value, "apple", amanuensis::core::Value{ 2LL });
-      amanuensis::Json::Insert(object_value, "mango", amanuensis::core::Value{ 3LL });
+      amanuensis::core::Value object_value = amanuensis::core::Value::MakeObject();
+      object_value.Insert("zebra", amanuensis::core::Value{1LL});
+      object_value.Insert("apple", amanuensis::core::Value{2LL});
+      object_value.Insert("mango", amanuensis::core::Value{3LL});
 
       auto keys = CollectKeys(object_value);
       ASSERT_EQUAL(keys.size(), 3u);
@@ -35,16 +33,16 @@ DESCRIBE("Insertion order", {
     });
 
     IT("overwrites value but preserves position on duplicate key", {
-      amanuensis::core::Value object_value = amanuensis::Json::MakeObject();
-      amanuensis::Json::Insert(object_value, "first",  amanuensis::core::Value{ 1LL });
-      amanuensis::Json::Insert(object_value, "second", amanuensis::core::Value{ 2LL });
-      amanuensis::Json::Insert(object_value, "first",  amanuensis::core::Value{ 99LL });
+      amanuensis::core::Value object_value = amanuensis::core::Value::MakeObject();
+      object_value.Insert("first", amanuensis::core::Value{1LL});
+      object_value.Insert("second", amanuensis::core::Value{2LL});
+      object_value.Insert("first", amanuensis::core::Value{99LL});
 
       auto keys = CollectKeys(object_value);
       ASSERT_EQUAL(keys.size(), 2u);
       ASSERT_EQUAL(keys[0], std::string("first"));
       ASSERT_EQUAL(keys[1], std::string("second"));
-      ASSERT_EQUAL(amanuensis::Json::AsInteger(amanuensis::Json::Get(object_value, "first")), 99LL);
+      ASSERT_EQUAL(object_value.Get("first").AsInteger(), 99LL);
     });
   });
 

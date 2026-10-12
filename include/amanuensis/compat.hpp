@@ -8,10 +8,12 @@
 // - the old Json-prefixed names (JsonValue, JsonValueType, JsonParseResult,
 //   JsonParseError and JsonTraits);
 // - names that moved from `amanuensis` into `amanuensis::core` or
-//   `amanuensis::json`, such as amanuensis::OrderedMap and amanuensis::Reader.
+//   `amanuensis::json`, such as amanuensis::OrderedMap and amanuensis::Reader;
+// - the static amanuensis::Json helper (in json.hpp), whose functions are now
+//   core::Value's member functions.
 //
-// The sweep removes this file, the AMANUENSIS_NO_COMPAT blocks in
-// serialization/ (the JsonTraits fallback in SerialTraits, and the ToJson,
+// The sweep removes this file, the Json class in json.hpp, the
+// AMANUENSIS_NO_COMPAT blocks in serialization/ (the JsonTraits fallback in SerialTraits, and the ToJson,
 // FromJson and TryFromJson forwarders) and the forwarding headers left at the
 // old paths: json-value.hpp, ordered-map.hpp, object-iterator.hpp, errors.hpp,
 // value-traits.hpp, converter.hpp, io/ and serialization/json-traits*.hpp.

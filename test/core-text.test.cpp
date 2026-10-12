@@ -2,7 +2,7 @@
 #include "core/cursor.hpp"
 #include "core/number-format.hpp"
 #include "core/quoted-string.hpp"
-#include <amanuensis/json.hpp>
+#include <amanuensis/core/value.hpp>
 
 #include <bit>
 #include <charconv>
@@ -90,7 +90,7 @@ DESCRIBE("Shared text helpers", {
       core::Cursor cursor(R"("a\"b\\c\n\/" rest)");
       auto result = core::ParseQuotedString(cursor);
       REQUIRE_TRUE(result.succeeded);
-      ASSERT_EQUAL(amanuensis::Json::AsString(result.value), std::string("a\"b\\c\n/"));
+      ASSERT_EQUAL(result.value.AsString(), std::string("a\"b\\c\n/"));
       ASSERT_EQUAL(cursor.Peek(), ' ');
     });
 
@@ -98,7 +98,7 @@ DESCRIBE("Shared text helpers", {
       core::Cursor cursor(R"("\uD83D\uDE00")");
       auto result = core::ParseQuotedString(cursor);
       REQUIRE_TRUE(result.succeeded);
-      ASSERT_EQUAL(amanuensis::Json::AsString(result.value), std::string("\xF0\x9F\x98\x80"));
+      ASSERT_EQUAL(result.value.AsString(), std::string("\xF0\x9F\x98\x80"));
     });
 
     IT("reports an unterminated string at the end of the input", {
@@ -135,7 +135,7 @@ DESCRIBE("Shared text helpers", {
       core::Cursor cursor(written);
       auto result = core::ParseQuotedString(cursor);
       REQUIRE_TRUE(result.succeeded);
-      ASSERT_EQUAL(amanuensis::Json::AsString(result.value), original);
+      ASSERT_EQUAL(result.value.AsString(), original);
       ASSERT_TRUE(cursor.IsAtEnd());
     });
   });
@@ -145,8 +145,8 @@ DESCRIBE("Shared text helpers", {
       core::Cursor cursor("-42 rest");
       auto result = core::ParseNumber(cursor);
       REQUIRE_TRUE(result.succeeded);
-      ASSERT_TRUE(amanuensis::Json::IsInteger(result.value));
-      ASSERT_EQUAL(amanuensis::Json::AsInteger(result.value), -42LL);
+      ASSERT_TRUE(result.value.IsInteger());
+      ASSERT_EQUAL(result.value.AsInteger(), -42LL);
       ASSERT_EQUAL(cursor.Peek(), ' ');
     });
 
@@ -154,22 +154,22 @@ DESCRIBE("Shared text helpers", {
       core::Cursor fraction("1.0");
       auto fractionResult = core::ParseNumber(fraction);
       REQUIRE_TRUE(fractionResult.succeeded);
-      ASSERT_TRUE(amanuensis::Json::IsDouble(fractionResult.value));
-      ASSERT_EQUAL(amanuensis::Json::AsDouble(fractionResult.value), 1.0);
+      ASSERT_TRUE(fractionResult.value.IsDouble());
+      ASSERT_EQUAL(fractionResult.value.AsDouble(), 1.0);
 
       core::Cursor exponent("2e3");
       auto exponentResult = core::ParseNumber(exponent);
       REQUIRE_TRUE(exponentResult.succeeded);
-      ASSERT_TRUE(amanuensis::Json::IsDouble(exponentResult.value));
-      ASSERT_EQUAL(amanuensis::Json::AsDouble(exponentResult.value), 2000.0);
+      ASSERT_TRUE(exponentResult.value.IsDouble());
+      ASSERT_EQUAL(exponentResult.value.AsDouble(), 2000.0);
     });
 
     IT("reads an integer that overflows long long as a Double", {
       core::Cursor cursor("9223372036854775808");
       auto result = core::ParseNumber(cursor);
       REQUIRE_TRUE(result.succeeded);
-      ASSERT_TRUE(amanuensis::Json::IsDouble(result.value));
-      ASSERT_EQUAL(amanuensis::Json::AsDouble(result.value), 9223372036854775808.0);
+      ASSERT_TRUE(result.value.IsDouble());
+      ASSERT_EQUAL(result.value.AsDouble(), 9223372036854775808.0);
     });
 
     IT("rejects a leading zero at its line and column", {
@@ -196,8 +196,7 @@ DESCRIBE("Shared text helpers", {
       auto result = core::ParseNumber(cursor);
       REQUIRE_TRUE(result.succeeded);
       ASSERT_EQUAL(
-          std::bit_cast<std::uint64_t>(amanuensis::Json::AsDouble(result.value)),
-          std::bit_cast<std::uint64_t>(0.1)
+          std::bit_cast<std::uint64_t>(result.value.AsDouble()), std::bit_cast<std::uint64_t>(0.1)
       );
       ASSERT_TRUE(cursor.IsAtEnd());
     });

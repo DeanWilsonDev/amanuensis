@@ -53,8 +53,7 @@ Then include the umbrella header:
 Or include individual headers as needed:
 
 ```cpp
-#include <amanuensis/core/value.hpp>                   // amanuensis::core::Value
-#include <amanuensis/json.hpp>                         // amanuensis::Json, the operations on a Value
+#include <amanuensis/core/value.hpp>                   // amanuensis::core::Value and its operations
 #include <amanuensis/json/reader.hpp>                  // amanuensis::json::Reader
 #include <amanuensis/json/writer.hpp>                  // amanuensis::json::Writer
 #include <amanuensis/calamus/reader.hpp>               // amanuensis::calamus::Reader
@@ -89,12 +88,13 @@ cmake --build build
 
 ## API
 
-The data model and everything the formats share lives in `amanuensis::core`, the JSON reader and writer live in `amanuensis::json`, and the Calamus reader and writer live in `amanuensis::calamus`. The serialisation layer (`ToValue`, `FromValue`, `SerialTraits`) is in `amanuensis`. For now, the operations on a `Value` are static functions on `amanuensis::Json`.
+The data model and everything the formats share lives in `amanuensis::core`, the JSON reader and writer live in `amanuensis::json`, and the Calamus reader and writer live in `amanuensis::calamus`. The serialisation layer (`ToValue`, `FromValue`, `SerialTraits`) is in `amanuensis`. The operations on a `Value` are its member functions.
 
 Until consumers have moved over, `<amanuensis/compat.hpp>` (pulled in by every public header) keeps the old names working:
 
 - the `Amanuensis::` namespace spelling;
 - `JsonValue`, `JsonValueType`, `JsonParseResult` and `JsonParseError`, as aliases of `core::Value`, `core::ValueType`, `core::ParseResult` and `core::ParseError`;
+- `amanuensis::Json`, whose static functions forward to `Value`'s member functions: `Json::Get(value, key)` is `value.Get(key)`;
 - `ToJson`, `FromJson`, `TryFromJson` and `FromJsonResult`, which forward to `ToValue`, `FromValue`, `TryFromValue` and `FromValueResult`, and `JsonTraits<T>` specialisations with `ToJson`/`FromJson` members, which are still picked up when there is no `SerialTraits<T>` one;
 - `amanuensis::Reader`, `Writer` and `WriterOptions`, now in `amanuensis::json`, and `amanuensis::OrderedMap`, `ObjectIterator`, `Converter`, `ValueTraits` and the error types, now in `amanuensis::core`;
 - the old header paths, such as `<amanuensis/io/reader.hpp>` and `<amanuensis/json-value.hpp>`, which forward to the new ones.
@@ -126,12 +126,11 @@ auto result = amanuensis::json::Reader::ParseFile("config.json");
 `Writer` has two static methods. `WriteToFile` returns `bool` rather than throwing on I/O failure.
 
 ```cpp
-using amanuensis::Json;
 using amanuensis::core::Value;
 
-Value root = Json::MakeObject();
-Json::Insert(root, "version", Value{1LL});
-Json::Insert(root, "name", Value{std::string("example")});
+Value root = Value::MakeObject();
+root.Insert("version", Value{1LL});
+root.Insert("name", Value{std::string("example")});
 
 // Pretty-printed (default)
 std::string text = amanuensis::json::Writer::WriteToString(root);
@@ -147,10 +146,9 @@ bool ok = amanuensis::json::Writer::WriteToFile(root, "output.json");
 
 ### The Value type
 
-`core::Value` holds null, a boolean, an integer (`long long`), a double, a string, an array or an object. Objects keep their insertion order.
+`core::Value` holds null, a boolean, an integer (`long long`), a double, a string, an array or an object. Objects keep their insertion order. Its operations are member functions.
 
 ```cpp
-using amanuensis::Json;
 using amanuensis::core::Value;
 
 // Construction
@@ -159,37 +157,37 @@ Value boolean{true};
 Value integer{42LL};
 Value number{3.14};
 Value text{std::string("hello")};
-Value array = Json::MakeArray();
-Value object = Json::MakeObject();
+Value array = Value::MakeArray();
+Value object = Value::MakeObject();
 
 // Type inspection
-Json::GetType(value);     // amanuensis::core::ValueType
-Json::IsNull(value);
-Json::IsBoolean(value);
-Json::IsInteger(value);
-Json::IsDouble(value);
-Json::IsNumber(value);    // true for Integer or Double
-Json::IsString(value);
-Json::IsArray(value);
-Json::IsObject(value);
+value.GetType();     // amanuensis::core::ValueType
+value.IsNull();
+value.IsBoolean();
+value.IsInteger();
+value.IsDouble();
+value.IsNumber();    // true for Integer or Double
+value.IsString();
+value.IsArray();
+value.IsObject();
 
 // Typed accessors — throw amanuensis::core::TypeMismatchError on wrong type
-bool        b = Json::AsBoolean(value);
-long long   i = Json::AsInteger(value);
-double      d = Json::AsDouble(value);
-std::string s = Json::AsString(value);
+bool        b = value.AsBoolean();
+long long   i = value.AsInteger();
+double      d = value.AsDouble();
+std::string s = value.AsString();
 
 // Array operations
-Json::PushBack(array, Value{99LL});
-std::size_t count = Json::Size(array);
-Value& element = Json::At(array, 0);         // throws IndexOutOfRangeError if out of range
+array.PushBack(Value{99LL});
+std::size_t count = array.Size();
+Value& element = array.At(0);           // throws IndexOutOfRangeError if out of range
 
 // Object operations — insertion order is preserved
-Json::Insert(object, "key", Value{std::string("value")});
-bool exists = Json::Contains(object, "key");
-Value& v = Json::Get(object, "key");         // throws KeyNotFoundError if absent
-const Value* p = Json::Find(object, "key");  // nullptr if absent
-for (auto entry = Json::BeginObject(object); entry != Json::EndObject(object); ++entry) {
+object.Insert("key", Value{std::string("value")});
+bool exists = object.Contains("key");
+Value& v = object.Get("key");           // throws KeyNotFoundError if absent
+const Value* p = object.Find("key");    // nullptr if absent
+for (auto entry = object.BeginObject(); entry != object.EndObject(); ++entry) {
     // entry->first is the key, entry->second the value
 }
 ```
@@ -338,16 +336,16 @@ For types you do not own (external types), or for types that require a non-objec
 namespace amanuensis {
 template <> struct SerialTraits<Vec3> {
     static core::Value ToValue(const Vec3& v) {
-        core::Value array = Json::MakeArray();
-        Json::PushBack(array, core::Value{v.x});
-        Json::PushBack(array, core::Value{v.y});
-        Json::PushBack(array, core::Value{v.z});
+        core::Value array = core::Value::MakeArray();
+        array.PushBack(core::Value{v.x});
+        array.PushBack(core::Value{v.y});
+        array.PushBack(core::Value{v.z});
         return array;
     }
     static Vec3 FromValue(const core::Value& value) {
-        return { Json::AsDouble(Json::At(value, 0)),
-                 Json::AsDouble(Json::At(value, 1)),
-                 Json::AsDouble(Json::At(value, 2)) };
+        return { value.At(0).AsDouble(),
+                 value.At(1).AsDouble(),
+                 value.At(2).AsDouble() };
     }
 };
 } // namespace amanuensis

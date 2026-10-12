@@ -2,7 +2,7 @@
 #include <amanuensis/json/reader.hpp>
 #include <amanuensis/json/writer.hpp>
 #include <amanuensis/core/parse-result.hpp>
-#include <amanuensis/json.hpp>
+#include <amanuensis/core/value.hpp>
 
 #include <string>
 
@@ -24,9 +24,9 @@ DESCRIBE("Round-trip", {
 
       auto second_parse = amanuensis::json::Reader::ParseString(rewritten);
       ASSERT_TRUE(second_parse.succeeded);
-      ASSERT_EQUAL(amanuensis::Json::AsString(amanuensis::Json::Get(second_parse.value, "name")), std::string("test"));
-      ASSERT_EQUAL(amanuensis::Json::AsInteger(amanuensis::Json::Get(second_parse.value, "count")), 42LL);
-      ASSERT_TRUE(amanuensis::Json::AsBoolean(amanuensis::Json::Get(second_parse.value, "flag")));
+      ASSERT_EQUAL(second_parse.value.Get("name").AsString(), std::string("test"));
+      ASSERT_EQUAL(second_parse.value.Get("count").AsInteger(), 42LL);
+      ASSERT_TRUE(second_parse.value.Get("flag").AsBoolean());
     });
 
     IT("round-trips nested objects and arrays", {
@@ -41,9 +41,9 @@ DESCRIBE("Round-trip", {
 
       auto second_parse = amanuensis::json::Reader::ParseString(rewritten);
       ASSERT_TRUE(second_parse.succeeded);
-      ASSERT_EQUAL(amanuensis::Json::AsString(amanuensis::Json::Get(second_parse.value, "name")), std::string("test"));
-      ASSERT_EQUAL(amanuensis::Json::Size(amanuensis::Json::Get(second_parse.value, "values")), 3u);
-      ASSERT_TRUE(amanuensis::Json::AsBoolean(amanuensis::Json::Get(amanuensis::Json::Get(second_parse.value, "nested"), "flag")));
+      ASSERT_EQUAL(second_parse.value.Get("name").AsString(), std::string("test"));
+      ASSERT_EQUAL(second_parse.value.Get("values").Size(), 3u);
+      ASSERT_TRUE(second_parse.value.Get("nested").Get("flag").AsBoolean());
     });
 
     IT("round-trips strings with escape sequences", {
@@ -59,8 +59,7 @@ DESCRIBE("Round-trip", {
       auto second_parse = amanuensis::json::Reader::ParseString(rewritten);
       ASSERT_TRUE(second_parse.succeeded);
       ASSERT_EQUAL(
-        amanuensis::Json::AsString(amanuensis::Json::Get(second_parse.value, "text")),
-        amanuensis::Json::AsString(amanuensis::Json::Get(first_parse.value, "text"))
+          second_parse.value.Get("text").AsString(), first_parse.value.Get("text").AsString()
       );
     });
   });
@@ -75,9 +74,9 @@ DESCRIBE("Round-trip", {
 
       auto second_parse = amanuensis::json::Reader::ParseString(pretty_output);
       ASSERT_TRUE(second_parse.succeeded);
-      ASSERT_EQUAL(amanuensis::Json::AsInteger(amanuensis::Json::Get(second_parse.value, "a")), 1LL);
-      ASSERT_EQUAL(amanuensis::Json::Size(amanuensis::Json::Get(second_parse.value, "b")), 2u);
-      ASSERT_TRUE(amanuensis::Json::AsBoolean(amanuensis::Json::Get(amanuensis::Json::Get(second_parse.value, "c"), "d")));
+      ASSERT_EQUAL(second_parse.value.Get("a").AsInteger(), 1LL);
+      ASSERT_EQUAL(second_parse.value.Get("b").Size(), 2u);
+      ASSERT_TRUE(second_parse.value.Get("c").Get("d").AsBoolean());
     });
 
     IT("second pretty write is byte-identical to first", {
@@ -100,8 +99,8 @@ DESCRIBE("Round-trip", {
       auto parsed = amanuensis::json::Reader::ParseString(original_json);
       REQUIRE_TRUE(parsed.succeeded);
 
-      ASSERT_TRUE(amanuensis::Json::IsInteger(amanuensis::Json::Get(parsed.value, "intValue")));
-      ASSERT_TRUE(amanuensis::Json::IsDouble(amanuensis::Json::Get(parsed.value, "doubleValue")));
+      ASSERT_TRUE(parsed.value.Get("intValue").IsInteger());
+      ASSERT_TRUE(parsed.value.Get("doubleValue").IsDouble());
 
       amanuensis::json::WriterOptions minified_options;
       minified_options.pretty = false;
@@ -110,8 +109,8 @@ DESCRIBE("Round-trip", {
 
       auto reparsed = amanuensis::json::Reader::ParseString(rewritten);
       REQUIRE_TRUE(reparsed.succeeded);
-      ASSERT_TRUE(amanuensis::Json::IsInteger(amanuensis::Json::Get(reparsed.value, "intValue")));
-      ASSERT_TRUE(amanuensis::Json::IsDouble(amanuensis::Json::Get(reparsed.value, "doubleValue")));
+      ASSERT_TRUE(reparsed.value.Get("intValue").IsInteger());
+      ASSERT_TRUE(reparsed.value.Get("doubleValue").IsDouble());
     });
 
     IT("preserves null through round-trip", {
@@ -125,7 +124,7 @@ DESCRIBE("Round-trip", {
 
       auto reparsed = amanuensis::json::Reader::ParseString(rewritten);
       REQUIRE_TRUE(reparsed.succeeded);
-      ASSERT_TRUE(amanuensis::Json::IsNull(amanuensis::Json::Get(reparsed.value, "v")));
+      ASSERT_TRUE(reparsed.value.Get("v").IsNull());
     });
   });
 });

@@ -1,6 +1,5 @@
 #pragma once
 #include <amanuensis/core/value.hpp>
-#include <amanuensis/json.hpp>
 
 #include <optional>
 #include <string>
@@ -38,22 +37,19 @@ template <typename T> struct SerialTraits {
 // bool
 template <> struct SerialTraits<bool> {
   static core::Value ToValue(const bool& value) { return core::Value(value); }
-  static bool FromValue(const core::Value& value) { return Json::AsBoolean(value); }
+  static bool FromValue(const core::Value& value) { return value.AsBoolean(); }
 };
 
 // int
 template <> struct SerialTraits<int> {
   static core::Value ToValue(const int& value) { return core::Value(value); }
-  static int FromValue(const core::Value& value)
-  {
-    return static_cast<int>(Json::AsInteger(value));
-  }
+  static int FromValue(const core::Value& value) { return static_cast<int>(value.AsInteger()); }
 };
 
 // long long
 template <> struct SerialTraits<long long> {
   static core::Value ToValue(const long long& value) { return core::Value(value); }
-  static long long FromValue(const core::Value& value) { return Json::AsInteger(value); }
+  static long long FromValue(const core::Value& value) { return value.AsInteger(); }
 };
 
 namespace detail {
@@ -61,10 +57,10 @@ namespace detail {
 // throws TypeMismatchError.
 inline double AsFloatingPoint(const core::Value& value)
 {
-  if (Json::IsInteger(value)) {
-    return static_cast<double>(Json::AsInteger(value));
+  if (value.IsInteger()) {
+    return static_cast<double>(value.AsInteger());
   }
-  return Json::AsDouble(value);
+  return value.AsDouble();
 }
 } // namespace detail
 
@@ -86,7 +82,7 @@ template <> struct SerialTraits<float> {
 // std::string
 template <> struct SerialTraits<std::string> {
   static core::Value ToValue(const std::string& value) { return core::Value(value); }
-  static std::string FromValue(const core::Value& value) { return Json::AsString(value); }
+  static std::string FromValue(const core::Value& value) { return value.AsString(); }
 };
 
 // std::vector<T>

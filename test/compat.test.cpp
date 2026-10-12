@@ -111,4 +111,43 @@ DESCRIBE("Compatibility names", {
         amanuensis::TryFromJson<LegacyPoint>(amanuensis::Json::MakeObject());
     ASSERT_FALSE(failed.succeeded);
   });
+
+  IT("forwards every Json helper to Value's member functions", {
+    using amanuensis::Json;
+    using amanuensis::JsonValue;
+    JsonValue object = Json::MakeObject();
+    JsonValue array = Json::MakeArray();
+    Json::PushBack(array, JsonValue{1.5});
+    Json::Insert(object, "list", array);
+    Json::Insert(object, "flag", JsonValue{true});
+    Json::Insert(object, "name", JsonValue{std::string("door")});
+    Json::Insert(object, "count", JsonValue{2LL});
+
+    ASSERT_TRUE(Json::GetType(object) == amanuensis::core::ValueType::Object);
+    ASSERT_TRUE(Json::IsObject(object) && Json::IsArray(array));
+    ASSERT_TRUE(Json::IsNull(JsonValue{}) && Json::IsString(Json::Get(object, "name")));
+    ASSERT_TRUE(
+        Json::IsBoolean(Json::Get(object, "flag")) && Json::AsBoolean(Json::Get(object, "flag"))
+    );
+    ASSERT_TRUE(
+        Json::IsInteger(Json::Get(object, "count")) && Json::IsNumber(Json::Get(object, "count"))
+    );
+    ASSERT_TRUE(Json::IsDouble(Json::At(array, 0)));
+    ASSERT_EQUAL(Json::AsDouble(Json::At(Json::Get(object, "list"), 0)), 1.5);
+    ASSERT_EQUAL(Json::AsString(Json::Get(object, "name")), std::string("door"));
+    ASSERT_EQUAL(Json::AsArray(array).size(), std::size_t{1});
+    ASSERT_EQUAL(Json::Size(object), std::size_t{4});
+    ASSERT_TRUE(Json::Contains(object, "name") && Json::Find(object, "missing") == nullptr);
+
+    Json::Get(object, "count") = JsonValue{3LL};
+    Json::At(array, 0) = JsonValue{2.5};
+    ASSERT_EQUAL(Json::AsInteger(Json::Get(object, "count")), 3LL);
+    ASSERT_EQUAL(Json::AsDouble(Json::At(array, 0)), 2.5);
+
+    std::size_t entries = 0;
+    for (auto entry = Json::BeginObject(object); entry != Json::EndObject(object); ++entry) {
+      ++entries;
+    }
+    ASSERT_EQUAL(entries, std::size_t{4});
+  });
 });
