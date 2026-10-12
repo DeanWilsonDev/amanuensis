@@ -10,8 +10,9 @@ namespace amanuensis::core {
 
 class Cursor {
 public:
-  explicit Cursor(std::string_view input)
+  explicit Cursor(std::string_view input, int line = 1)
       : input_(input)
+      , line_(line)
   {
   }
 

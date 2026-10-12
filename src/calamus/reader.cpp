@@ -3,7 +3,7 @@
 #include "amanuensis/core/overlay.hpp"
 #include "amanuensis/core/stable-hash.hpp"
 #include "calamus/canonical.hpp"
-#include "calamus/parser.hpp"
+#include "calamus/parser/parser.hpp"
 #include "calamus/paths.hpp"
 
 #include <fstream>

@@ -34,7 +34,30 @@ add_library(
   src/calamus/canonical.cpp
   src/calamus/heal.cpp
   src/calamus/migrate.cpp
-  src/calamus/parser.cpp
+  src/calamus/parser/body/body-line-parser.cpp
+  src/calamus/parser/body/item-line-parser.cpp
+  src/calamus/parser/body/key-line-parser.cpp
+  src/calamus/parser/body/line-end-parser.cpp
+  src/calamus/parser/body/line-prefix-parser.cpp
+  src/calamus/parser/body/tree-builder.cpp
+  src/calamus/parser/header/header-field-table.cpp
+  src/calamus/parser/header/header-parser.cpp
+  src/calamus/parser/header/hex.cpp
+  src/calamus/parser/header/parselets/base-field-parselet.cpp
+  src/calamus/parser/header/parselets/base-hash-field-parselet.cpp
+  src/calamus/parser/header/parselets/id-field-parselet.cpp
+  src/calamus/parser/header/parselets/type-field-parselet.cpp
+  src/calamus/parser/header/parselets/version-field-parselet.cpp
+  src/calamus/parser/line-cursor.cpp
+  src/calamus/parser/parser.cpp
+  src/calamus/parser/source-text.cpp
+  src/calamus/parser/values/parselets/inline-array-parselet.cpp
+  src/calamus/parser/values/parselets/number-parselet.cpp
+  src/calamus/parser/values/parselets/quoted-string-parselet.cpp
+  src/calamus/parser/values/parselets/rejected-value-parselet.cpp
+  src/calamus/parser/values/parselets/word-parselet.cpp
+  src/calamus/parser/values/value-parselet-table.cpp
+  src/calamus/parser/values/value-parser.cpp
   src/calamus/reader.cpp
   src/calamus/writer.cpp
   src/core/converter.cpp
