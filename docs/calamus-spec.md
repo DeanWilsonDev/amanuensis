@@ -4,7 +4,7 @@ Calamus is Amanuensis' second format: a line-based text format for Umbra entity 
 
 The design note behind it is `amanuensis-json-library/calamus-format.md`. This spec is the normative version.
 
-> **Status: draft for review.** Rulings tagged **(proposed)** were made while writing this spec and haven't been signed off. Everything else was decided in the design note or on the board. [Rulings to review](#rulings-to-review) lists the proposed ones in one place.
+> **Status: v1, signed off 2026-10-12.** Most rulings come from the design note or the board. The ones made while writing this spec and the reader are listed under [Rulings signed off](#rulings-signed-off).
 
 ## Example
 
@@ -51,10 +51,10 @@ The design note behind it is `amanuensis-json-library/calamus-format.md`. This s
 
 ## Text
 
-- **Encoding.** UTF-8. A leading byte-order mark is skipped on read and never written **(proposed)**.
+- **Encoding.** UTF-8. A leading byte-order mark is skipped on read and never written.
 - **Line endings.** The reader accepts LF and CRLF. A carriage return anywhere else is an error. The writer writes LF.
 - **Trailing whitespace.** Spaces and tabs at the end of a line are ignored.
-- **Blank lines.** Lines that are empty, or hold only spaces and tabs, are ignored anywhere **(proposed)**. The writer writes exactly one, between the header and the body.
+- **Blank lines.** Lines that are empty, or hold only spaces and tabs, are ignored anywhere. The writer writes exactly one, between the header and the body.
 - **End of file.** The writer ends the file with exactly one LF. The reader doesn't require a final newline.
 - **Columns** in error positions count bytes, the same as the JSON reader.
 
@@ -65,15 +65,15 @@ The file starts with header lines. Each is `@name`, one or more spaces, then a v
 | Line | Value | Required | Meaning |
 | --- | --- | --- | --- |
 | `@version` | Decimal integer, at least 1 | Yes | The entity type's data version, for migration. Not the Calamus syntax version. |
-| `@type` | Bare name **(proposed)**: a letter or `_`, then letters, digits, `_`, `.` or `:` | Yes | The entity type. |
-| `@id` | 1 to 16 hex digits, either case. The writer writes 16 lowercase digits **(proposed)** | No | The entity's ID, held as `std::uint64_t`. A file without one gets one from Umbra's tooling on load. |
+| `@type` | Bare name: a letter or `_`, then letters, digits, `_`, `.` or `:` | Yes | The entity type. |
+| `@id` | 1 to 16 hex digits, either case. The writer writes 16 lowercase digits | No | The entity's ID, held as `std::uint64_t`. A file without one gets one from Umbra's tooling on load. |
 | `@base` | Quoted string | No | The prefab the entity is based on. Umbra resolves it. |
 | `@base_hash` | Exactly 16 hex digits, either case. The writer writes lowercase | No | `core::StableHash` of the base the writer diffed against, in canonical form (see [Numbers](#numbers)). |
 
 - The filename is free. `@id` lives only in the header, so files can be named `door_01.calamus` and moved or renamed.
 - Every header line comes before the first body line. An unknown, repeated or late header line is an error, and so is a missing `@version` or `@type`.
-- The writer always writes `@base_hash`, because it always has a base: the prefab, or the type's default when there's no `@base` **(proposed)**. The reader treats it as optional, because a hand-written file may not have one.
-- v1 files don't name their syntax version. A later syntax change adds a header line such as `@calamus 2`. A v1 reader rejects unknown header lines, so it fails loudly on such a file **(proposed)**.
+- The writer always writes `@base_hash`, because it always has a base: the prefab, or the type's default when there's no `@base`. The reader treats it as optional, because a hand-written file may not have one.
+- v1 files don't name their syntax version. A later syntax change adds a header line such as `@calamus 2`. A v1 reader rejects unknown header lines, so it fails loudly on such a file.
 
 ## Body lines
 
@@ -91,10 +91,10 @@ After the header, every non-blank line is a body line:
 | --- | --- | --- |
 | `key : value` | Field line | Sets a field to a scalar or inline array. |
 | `key :` or `key:` | Block line | Opens a container under the field. See [Blocks](#blocks). |
-| `- value` | Item line | An array item that is a scalar or inline array **(proposed)**. |
+| `- value` | Item line | An array item that is a scalar or inline array. |
 | `-` | Item block line | An array item that is a container. |
 
-- **Separators.** The reader allows any number of spaces, including none, around `:` and `|` **(proposed)**. The writer writes `key : value`, `key:` for a block, and ` | ` before a recorded default. It never pads keys to line up the colons, because adding one long key would then re-pad every line and bury the real change in the diff.
+- **Separators.** The reader allows any number of spaces, including none, around `:` and `|`. The writer writes `key : value`, `key:` for a block, and ` | ` before a recorded default. It never pads keys to line up the colons, because adding one long key would then re-pad every line and bury the real change in the diff.
 - **Keys** are bare when they're identifiers (`[A-Za-z_][A-Za-z0-9_]*`) and quoted otherwise, with the same rules as strings: `"door frame" : 1`. The writer writes a key bare whenever it can.
 - **Duplicate keys** in one object are an error, reported at the second one.
 - **Comments are not part of v1.** A `#` outside a quoted string is an error. That keeps hand-written notes from being dropped silently, and a later version can add comments without breaking existing files.
@@ -104,14 +104,14 @@ After the header, every non-blank line is a body line:
 A block line (`key:` or a bare `-`) opens a container whose kind is set by the lines indented directly under it:
 
 - Field lines make an **Object**.
-- Item lines (`-` or `- value`) make an **Array** **(proposed)**.
+- Item lines (`-` or `- value`) make an **Array**.
 - No lines make an **empty Object**. An empty array is always written inline as `[]`.
 
 Mixing field lines and item lines under one block is an error. Item lines anywhere else are an error, including directly under the root, which is always an Object.
 
 ### Arrays
 
-- An array that holds no Object at any depth is written inline, as `[a, b, c]`. Inline arrays can nest, such as `[[1, 2], [3]]`, and hold only scalars and inline arrays **(proposed)**. They stay on one line, since arrays override as a whole anyway. A trailing comma is an error.
+- An array that holds no Object at any depth is written inline, as `[a, b, c]`. Inline arrays can nest, such as `[[1, 2], [3]]`, and hold only scalars and inline arrays. They stay on one line, since arrays override as a whole anyway. A trailing comma is an error.
 - Any other array is an array block. Each item is an item line: `-` with the item's fields or items indented under it, or `- value` for an item that is a scalar or inline array.
 - An array is one field. It compares, overrides and is marked as a whole.
 
@@ -125,11 +125,11 @@ Mixing field lines and item lines under one block is an error. Item lines anywhe
 
 - **Reading** uses the JSON reader's grammar and rule: a `.` or an exponent makes a Double, anything else an Integer. An integer that overflows `long long` reads as a Double, the same as JSON.
 - **Integers** are written in plain decimal.
-- **Doubles** are written in their *canonical text* **(proposed)**:
+- **Doubles** are written in their *canonical text*:
   - If the double converts to `float` and back unchanged (and is within `float`'s range), write the shortest text that reads back as that `float`. Otherwise write the shortest text that reads back as the double.
   - Add `.0` when the text has neither a `.` nor an exponent, so it reads back as a Double. So `1.0` stays `1.0`, and a `float` 0.1 is written `0.1` rather than `0.10000000149011612` (hole 4).
-- **NaN and infinity** have no syntax in v1. The writer fails with an error naming the field's path **(proposed)**.
-- **Canonical values** **(proposed)**. The canonical text of a `float`-valued double reads back as a *different* double: `0.1` reads as 0.1, not 0.10000000149011612. If the reader and writer compared values bit for bit, every `float` field would differ from its base after one round trip. Every `float` would be marked on save, or promoted as a hand edit on load. So Calamus compares and hashes *canonical* values, in which every double is replaced by the double its canonical text reads back as. The writer canonicalises the entity and the base before working out markers and `@base_hash`. The reader canonicalises the base and the file's values before comparing them and checking the hash. `core::Diff` and `core::StableHash` stay bit-exact; canonicalising first is what makes them agree with the text.
+- **NaN and infinity** have no syntax in v1. The writer fails with an error naming the field's path.
+- **Canonical values**. The canonical text of a `float`-valued double reads back as a *different* double: `0.1` reads as 0.1, not 0.10000000149011612. If the reader and writer compared values bit for bit, every `float` field would differ from its base after one round trip. Every `float` would be marked on save, or promoted as a hand edit on load. So Calamus compares and hashes *canonical* values, in which every double is replaced by the double its canonical text reads back as. The writer canonicalises the entity and the base before working out markers and `@base_hash`. The reader canonicalises the base and the file's values before comparing them and checking the hash. `core::Diff` and `core::StableHash` stay bit-exact; canonicalising first is what makes them agree with the text.
 - **Integer for a float field.** A hand-typed `1` in a `float` or `double` field must still load. The serialisation layer's float and double traits accept an Integer (hole 3). This is serialisation work, tracked separately.
 
 ## Markers and overrides
@@ -147,7 +147,7 @@ Marks anywhere else are informational, and the writer regenerates them: on a blo
 
 ### Load
 
-The reader is given the file and the base, and canonicalises the base. It reads every honoured line as a *(key path, value, marked)* entry, then decides each one. A line *differs* from the base when applying it would change the base, so an empty block over an object the base has is equal to it **(proposed)**:
+The reader is given the file and the base, and canonicalises the base. It reads every honoured line as a *(key path, value, marked)* entry, then decides each one. A line *differs* from the base when applying it would change the base, so an empty block over an object the base has is equal to it:
 
 | Line | Compared with the base | `@base_hash` | Result | Reported as | Sets `needsRewrite` |
 | --- | --- | --- | --- | --- | --- |
@@ -161,9 +161,9 @@ The reader is given the file and the base, and canonicalises the base. It reads 
 
 The loaded value is `core::Overlay(base, overrides)`. Keys the file doesn't mention come from the base, so an entity can't remove a field its base has.
 
-- **`@base_hash` matches** when it equals `StableHash` of the canonical base. A missing hash counts as a match, because a file without one was written by hand **(proposed)**.
-- **Marked fields the base doesn't have** are kept as additions, not rejected, and listed in `additions` so tooling can flag an override of nothing **(proposed)**. This replaces the review's "error with line and column" (hole 8): it lets objects with open-ended keys, such as a `std::map` field, gain entries. It also doesn't stop a level loading because a prefab dropped a field.
-- **`needsRewrite`** is set only by things a person did to this file (`promoted`, `reset`). Changes to the base (`refreshed`, `stale`, a stale `@base_hash`, override review) wait for the next save, so one prefab edit doesn't rewrite every entity that uses it **(proposed)**. A missing `@id` doesn't set it either: Umbra assigns the ID and writes the file back itself.
+- **`@base_hash` matches** when it equals `StableHash` of the canonical base. A missing hash counts as a match, because a file without one was written by hand.
+- **Marked fields the base doesn't have** are kept as additions, not rejected, and listed in `additions` so tooling can flag an override of nothing. This replaces the review's "error with line and column" (hole 8): it lets objects with open-ended keys, such as a `std::map` field, gain entries. It also doesn't stop a level loading because a prefab dropped a field.
+- **`needsRewrite`** is set only by things a person did to this file (`promoted`, `reset`). Changes to the base (`refreshed`, `stale`, a stale `@base_hash`, override review) wait for the next save, so one prefab edit doesn't rewrite every entity that uses it. A missing `@id` doesn't set it either: Umbra assigns the ID and writes the file back itself.
 - **`needsRewrite` means "regenerating may change the text"**, not "the file is wrong". The caller regenerates the text and writes it only if it differs from the file on disk. A clean file therefore never produces a diff. One expected case is an atomic object: the writer marks its components that equal the base, so a reload reports them as `reset`, and regenerating gives identical text, so nothing is written.
 - **Override review.** A marked line can carry the base value it overrides, after `|` (see [Recorded defaults](#recorded-defaults)). When that recorded default differs from the current canonical base, or the base no longer has the field, the base has moved under the override. The field is listed in `moved` so a designer can check the override still makes sense.
 - **The reader never writes.** Writing a healed file back is the caller's decision, and shipped builds never do it.
@@ -189,7 +189,7 @@ Some objects only make sense as a whole, such as a quaternion or a colour. Wheth
 
 - The writer adds ` | <base value>` to a marked field line when the base has a scalar or inline array at that path. It doesn't add one to array blocks, to lines inside arrays, or to additions.
 - **Informational only.** The reader never loads the value after `|`. It must still be a valid scalar or inline array, and it's used only for the override review. Deleting from `|` to the end of the line removes it.
-- Only a field line can carry one. A `|` after an item line's value is an error **(proposed)**.
+- Only a field line can carry one. A `|` after an item line's value is an error.
 - An unmarked line with a recorded default, left behind by deleting the `*`, is allowed. Its value is promoted or ignored like any other unmarked line, and the next save drops the default.
 - **Resetting a field.** Copy the recorded default over the value, or delete the line. Either way the field equals the base, so it follows the base, and the next save drops the `*`.
 
@@ -232,18 +232,18 @@ These stay in Umbra: finding and loading prefabs and resolving prefab chains (ha
 | 1. Silent hand edits | Base hash and self-healing: an unmarked difference is promoted when `@base_hash` matches | [Load](#load) |
 | 2. One-item list looks like a scalar | Arrays always use brackets | [Arrays](#arrays) |
 | 3. Integer/Double drift | Doubles always get `.0` or an exponent; float traits accept an Integer | [Numbers](#numbers) |
-| 4. Float noise | `float`-valued doubles use their shortest `float` text; values are compared and hashed canonically **(proposed)** | [Numbers](#numbers) |
+| 4. Float noise | `float`-valued doubles use their shortest `float` text; values are compared and hashed canonically | [Numbers](#numbers) |
 | 5. Arrays of objects | `-` items, and arrays override as a whole | [Arrays](#arrays) |
 | 6. Keys that aren't identifiers | Quoted keys, written bare only when they're identifiers | [Body lines](#body-lines) |
 | 7. Separators inside strings | A quote-aware tokenizer with JSON's escapes | [Values](#values) |
-| 8. Stale unmarked fields | Dropped on load and removed on the next save; marked fields the base lacks are kept as additions **(proposed)** | [Load](#load) |
+| 8. Stale unmarked fields | Dropped on load and removed on the next save; marked fields the base lacks are kept as additions | [Load](#load) |
 | 9. Empty objects | A block line with nothing under it | [Blocks](#blocks) |
 | 10. Comments don't survive a save | Cut from v1; `#` is an error | [Body lines](#body-lines) |
 | 11. Small things | Duplicate keys are errors; CRLF read, LF written; trailing whitespace ignored; one final newline | [Text](#text), [Errors](#errors) |
 
-## Rulings to review
+## Rulings signed off
 
-These were made while writing the spec and the reader:
+These were made while writing the spec and the reader, and signed off as written on 2026-10-12:
 
 1. **Canonical values** (hole 4). Compare and hash canonicalised values, or `float` fields mismatch their base after every round trip.
 2. **Marked fields the base lacks are additions**, not errors (hole 8). They support map-like objects and don't block loading.
