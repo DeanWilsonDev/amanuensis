@@ -3,6 +3,7 @@
 #include "amanuensis/core/key-path.hpp"
 #include "amanuensis/core/stable-hash.hpp"
 #include "calamus/canonical.hpp"
+#include "calamus/paths.hpp"
 #include "calamus/syntax.hpp"
 #include "core/number-format.hpp"
 #include "core/quoted-string.hpp"
@@ -34,20 +35,6 @@ struct Changes {
   // are marked.
   std::set<core::KeyPath> containing;
 };
-
-// The value at path, or nullptr when some key on the way is missing or isn't
-// an Object.
-const core::Value* FindPath(const core::Value& entity, const core::KeyPath& path)
-{
-  const core::Value* current = &entity;
-  for (const std::string& key : path) {
-    const auto* object = std::get_if<Object>(&current->data);
-    if (object == nullptr || (current = object->Find(key)) == nullptr) {
-      return nullptr;
-    }
-  }
-  return current;
-}
 
 bool EntityHas(const core::Value& entity, const core::KeyPath& path)
 {

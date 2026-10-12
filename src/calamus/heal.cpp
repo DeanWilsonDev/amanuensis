@@ -10,11 +10,15 @@ namespace amanuensis::calamus {
 
 static HealResult Fail(core::ParseError error, LoadResult load = {})
 {
-  return HealResult{false, false, std::move(load), std::move(error)};
+  return HealResult{false, false, std::nullopt, std::move(load), std::move(error)};
 }
 
-HealResult
-Heal(const std::filesystem::path& path, const core::Value& base, const WriterOptions& options)
+HealResult Heal(
+    const std::filesystem::path& path,
+    const core::Value& base,
+    const WriterOptions& options,
+    const std::optional<Migration>& migration
+)
 {
   std::ifstream inputFile(path, std::ios::binary);
   if (!inputFile.is_open()) {
@@ -29,9 +33,21 @@ Heal(const std::filesystem::path& path, const core::Value& base, const WriterOpt
   if (!read.succeeded) {
     return Fail(read.error);
   }
+  std::optional<int> migratedFrom;
+  if (migration) {
+    int fileVersion = read.document.header.version;
+    core::MigrateResult migrated = Migrate(read.document, *migration);
+    if (!migrated.succeeded) {
+      return Fail(core::ParseError{migrated.error, 0, 0});
+    }
+    if (read.document.header.version != fileVersion) {
+      migratedFrom = fileVersion;
+    }
+  }
+
   LoadResult load = Reader::Load(read.document, base);
-  if (!load.needsRewrite) {
-    return HealResult{true, false, std::move(load), {}};
+  if (migratedFrom || !load.needsRewrite) {
+    return HealResult{true, false, migratedFrom, std::move(load), {}};
   }
 
   WriteResult written = Writer::WriteToString(read.document.header, load.value, base, options);
@@ -39,7 +55,7 @@ Heal(const std::filesystem::path& path, const core::Value& base, const WriterOpt
     return Fail(core::ParseError{written.error, 0, 0}, std::move(load));
   }
   if (written.text == fileContent) {
-    return HealResult{true, false, std::move(load), {}};
+    return HealResult{true, false, std::nullopt, std::move(load), {}};
   }
 
   std::ofstream outputFile(path, std::ios::binary | std::ios::trunc);
@@ -52,7 +68,7 @@ Heal(const std::filesystem::path& path, const core::Value& base, const WriterOpt
   if (!outputFile.good()) {
     return Fail(core::ParseError{"Could not write file: " + path.string(), 0, 0}, std::move(load));
   }
-  return HealResult{true, true, std::move(load), {}};
+  return HealResult{true, true, std::nullopt, std::move(load), {}};
 }
 
 } // namespace amanuensis::calamus

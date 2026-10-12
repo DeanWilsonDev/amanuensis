@@ -4,6 +4,7 @@
 #include "amanuensis/core/stable-hash.hpp"
 #include "calamus/canonical.hpp"
 #include "calamus/parser.hpp"
+#include "calamus/paths.hpp"
 
 #include <fstream>
 #include <sstream>
@@ -39,39 +40,6 @@ ReadResult Reader::ParseFile(const std::filesystem::path& path)
 // -----------------------------------------------------------------------
 // Load
 // -----------------------------------------------------------------------
-
-// The value at path, or nullptr when some key on the way is missing or isn't
-// an Object.
-static const core::Value* FindPath(const core::Value& root, const core::KeyPath& path)
-{
-  const core::Value* current = &root;
-  for (const std::string& key : path) {
-    const auto* object = std::get_if<Object>(&current->data);
-    if (object == nullptr) {
-      return nullptr;
-    }
-    current = object->Find(key);
-    if (current == nullptr) {
-      return nullptr;
-    }
-  }
-  return current;
-}
-
-// Sets the value at path, creating the Objects on the way. No field's path
-// runs through another field, so everything on the way is an Object.
-static void SetPath(core::Value& root, const core::KeyPath& path, core::Value value)
-{
-  core::Value* current = &root;
-  for (std::size_t index = 0; index + 1 < path.size(); ++index) {
-    auto& object = std::get<Object>(current->data);
-    if (!object.Contains(path[index])) {
-      object.Insert(path[index], core::Value{Object{}});
-    }
-    current = &object.Get(path[index]);
-  }
-  std::get<Object>(current->data).Insert(path.back(), std::move(value));
-}
 
 static bool Same(const core::Value& left, const core::Value& right)
 {

@@ -60,6 +60,9 @@ struct Value {
   // Objects. Insert replaces the value of a key that's already there, in
   // place.
   void Insert(std::string key, Value element);
+  // Removes key, keeping the other keys in order. Returns whether it was
+  // there.
+  bool Erase(const std::string& key);
   bool Contains(const std::string& key) const;
   const Value& Get(const std::string& key) const;
   Value& Get(const std::string& key);

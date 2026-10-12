@@ -5,3 +5,4 @@
 #include "read-archive.hpp"
 #include "write-archive.hpp"
 #include "atomic.hpp"
+#include "migration.hpp"

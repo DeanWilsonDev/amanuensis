@@ -183,6 +183,14 @@ void Value::Insert(std::string key, Value element)
   std::get<OrderedMap<Value>>(data).Insert(std::move(key), std::move(element));
 }
 
+bool Value::Erase(const std::string& key)
+{
+  if (!IsObject()) {
+    throw TypeMismatchError("Erase called on non-Object Value");
+  }
+  return std::get<OrderedMap<Value>>(data).Erase(key);
+}
+
 bool Value::Contains(const std::string& key) const
 {
   if (!IsObject()) {

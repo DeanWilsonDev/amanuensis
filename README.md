@@ -59,7 +59,7 @@ Or include individual headers as needed:
 #include <amanuensis/calamus/reader.hpp>               // amanuensis::calamus::Reader
 #include <amanuensis/calamus/writer.hpp>               // amanuensis::calamus::Writer
 #include <amanuensis/calamus/heal.hpp>                 // amanuensis::calamus::Heal
-#include <amanuensis/serialization/serialization.hpp>  // ToValue, FromValue, AMANUENSIS_SERIALISABLE
+#include <amanuensis/serialization/serialization.hpp>  // ToValue, FromValue, AMANUENSIS_SERIALISABLE, AMANUENSIS_VERSION
 ```
 
 ---
@@ -228,6 +228,13 @@ auto loaded = amanuensis::calamus::Reader::Load(read.document, prefab);
 amanuensis::core::Value entity = loaded.value;  // the prefab with the marked fields applied
 ```
 
+A file older than its type's current version is migrated between the two steps. Only its overrides are upgraded, and everything else follows the current base:
+
+```cpp
+amanuensis::calamus::Migration migration{amanuensis::CurrentVersion<Door>, amanuensis::MigrateStep<Door>};
+auto migrated = amanuensis::calamus::Migrate(read.document, migration);  // fails on a file newer than the code
+```
+
 `Load` never writes. When a person has edited the file by hand, for example by changing a value without adding its `*`, it sets `needsRewrite` and lists the field under `promoted` or `reset`. The caller can then regenerate the text and write it if it changed. `amanuensis::calamus::Heal(path, base)` does exactly that for editor tooling (never in a shipped build). Changes to the base are reported as `refreshed`, `stale` and `moved`, and they wait for the next save.
 
 ### Writing Calamus
@@ -350,6 +357,35 @@ template <> struct SerialTraits<Vec3> {
 };
 } // namespace amanuensis
 ```
+
+### Data versions and migration
+
+When a type's layout changes, such as a renamed field or a new unit, raise its version and add a step that upgrades old data by one version. A type without `AMANUENSIS_VERSION` is at version 1.
+
+```cpp
+AMANUENSIS_SERIALISABLE(Door, position, angle);
+AMANUENSIS_VERSION(Door, 3);
+
+// Called once per step: fromVersion -> fromVersion + 1.
+void AmanuensisMigrate(Door*, amanuensis::core::Value& value, int fromVersion)
+{
+    if (fromVersion == 1 && value.Contains("pos")) {
+        value.Insert("position", value.Get("pos"));
+        value.Erase("pos");
+    }
+    if (fromVersion == 2 && value.Contains("angleDegrees")) {
+        double degrees = value.Get("angleDegrees").AsDouble();
+        value.Insert("angle", amanuensis::core::Value{degrees * std::numbers::pi / 180.0});
+        value.Erase("angleDegrees");
+    }
+}
+
+// Upgrade data that was saved at version 1, then deserialise it.
+auto migrated = amanuensis::Migrate<Door>(value, 1);  // never throws; check migrated.succeeded
+Door door = amanuensis::FromValue<Door>(value);
+```
+
+Data newer than the code is refused. A Calamus file records its version in `@version`, and `calamus::Migrate` upgrades only its overrides (see [Reading Calamus](#reading-calamus)).
 
 ---
 

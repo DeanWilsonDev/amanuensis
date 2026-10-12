@@ -1,8 +1,9 @@
 // NOTE: OrderedMap maintains insertion order.
 // This means the JSON output is always the same, making it easier to read and version control
-// The drawback is that performing deletions is difficult.
+// The drawback is that Erase costs O(n), since the later entries shift down.
 
 #pragma once
+#include <cstddef>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -33,6 +34,23 @@ public:
       key_to_index_[key] = entries_.size();
       entries_.emplace_back(std::move(key), std::move(value));
     }
+  }
+
+  // Removes key, keeping the other entries in order. Returns whether it was
+  // there.
+  bool Erase(const std::string& key)
+  {
+    auto found_entry = key_to_index_.find(key);
+    if (found_entry == key_to_index_.end()) {
+      return false;
+    }
+    std::size_t index = found_entry->second;
+    key_to_index_.erase(found_entry);
+    entries_.erase(entries_.begin() + static_cast<std::ptrdiff_t>(index));
+    for (std::size_t later = index; later < entries_.size(); ++later) {
+      key_to_index_[entries_[later].first] = later;
+    }
+    return true;
   }
 
   bool Contains(const std::string& key) const { return key_to_index_.count(key) > 0; }
