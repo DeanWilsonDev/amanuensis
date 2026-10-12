@@ -1,21 +1,13 @@
 #include <cimmerian/test.hpp>
+#include "support/calamus.hpp"
+#include "support/values.hpp"
 #include <amanuensis/calamus/heal.hpp>
-#include <amanuensis/calamus/writer.hpp>
-#include <amanuensis/json/reader.hpp>
 
+#include <cstddef>
 #include <filesystem>
 #include <fstream>
 #include <sstream>
 #include <string>
-#include <string_view>
-
-namespace calamus = amanuensis::calamus;
-namespace core = amanuensis::core;
-
-static core::Value Json(std::string_view text)
-{
-  return amanuensis::json::Reader::ParseString(text).value;
-}
 
 static std::filesystem::path TestFile()
 {
@@ -34,14 +26,6 @@ static std::string Saved()
   std::ostringstream content;
   content << file.rdbuf();
   return content.str();
-}
-
-static std::string Write(const core::Value& entity, const core::Value& base)
-{
-  calamus::Header header;
-  header.version = 1;
-  header.type = "Door";
-  return calamus::Writer::WriteToString(header, entity, base).text;
 }
 
 static const core::Value Prefab = Json(R"({"name":"door","locked":false})");

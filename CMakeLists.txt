@@ -160,15 +160,72 @@ if(AMANUENSIS_BUILD_TESTS)
   add_subdirectory(external/cimmerian)
   add_executable(
     test_amanuensis
-    test/test-main.cpp test/reader.test.cpp test/writer.test.cpp
-    test/round-trip.test.cpp test/value.test.cpp test/serialization.test.cpp
-    test/converter.test.cpp test/compat.test.cpp test/core-text.test.cpp
-    test/value-utilities.test.cpp test/calamus-reader.test.cpp
-    test/calamus-load.test.cpp test/calamus-writer.test.cpp
-    test/calamus-conformance.test.cpp test/calamus-heal.test.cpp
-    test/calamus-atomic.test.cpp test/migration.test.cpp)
+    test/test-main.cpp
+    test/reader.test.cpp
+    test/writer.test.cpp
+    test/round-trip.test.cpp
+    test/value.test.cpp
+    test/converter.test.cpp
+    test/compat.test.cpp
+    test/core-text.test.cpp
+    test/value-utilities.test.cpp
+    test/calamus/atomic/amanuensis-atomic.test.cpp
+    test/calamus/atomic/atomic-paths.test.cpp
+    test/calamus/atomic/loading.test.cpp
+    test/calamus/atomic/writing.test.cpp
+    test/calamus/conformance/hole-01-silent-hand-edits.test.cpp
+    test/calamus/conformance/hole-02-one-item-list.test.cpp
+    test/calamus/conformance/hole-03-integer-and-double-drift.test.cpp
+    test/calamus/conformance/hole-04-float-noise.test.cpp
+    test/calamus/conformance/hole-05-arrays-of-objects.test.cpp
+    test/calamus/conformance/hole-06-keys-that-arent-identifiers.test.cpp
+    test/calamus/conformance/hole-07-separators-inside-strings.test.cpp
+    test/calamus/conformance/hole-08-stale-unmarked-fields.test.cpp
+    test/calamus/conformance/hole-09-empty-objects.test.cpp
+    test/calamus/conformance/hole-10-comments-dont-survive-a-save.test.cpp
+    test/calamus/conformance/hole-11-small-things.test.cpp
+    test/calamus/conformance/round-trips.test.cpp
+    test/calamus/heal.test.cpp
+    test/calamus/load/canonical-numbers.test.cpp
+    test/calamus/load/marked-fields.test.cpp
+    test/calamus/load/the-whole-entity.test.cpp
+    test/calamus/load/unmarked-fields.test.cpp
+    test/calamus/reader/blocks.test.cpp
+    test/calamus/reader/comments.test.cpp
+    test/calamus/reader/fields.test.cpp
+    test/calamus/reader/header.test.cpp
+    test/calamus/reader/marker-column-and-indentation.test.cpp
+    test/calamus/reader/recorded-defaults.test.cpp
+    test/calamus/reader/spec-example.test.cpp
+    test/calamus/reader/text.test.cpp
+    test/calamus/reader/values.test.cpp
+    test/calamus/writer/formatting.test.cpp
+    test/calamus/writer/header.test.cpp
+    test/calamus/writer/marks.test.cpp
+    test/calamus/writer/numbers.test.cpp
+    test/calamus/writer/round-trips.test.cpp
+    test/calamus/writer/writer.test.cpp
+    test/migration/amanuensis-version.test.cpp
+    test/migration/calamus-documents.test.cpp
+    test/migration/core-migrate.test.cpp
+    test/migration/heal.test.cpp
+    test/migration/value-erase.test.cpp
+    test/serialization/built-in-floating-point.test.cpp
+    test/serialization/built-in-map.test.cpp
+    test/serialization/built-in-optional.test.cpp
+    test/serialization/built-in-vector.test.cpp
+    test/serialization/extra-fields.test.cpp
+    test/serialization/file-round-trip.test.cpp
+    test/serialization/mechanism-1-serialisable-macro.test.cpp
+    test/serialization/mechanism-2-serialise-member.test.cpp
+    test/serialization/mechanism-3-serial-traits.test.cpp
+    test/serialization/optional-fields.test.cpp
+    test/serialization/try-from-value.test.cpp
+  )
   target_link_libraries(test_amanuensis PRIVATE amanuensis cimmerian)
-  target_include_directories(test_amanuensis PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+  target_include_directories(
+    test_amanuensis PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/test
+  )
   target_compile_features(test_amanuensis PRIVATE cxx_std_26)
   # No -Wpedantic: Cimmerian's test macros use __COUNTER__, which clang 22
   # reports as a C2y extension in every test.
