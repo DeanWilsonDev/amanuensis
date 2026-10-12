@@ -199,6 +199,25 @@ Whether an object is atomic comes from the entity's C++ types, not from the file
 - An unmarked line with a recorded default, left behind by deleting the `*`, is allowed. Its value is promoted or ignored like any other unmarked line, and the next save drops the default.
 - **Resetting a field.** Copy the recorded default over the value, or delete the line. Either way the field equals the base, so it follows the base, and the next save drops the `*`.
 
+## Migration
+
+`@version` is the entity type's data version. When a type's C++ layout changes, such as a renamed field or a new unit, its version goes up. Old files are upgraded on load by migration steps the type provides:
+
+```cpp
+AMANUENSIS_SERIALISABLE(Door, position, angle);
+AMANUENSIS_VERSION(Door, 3);
+
+// Called once per step: upgrades overrides from fromVersion to fromVersion + 1.
+void AmanuensisMigrate(Door*, core::Value& overrides, int fromVersion);
+```
+
+A type without `AMANUENSIS_VERSION` is at version 1. Migration works on `Value`s, so JSON can use the same steps.
+
+- **Only the overrides are migrated.** The file's marked fields form one sparse Object, and each step from the file's version up to the current one rewrites it in turn. The document's fields are then replaced by the migrated overrides, all marked. Unmarked fields are dropped and follow the current base, since a version bump is a change to the base. Recorded defaults are dropped too, because they're in the old layout.
+- **Steps see only what was overridden,** so a step must cope with missing keys. `Value::Erase` lets a step remove or rename a field.
+- **A file newer than the code** is an error naming both versions. An older build can't know what the newer fields mean, and saving would drop them.
+- **No rewrite on load.** Migrating doesn't set `needsRewrite`, so a version bump doesn't rewrite every file of that type at once. A migrated file takes the current version and layout the next time it's saved, and `Heal` never rewrites one.
+
 ## Errors
 
 Every error stops the load and reports a message with a line and column, through `core::ParseResult` like the JSON reader. Beyond the shared string and number errors, Calamus reports:
@@ -229,7 +248,7 @@ Every error stops the load and reports a message with a line and column, through
 - NaN and infinity.
 - Removing a field the base has.
 
-These stay in Umbra: finding and loading prefabs and resolving prefab chains (hashing the resolved values), assigning IDs, when a healed file is written back, and which C++ types are atomic. The `@version` migration hook is designed in its own task.
+These stay in Umbra: finding and loading prefabs and resolving prefab chains (hashing the resolved values), assigning IDs, when a healed file is written back, and which C++ types are atomic. Amanuensis runs the `@version` migration steps (see [Migration](#migration)); the steps themselves come from the entity's types.
 
 ## Holes from the review
 
