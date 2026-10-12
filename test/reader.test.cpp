@@ -203,7 +203,8 @@ DESCRIBE("Reader", {
     });
 
     IT("parses a deeply nested structure", {
-      auto result = amanuensis::json::Reader::ParseString("{\"a\": {\"b\": {\"c\": [1, {\"d\": true}]}}}");
+      auto result =
+          amanuensis::json::Reader::ParseString("{\"a\": {\"b\": {\"c\": [1, {\"d\": true}]}}}");
       ASSERT_TRUE(result.succeeded);
       ASSERT_TRUE(result.value.Get("a").Get("b").Get("c").At(1).Get("d").AsBoolean());
     });

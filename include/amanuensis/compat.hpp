@@ -13,10 +13,10 @@
 //   core::Value's member functions.
 //
 // The sweep removes this file, the Json class in json.hpp, the
-// AMANUENSIS_NO_COMPAT blocks in serialization/ (the JsonTraits fallback in SerialTraits, and the ToJson,
-// FromJson and TryFromJson forwarders) and the forwarding headers left at the
-// old paths: json-value.hpp, ordered-map.hpp, object-iterator.hpp, errors.hpp,
-// value-traits.hpp, converter.hpp, io/ and serialization/json-traits*.hpp.
+// AMANUENSIS_NO_COMPAT blocks in serialization/ (the JsonTraits fallback in SerialTraits, and the
+// ToJson, FromJson and TryFromJson forwarders) and the forwarding headers left at the old paths:
+// json-value.hpp, ordered-map.hpp, object-iterator.hpp, errors.hpp, value-traits.hpp,
+// converter.hpp, io/ and serialization/json-traits*.hpp.
 //
 // A namespace alias can't be reopened, so `namespace Amanuensis { ... }` in a
 // consumer (a forward declaration or a JsonTraits specialisation) still has to

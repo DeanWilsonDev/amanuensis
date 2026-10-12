@@ -81,7 +81,8 @@ DESCRIBE("Insertion order", {
       amanuensis::json::WriterOptions minified_options;
       minified_options.pretty = false;
       minified_options.trailingNewline = false;
-      std::string rewritten = amanuensis::json::Writer::WriteToString(first_parse.value, minified_options);
+      std::string rewritten =
+          amanuensis::json::Writer::WriteToString(first_parse.value, minified_options);
 
       auto second_parse = amanuensis::json::Reader::ParseString(rewritten);
       REQUIRE_TRUE(second_parse.succeeded);
