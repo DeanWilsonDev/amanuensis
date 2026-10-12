@@ -1,5 +1,6 @@
 #include "calamus/parser.hpp"
 
+#include "calamus/syntax.hpp"
 #include "core/cursor.hpp"
 #include "core/number-format.hpp"
 #include "core/quoted-string.hpp"
@@ -86,17 +87,6 @@ MaybeError SplitLines(std::string_view input, SourceText& source)
 // -----------------------------------------------------------------------
 // Tokens shared by the header and the body
 // -----------------------------------------------------------------------
-
-bool IsIdentifierStart(char character)
-{
-  return (character >= 'a' && character <= 'z') || (character >= 'A' && character <= 'Z') ||
-         character == '_';
-}
-
-bool IsIdentifierCharacter(char character)
-{
-  return IsIdentifierStart(character) || (character >= '0' && character <= '9');
-}
 
 bool IsHexDigit(char character)
 {
@@ -265,19 +255,6 @@ std::optional<std::uint64_t> ParseHex(std::string_view text, std::size_t maxDigi
   return value;
 }
 
-bool IsTypeName(std::string_view text)
-{
-  if (text.empty() || !IsIdentifierStart(text.front())) {
-    return false;
-  }
-  for (char character : text) {
-    if (!IsIdentifierCharacter(character) && character != '.' && character != ':') {
-      return false;
-    }
-  }
-  return true;
-}
-
 MaybeError ParseHeaderLine(const SourceLine& line, HeaderState& state)
 {
   core::Cursor cursor(line.text);
@@ -399,12 +376,8 @@ struct BodyLine {
 
 // Whatever may follow a value: an optional recorded default, then the end of
 // the line.
-MaybeError ParseLineEnd(
-    core::Cursor& cursor,
-    const SourceLine& line,
-    BodyLine& bodyLine,
-    const char* after
-)
+MaybeError
+ParseLineEnd(core::Cursor& cursor, const SourceLine& line, BodyLine& bodyLine, const char* after)
 {
   SkipSpaces(cursor);
   if (cursor.IsAtEnd()) {
@@ -429,9 +402,7 @@ MaybeError ParseLineEnd(
   if (cursor.Peek() == '#') {
     return ErrorHere(CommentError, line, cursor);
   }
-  return ErrorHere(
-      std::string("Unexpected '") + cursor.Peek() + "' after " + after, line, cursor
-  );
+  return ErrorHere(std::string("Unexpected '") + cursor.Peek() + "' after " + after, line, cursor);
 }
 
 MaybeError ParseBodyLine(const SourceLine& line, BodyLine& bodyLine)
@@ -550,8 +521,8 @@ MaybeError ParseBodyLine(const SourceLine& line, BodyLine& bodyLine)
 class TreeBuilder {
 public:
   TreeBuilder(std::vector<BodyLine>& lines, std::vector<Field>& fields)
-      : lines_(lines),
-        fields_(fields)
+      : lines_(lines)
+      , fields_(fields)
   {
   }
 
@@ -565,8 +536,7 @@ public:
 private:
   // Reads the lines at depth into container. A Null container takes its kind
   // from its first line: fields make an Object, '-' items an Array.
-  MaybeError
-  ReadChildren(int depth, core::Value& container, core::KeyPath& path, bool insideArray)
+  MaybeError ReadChildren(int depth, core::Value& container, core::KeyPath& path, bool insideArray)
   {
     while (index_ < lines_.size() && lines_[index_].depth >= depth) {
       BodyLine& line = lines_[index_];

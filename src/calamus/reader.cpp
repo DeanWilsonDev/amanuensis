@@ -83,17 +83,16 @@ LoadResult Reader::Load(const Document& document, const core::Value& base)
   core::Value canonicalBase = Canonicalise(base);
 
   LoadResult result;
-  result.baseHashMatches = !document.header.baseHash ||
-                           *document.header.baseHash == core::StableHash(canonicalBase);
+  result.baseHashMatches =
+      !document.header.baseHash || *document.header.baseHash == core::StableHash(canonicalBase);
 
   core::Value overrides{Object{}};
   for (const Field& field : document.fields) {
     const core::Value* baseValue = FindPath(canonicalBase, field.path);
     // Overlaying keeps the base's keys, so an empty object over an object is
     // no change.
-    bool differs =
-        baseValue == nullptr ||
-        !Same(*baseValue, core::Overlay(*baseValue, Canonicalise(field.value)));
+    bool differs = baseValue == nullptr ||
+                   !Same(*baseValue, core::Overlay(*baseValue, Canonicalise(field.value)));
 
     bool isOverride = false;
     if (field.marked) {

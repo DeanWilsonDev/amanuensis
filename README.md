@@ -58,6 +58,7 @@ Or include individual headers as needed:
 #include <amanuensis/json/reader.hpp>                  // amanuensis::json::Reader
 #include <amanuensis/json/writer.hpp>                  // amanuensis::json::Writer
 #include <amanuensis/calamus/reader.hpp>               // amanuensis::calamus::Reader
+#include <amanuensis/calamus/writer.hpp>               // amanuensis::calamus::Writer
 #include <amanuensis/serialization/serialization.hpp>  // ToValue, FromValue, AMANUENSIS_SERIALISABLE
 ```
 
@@ -87,7 +88,7 @@ cmake --build build
 
 ## API
 
-The data model and everything the formats share lives in `amanuensis::core`, the JSON reader and writer live in `amanuensis::json`, and the Calamus reader lives in `amanuensis::calamus`. The serialisation layer (`ToValue`, `FromValue`, `SerialTraits`) is in `amanuensis`. For now, the operations on a `Value` are static functions on `amanuensis::Json`.
+The data model and everything the formats share lives in `amanuensis::core`, the JSON reader and writer live in `amanuensis::json`, and the Calamus reader and writer live in `amanuensis::calamus`. The serialisation layer (`ToValue`, `FromValue`, `SerialTraits`) is in `amanuensis`. For now, the operations on a `Value` are static functions on `amanuensis::Json`.
 
 Until consumers have moved over, `<amanuensis/compat.hpp>` (pulled in by every public header) keeps the old names working:
 
@@ -229,6 +230,25 @@ amanuensis::core::Value entity = loaded.value;  // the prefab with the marked fi
 ```
 
 `Load` never writes. When a person has edited the file by hand, for example by changing a value without adding its `*`, it sets `needsRewrite` and lists the field under `promoted` or `reset`. The caller can then regenerate the text and write it if it changed. Changes to the base are reported as `refreshed`, `stale` and `moved`, and they wait for the next save.
+
+### Writing Calamus
+
+`calamus::Writer` takes the header, the entity and its base. It works out the `*` marks and the recorded defaults itself, and sets `@base_hash` from the base:
+
+```cpp
+amanuensis::calamus::Header header;
+header.version = 3;
+header.type = "Door";
+header.id = 0x3f9c2a7be1d04c58;
+header.base = "prefabs/wooden_door";
+
+auto written = amanuensis::calamus::Writer::WriteToString(header, entity, prefab);
+if (!written.succeeded) {
+    std::cerr << written.error << "\n";  // such as NaN in a field, which Calamus can't write
+}
+```
+
+The same input always gives the same text, so a caller healing a file compares `written.text` with the file on disk and writes only if they differ. Calamus can't remove a field, so keys that only the base has are left out, and they come back from the base on the next load.
 
 ---
 

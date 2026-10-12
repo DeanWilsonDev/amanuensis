@@ -125,18 +125,20 @@ DESCRIBE("Calamus load", {
     IT("replace arrays whole", {
       auto result = Load(Unchanged(Door) + "* tags : [\"b\", \"c\"]\n", Door);
       ASSERT_EQUAL(
-          Minified(result.value),
-          std::string(R"({"position":{"x":0.0,"y":0.0,"z":0.0},)"
-                      R"("name":"door","locked":false,"tags":["b","c"]})")
+          Minified(result.value), std::string(
+                                      R"({"position":{"x":0.0,"y":0.0,"z":0.0},)"
+                                      R"("name":"door","locked":false,"tags":["b","c"]})"
+                                  )
       );
     });
 
     IT("keep a field the base doesn't have as an addition, at the end of its object", {
       auto result = Load(Unchanged(Door) + "* position:\n*   w : 1.0\n", Door);
       ASSERT_EQUAL(
-          Minified(result.value),
-          std::string(R"({"position":{"x":0.0,"y":0.0,"z":0.0,"w":1.0},)"
-                      R"("name":"door","locked":false,"tags":["a"]})")
+          Minified(result.value), std::string(
+                                      R"({"position":{"x":0.0,"y":0.0,"z":0.0,"w":1.0},)"
+                                      R"("name":"door","locked":false,"tags":["a"]})"
+                                  )
       );
       ASSERT_EQUAL(Paths(result.additions), std::string("position.w"));
       ASSERT_EQUAL(Paths(result.overrides), std::string("position.w"));
@@ -161,7 +163,8 @@ DESCRIBE("Calamus load", {
 
     IT("are listed as moved when the recorded default no longer matches the base", {
       auto result = Load(
-          Unchanged(Door) + "* position:\n*   x : 4.5 | 1.0\n*   y : 2.0 | 0.0\n* name : \"gate\"\n",
+          Unchanged(Door) +
+              "* position:\n*   x : 4.5 | 1.0\n*   y : 2.0 | 0.0\n* name : \"gate\"\n",
           Door
       );
       ASSERT_EQUAL(Paths(result.moved), std::string("position.x"));
@@ -207,9 +210,10 @@ DESCRIBE("Calamus load", {
       auto result = Load(Unchanged(Door) + "  colour : \"red\"\n", Door);
       ASSERT_EQUAL(Paths(result.promoted), std::string("colour"));
       ASSERT_EQUAL(
-          Minified(result.value),
-          std::string(R"({"position":{"x":0.0,"y":0.0,"z":0.0},)"
-                      R"("name":"door","locked":false,"tags":["a"],"colour":"red"})")
+          Minified(result.value), std::string(
+                                      R"({"position":{"x":0.0,"y":0.0,"z":0.0},)"
+                                      R"("name":"door","locked":false,"tags":["a"],"colour":"red"})"
+                                  )
       );
     });
 
@@ -303,8 +307,9 @@ DESCRIBE("Calamus load", {
     });
 
     IT("is idempotent", {
-      for (double value : {static_cast<double>(0.1f), static_cast<double>(46.103531f), 0.1,
-                           1.0 / 3.0, 3.4028234663852886e38, 1e300, 1e-45}) {
+      for (double value :
+           {static_cast<double>(0.1f), static_cast<double>(46.103531f), 0.1, 1.0 / 3.0,
+            3.4028234663852886e38, 1e300, 1e-45}) {
         double once = calamus::CanonicalDouble(value);
         ASSERT_EQUAL(Bits(calamus::CanonicalDouble(once)), Bits(once));
       }

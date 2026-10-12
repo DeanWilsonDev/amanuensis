@@ -85,7 +85,8 @@ ParseResult ParseNumber(Cursor& cursor)
         std::from_chars(numberText.data(), numberText.data() + numberText.size(), doubleValue);
     if (errorCode != std::errc()) {
       return ParseResult{
-          false, Value(), ParseError{"Failed to parse floating-point number", startLine, startColumn}
+          false, Value(),
+          ParseError{"Failed to parse floating-point number", startLine, startColumn}
       };
     }
     return ParseResult{true, Value(doubleValue), {}};

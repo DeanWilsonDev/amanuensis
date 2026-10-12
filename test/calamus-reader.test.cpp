@@ -144,8 +144,10 @@ DESCRIBE("Calamus reader", {
         fields += (fields.empty() ? "" : " ") + field.path.back() + (field.marked ? "*" : "");
       }
       ASSERT_EQUAL(
-          fields, std::string("x* y* z x y z x* y* z* w* name flags locked* tags waypoints "
-                              "intensity* r g b")
+          fields, std::string(
+                      "x* y* z x y z x* y* z* w* name flags locked* tags waypoints "
+                      "intensity* r g b"
+                  )
       );
     });
 
@@ -192,8 +194,7 @@ DESCRIBE("Calamus reader", {
 
     IT("rejects a missing @version or @type where the header ends", {
       ASSERT_EQUAL(
-          ErrorOf("@type Door\n\n  x : 1\n"),
-          std::string("3:1 Missing the @version header line")
+          ErrorOf("@type Door\n\n  x : 1\n"), std::string("3:1 Missing the @version header line")
       );
       ASSERT_EQUAL(ErrorOf("@version 1"), std::string("1:11 Missing the @type header line"));
       ASSERT_EQUAL(ErrorOf(""), std::string("1:1 Missing the @version header line"));
@@ -236,7 +237,9 @@ DESCRIBE("Calamus reader", {
               "2:7 @type must be a name: a letter or '_', then letters, digits, '_', '.' or ':'"
           )
       );
-      ASSERT_EQUAL(ErrorOf("@version 1\n@id xyz\n"), std::string("2:5 @id must be 1 to 16 hex digits"));
+      ASSERT_EQUAL(
+          ErrorOf("@version 1\n@id xyz\n"), std::string("2:5 @id must be 1 to 16 hex digits")
+      );
       ASSERT_EQUAL(
           ErrorOf("@version 1\n@id 3f9c2a7be1d04c58a\n"),
           std::string("2:5 @id must be 1 to 16 hex digits")
@@ -286,9 +289,8 @@ DESCRIBE("Calamus reader", {
       ASSERT_TRUE(result.succeeded);
     });
 
-    IT("doesn't need a final newline", {
-      ASSERT_EQUAL(BodyOf("  x : 1"), std::string(R"({"x":1})"));
-    });
+    IT("doesn't need a final newline",
+       { ASSERT_EQUAL(BodyOf("  x : 1"), std::string(R"({"x":1})")); });
   });
 
   DESCRIBE("Marker column and indentation", {
@@ -340,7 +342,8 @@ DESCRIBE("Calamus reader", {
 
     IT("rejects an indented first body line", {
       ASSERT_EQUAL(
-          BodyErrorOf("    x : 1\n"), std::string("4:5 The first line of the body can't be indented")
+          BodyErrorOf("    x : 1\n"),
+          std::string("4:5 The first line of the body can't be indented")
       );
     });
 
@@ -398,7 +401,9 @@ DESCRIBE("Calamus reader", {
   DESCRIBE("Values", {
     IT("reads scalars, with a '.' or exponent making a Double", {
       ASSERT_EQUAL(
-          BodyOf("  a : null\n  b : true\n  c : false\n  d : -12\n  e : 1.0\n  f : 2e3\n  g : \"\"\n"),
+          BodyOf(
+              "  a : null\n  b : true\n  c : false\n  d : -12\n  e : 1.0\n  f : 2e3\n  g : \"\"\n"
+          ),
           std::string(R"({"a":null,"b":true,"c":false,"d":-12,"e":1.0,"f":2000.0,"g":""})")
       );
     });
@@ -425,7 +430,9 @@ DESCRIBE("Calamus reader", {
     });
 
     IT("allows any spacing around ':' and '|'", {
-      ASSERT_EQUAL(BodyOf("  x:1|0\n  y   :   2   |   0\n  z:\n"), std::string(R"({"x":1,"y":2,"z":{}})"));
+      ASSERT_EQUAL(
+          BodyOf("  x:1|0\n  y   :   2   |   0\n  z:\n"), std::string(R"({"x":1,"y":2,"z":{}})")
+      );
     });
 
     IT("rejects an unquoted string", {
@@ -466,14 +473,13 @@ DESCRIBE("Calamus reader", {
       ASSERT_EQUAL(
           BodyErrorOf("  a:\n    x : 1\n    x : 2\n"), std::string("6:5 Duplicate key 'x'")
       );
-      ASSERT_EQUAL(
-          BodyErrorOf("  a : 1\n  \"a\":\n"), std::string("5:3 Duplicate key 'a'")
-      );
+      ASSERT_EQUAL(BodyErrorOf("  a : 1\n  \"a\":\n"), std::string("5:3 Duplicate key 'a'"));
     });
 
     IT("reports string errors at their line and column", {
       ASSERT_EQUAL(
-          BodyErrorOf("  a : 1\n  b : \"x\\q\"\n"), std::string("5:11 Invalid escape sequence '\\q'")
+          BodyErrorOf("  a : 1\n  b : \"x\\q\"\n"),
+          std::string("5:11 Invalid escape sequence '\\q'")
       );
     });
   });
@@ -496,16 +502,16 @@ DESCRIBE("Calamus reader", {
   DESCRIBE("Recorded defaults", {
     IT("must be a valid scalar or inline array", {
       ASSERT_EQUAL(
-          BodyErrorOf("  x : 1 | zero\n"), std::string("4:11 Strings must be quoted, as in \"zero\"")
+          BodyErrorOf("  x : 1 | zero\n"),
+          std::string("4:11 Strings must be quoted, as in \"zero\"")
       );
       ASSERT_EQUAL(
           BodyErrorOf("  x : 1 |\n"), std::string("4:10 Expected a recorded default after '|'")
       );
     });
 
-    IT("are allowed on unmarked lines and never become part of the body", {
-      ASSERT_EQUAL(BodyOf("  x : 1 | 0\n"), std::string(R"({"x":1})"));
-    });
+    IT("are allowed on unmarked lines and never become part of the body",
+       { ASSERT_EQUAL(BodyOf("  x : 1 | 0\n"), std::string(R"({"x":1})")); });
 
     IT("can only follow a field's value", {
       ASSERT_EQUAL(
@@ -516,9 +522,8 @@ DESCRIBE("Calamus reader", {
   });
 
   DESCRIBE("Fields", {
-    IT("honours marks on field lines", {
-      ASSERT_EQUAL(FieldsOf("* x : 1\n  y : 2\n"), std::string("x* y"));
-    });
+    IT("honours marks on field lines",
+       { ASSERT_EQUAL(FieldsOf("* x : 1\n  y : 2\n"), std::string("x* y")); });
 
     IT("treats a block line as a field when its block is an array or an empty object", {
       ASSERT_EQUAL(
@@ -527,9 +532,8 @@ DESCRIBE("Calamus reader", {
       );
     });
 
-    IT("ignores the mark on a block line that opens a non-empty object", {
-      ASSERT_EQUAL(FieldsOf("* a:\n    x : 1\n"), std::string("a.x"));
-    });
+    IT("ignores the mark on a block line that opens a non-empty object",
+       { ASSERT_EQUAL(FieldsOf("* a:\n    x : 1\n"), std::string("a.x")); });
 
     IT("never lists lines inside an array as fields", {
       ASSERT_EQUAL(
@@ -538,8 +542,7 @@ DESCRIBE("Calamus reader", {
       );
     });
 
-    IT("lists an inline array as one field", {
-      ASSERT_EQUAL(FieldsOf("* tags : [\"a\"]\n"), std::string("tags*"));
-    });
+    IT("lists an inline array as one field",
+       { ASSERT_EQUAL(FieldsOf("* tags : [\"a\"]\n"), std::string("tags*")); });
   });
 });

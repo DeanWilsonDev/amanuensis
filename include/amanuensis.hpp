@@ -17,4 +17,5 @@
 #include "amanuensis/json/writer.hpp"
 #include "amanuensis/calamus/header.hpp"
 #include "amanuensis/calamus/reader.hpp"
+#include "amanuensis/calamus/writer.hpp"
 #include "amanuensis/serialization/serialization.hpp"
