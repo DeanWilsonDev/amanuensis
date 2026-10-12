@@ -32,6 +32,7 @@ endif()
 add_library(
   amanuensis STATIC
   src/calamus/canonical.cpp
+  src/calamus/heal.cpp
   src/calamus/parser.cpp
   src/calamus/reader.cpp
   src/calamus/writer.cpp
@@ -123,7 +124,7 @@ if(AMANUENSIS_BUILD_TESTS)
     test/converter.test.cpp test/compat.test.cpp test/core-text.test.cpp
     test/value-utilities.test.cpp test/calamus-reader.test.cpp
     test/calamus-load.test.cpp test/calamus-writer.test.cpp
-    test/calamus-conformance.test.cpp)
+    test/calamus-conformance.test.cpp test/calamus-heal.test.cpp)
   target_link_libraries(test_amanuensis PRIVATE amanuensis cimmerian)
   # The tests reach the formats' shared helpers in src/core/ directly.
   target_include_directories(test_amanuensis PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)

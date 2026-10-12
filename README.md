@@ -59,6 +59,7 @@ Or include individual headers as needed:
 #include <amanuensis/json/writer.hpp>                  // amanuensis::json::Writer
 #include <amanuensis/calamus/reader.hpp>               // amanuensis::calamus::Reader
 #include <amanuensis/calamus/writer.hpp>               // amanuensis::calamus::Writer
+#include <amanuensis/calamus/heal.hpp>                 // amanuensis::calamus::Heal
 #include <amanuensis/serialization/serialization.hpp>  // ToValue, FromValue, AMANUENSIS_SERIALISABLE
 ```
 
@@ -229,7 +230,7 @@ auto loaded = amanuensis::calamus::Reader::Load(read.document, prefab);
 amanuensis::core::Value entity = loaded.value;  // the prefab with the marked fields applied
 ```
 
-`Load` never writes. When a person has edited the file by hand, for example by changing a value without adding its `*`, it sets `needsRewrite` and lists the field under `promoted` or `reset`. The caller can then regenerate the text and write it if it changed. Changes to the base are reported as `refreshed`, `stale` and `moved`, and they wait for the next save.
+`Load` never writes. When a person has edited the file by hand, for example by changing a value without adding its `*`, it sets `needsRewrite` and lists the field under `promoted` or `reset`. The caller can then regenerate the text and write it if it changed. `amanuensis::calamus::Heal(path, base)` does exactly that for editor tooling (never in a shipped build). Changes to the base are reported as `refreshed`, `stale` and `moved`, and they wait for the next save.
 
 ### Writing Calamus
 
