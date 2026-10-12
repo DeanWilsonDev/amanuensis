@@ -59,7 +59,12 @@ add_library(
   src/calamus/parser/values/value-parselet-table.cpp
   src/calamus/parser/values/value-parser.cpp
   src/calamus/reader.cpp
-  src/calamus/writer.cpp
+  src/calamus/writer/body-writer.cpp
+  src/calamus/writer/changes.cpp
+  src/calamus/writer/header-writer.cpp
+  src/calamus/writer/key-writer.cpp
+  src/calamus/writer/value-writer.cpp
+  src/calamus/writer/writer.cpp
   src/core/converter.cpp
   src/core/diff.cpp
   src/core/migrate.cpp
