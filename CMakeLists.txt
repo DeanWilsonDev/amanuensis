@@ -78,7 +78,15 @@ add_library(
   src/json/reader.cpp
   src/json/writer.cpp
   src/json/writer-context.cpp
-  src/json/parser.cpp
+  src/json/parser/parselets/array-parselet.cpp
+  src/json/parser/parselets/literal-parselet.cpp
+  src/json/parser/parselets/number-parselet.cpp
+  src/json/parser/parselets/object-parselet.cpp
+  src/json/parser/parselets/string-parselet.cpp
+  src/json/parser/parser.cpp
+  src/json/parser/value-parselet-table.cpp
+  src/json/parser/value-parser.cpp
+  src/json/parser/whitespace.cpp
   src/serialization/serialization.cpp)
 
 target_include_directories(
