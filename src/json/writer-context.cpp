@@ -1,7 +1,7 @@
 #include "writer-context.hpp"
 #include "amanuensis/core/value.hpp"
 #include "core/number-format.hpp"
-#include "core/quoted-string.hpp"
+#include "core/quoted-string/quoted-string.hpp"
 #include <cmath>
 
 namespace amanuensis::json {

@@ -17,7 +17,6 @@ public:
   void SkipSpaces();
   std::string_view ReadIdentifier();
 
-  core::ParseError ErrorHere(std::string message) const;
   core::ParseError ErrorAt(std::string message, int column) const;
 
 private:

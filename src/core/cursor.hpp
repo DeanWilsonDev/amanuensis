@@ -5,6 +5,7 @@
 #include <cstddef>
 #include <string>
 #include <string_view>
+#include <utility>
 
 namespace amanuensis::core {
 
@@ -44,9 +45,14 @@ public:
     return input_.substr(start, position_ - start);
   }
 
+  ParseError ErrorHere(std::string message) const
+  {
+    return ParseError{std::move(message), line_, column_};
+  }
+
   ParseResult MakeError(const std::string& message) const
   {
-    return ParseResult{false, Value(), ParseError{message, line_, column_}};
+    return ParseResult{false, Value(), ErrorHere(message)};
   }
 
 private:

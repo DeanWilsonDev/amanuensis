@@ -1,7 +1,7 @@
 #include <cimmerian/test.hpp>
 #include "core/cursor.hpp"
 #include "core/number-format.hpp"
-#include "core/quoted-string.hpp"
+#include "core/quoted-string/quoted-string.hpp"
 #include <amanuensis/core/value.hpp>
 
 #include <bit>

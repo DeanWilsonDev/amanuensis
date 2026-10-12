@@ -1,6 +1,6 @@
 #include "calamus/writer/key-writer.hpp"
 #include "calamus/syntax.hpp"
-#include "core/quoted-string.hpp"
+#include "core/quoted-string/quoted-string.hpp"
 
 namespace amanuensis::calamus {
 

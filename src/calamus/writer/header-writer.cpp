@@ -1,6 +1,6 @@
 #include "calamus/writer/header-writer.hpp"
 #include "calamus/syntax.hpp"
-#include "core/quoted-string.hpp"
+#include "core/quoted-string/quoted-string.hpp"
 
 #include <charconv>
 #include <cstddef>

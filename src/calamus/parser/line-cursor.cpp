@@ -33,11 +33,6 @@ std::string_view LineCursor::ReadIdentifier()
   return this->Slice(start);
 }
 
-core::ParseError LineCursor::ErrorHere(std::string message) const
-{
-  return this->ErrorAt(std::move(message), this->Column());
-}
-
 core::ParseError LineCursor::ErrorAt(std::string message, int column) const
 {
   return core::ParseError{std::move(message), this->Line(), column};

@@ -1,5 +1,5 @@
 #include "calamus/parser/header/parselets/base-field-parselet.hpp"
-#include "core/quoted-string.hpp"
+#include "core/quoted-string/quoted-string.hpp"
 
 #include <string>
 #include <variant>

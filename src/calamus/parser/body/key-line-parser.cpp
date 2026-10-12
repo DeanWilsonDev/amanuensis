@@ -1,7 +1,7 @@
 #include "calamus/parser/body/key-line-parser.hpp"
 #include "calamus/parser/messages.hpp"
 #include "calamus/syntax.hpp"
-#include "core/quoted-string.hpp"
+#include "core/quoted-string/quoted-string.hpp"
 
 #include <string>
 #include <utility>

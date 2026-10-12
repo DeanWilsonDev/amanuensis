@@ -1,5 +1,5 @@
 #include "json/parser/parselets/object-parselet.hpp"
-#include "core/quoted-string.hpp"
+#include "core/quoted-string/quoted-string.hpp"
 #include "json/parser/value-parser.hpp"
 #include "json/parser/whitespace.hpp"
 

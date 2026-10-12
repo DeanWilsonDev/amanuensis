@@ -1,5 +1,5 @@
 #include "calamus/parser/values/parselets/quoted-string-parselet.hpp"
-#include "core/quoted-string.hpp"
+#include "core/quoted-string/quoted-string.hpp"
 
 namespace amanuensis::calamus {
 

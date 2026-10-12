@@ -1,7 +1,7 @@
 #include "calamus/writer/value-writer.hpp"
 #include "calamus/canonical.hpp"
 #include "core/number-format.hpp"
-#include "core/quoted-string.hpp"
+#include "core/quoted-string/quoted-string.hpp"
 
 #include <cmath>
 #include <variant>

@@ -70,7 +70,11 @@ add_library(
   src/core/migrate.cpp
   src/core/number-format.cpp
   src/core/overlay.cpp
-  src/core/quoted-string.cpp
+  src/core/quoted-string/escape.cpp
+  src/core/quoted-string/read-quoted-string.cpp
+  src/core/quoted-string/unicode-escape.cpp
+  src/core/quoted-string/utf8.cpp
+  src/core/quoted-string/write-quoted-string.cpp
   src/core/stable-hash.cpp
   src/core/value.cpp
   src/core/ordered-map.cpp
