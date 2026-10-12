@@ -132,6 +132,13 @@ if(AMANUENSIS_BUILD_TESTS)
   # The tests reach the formats' shared helpers in src/core/ directly.
   target_include_directories(test_amanuensis PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
   target_compile_features(test_amanuensis PRIVATE cxx_std_26)
+  # No -Wpedantic: Cimmerian's test macros use __COUNTER__, which clang 22
+  # reports as a C2y extension in every test.
+  if(MSVC)
+    target_compile_options(test_amanuensis PRIVATE /W4)
+  else()
+    target_compile_options(test_amanuensis PRIVATE -Wall -Wextra)
+  endif()
 endif()
 
 # ------------------------

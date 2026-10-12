@@ -432,8 +432,7 @@ DESCRIBE("Calamus conformance", {
 
     IT("loads a hand-typed Integer into a float field", {
       calamus::LoadResult loaded = Load(Replace(Write(Door, Prefab), "46.5", "46"), Prefab);
-      const core::Value& x = Get(Get(loaded.value, "position"), "x");
-      ASSERT_EQUAL(amanuensis::FromValue<float>(x), 46.0f);
+      ASSERT_EQUAL(amanuensis::FromValue<float>(Get(Get(loaded.value, "position"), "x")), 46.0f);
     });
   });
 
