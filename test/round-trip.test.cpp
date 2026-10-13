@@ -1,8 +1,8 @@
 #include "cimmerian/test.hpp"
-#include <amanuensis/io/reader.hpp>
-#include <amanuensis/io/writer.hpp>
-#include <amanuensis/io/json-parse-result.hpp>
-#include <amanuensis/json.hpp>
+#include <amanuensis/json/reader.hpp>
+#include <amanuensis/json/writer.hpp>
+#include <amanuensis/core/parse-result.hpp>
+#include <amanuensis/core/value.hpp>
 
 #include <string>
 
@@ -14,53 +14,55 @@ DESCRIBE("Round-trip", {
   DESCRIBE("Minified round-trip", {
     IT("round-trips a flat object", {
       std::string original_json = R"({"name":"test","count":42,"flag":true})";
-      auto first_parse = amanuensis::Reader::ParseString(original_json);
+      auto first_parse = amanuensis::json::Reader::ParseString(original_json);
       REQUIRE_TRUE(first_parse.succeeded);
 
-      amanuensis::WriterOptions minified_options;
+      amanuensis::json::WriterOptions minified_options;
       minified_options.pretty = false;
       minified_options.trailingNewline = false;
-      std::string rewritten = amanuensis::Writer::WriteToString(first_parse.value, minified_options);
+      std::string rewritten =
+          amanuensis::json::Writer::WriteToString(first_parse.value, minified_options);
 
-      auto second_parse = amanuensis::Reader::ParseString(rewritten);
+      auto second_parse = amanuensis::json::Reader::ParseString(rewritten);
       ASSERT_TRUE(second_parse.succeeded);
-      ASSERT_EQUAL(amanuensis::Json::AsString(amanuensis::Json::Get(second_parse.value, "name")), std::string("test"));
-      ASSERT_EQUAL(amanuensis::Json::AsInteger(amanuensis::Json::Get(second_parse.value, "count")), 42LL);
-      ASSERT_TRUE(amanuensis::Json::AsBoolean(amanuensis::Json::Get(second_parse.value, "flag")));
+      ASSERT_EQUAL(second_parse.value.Get("name").AsString(), std::string("test"));
+      ASSERT_EQUAL(second_parse.value.Get("count").AsInteger(), 42LL);
+      ASSERT_TRUE(second_parse.value.Get("flag").AsBoolean());
     });
 
     IT("round-trips nested objects and arrays", {
       std::string original_json = R"({"name":"test","values":[1,2,3],"nested":{"flag":true}})";
-      auto first_parse = amanuensis::Reader::ParseString(original_json);
+      auto first_parse = amanuensis::json::Reader::ParseString(original_json);
       REQUIRE_TRUE(first_parse.succeeded);
 
-      amanuensis::WriterOptions minified_options;
+      amanuensis::json::WriterOptions minified_options;
       minified_options.pretty = false;
       minified_options.trailingNewline = false;
-      std::string rewritten = amanuensis::Writer::WriteToString(first_parse.value, minified_options);
+      std::string rewritten =
+          amanuensis::json::Writer::WriteToString(first_parse.value, minified_options);
 
-      auto second_parse = amanuensis::Reader::ParseString(rewritten);
+      auto second_parse = amanuensis::json::Reader::ParseString(rewritten);
       ASSERT_TRUE(second_parse.succeeded);
-      ASSERT_EQUAL(amanuensis::Json::AsString(amanuensis::Json::Get(second_parse.value, "name")), std::string("test"));
-      ASSERT_EQUAL(amanuensis::Json::Size(amanuensis::Json::Get(second_parse.value, "values")), 3u);
-      ASSERT_TRUE(amanuensis::Json::AsBoolean(amanuensis::Json::Get(amanuensis::Json::Get(second_parse.value, "nested"), "flag")));
+      ASSERT_EQUAL(second_parse.value.Get("name").AsString(), std::string("test"));
+      ASSERT_EQUAL(second_parse.value.Get("values").Size(), 3u);
+      ASSERT_TRUE(second_parse.value.Get("nested").Get("flag").AsBoolean());
     });
 
     IT("round-trips strings with escape sequences", {
       std::string original_json = R"({"text":"line1\nline2\ttab\\slash\"quote"})";
-      auto first_parse = amanuensis::Reader::ParseString(original_json);
+      auto first_parse = amanuensis::json::Reader::ParseString(original_json);
       REQUIRE_TRUE(first_parse.succeeded);
 
-      amanuensis::WriterOptions minified_options;
+      amanuensis::json::WriterOptions minified_options;
       minified_options.pretty = false;
       minified_options.trailingNewline = false;
-      std::string rewritten = amanuensis::Writer::WriteToString(first_parse.value, minified_options);
+      std::string rewritten =
+          amanuensis::json::Writer::WriteToString(first_parse.value, minified_options);
 
-      auto second_parse = amanuensis::Reader::ParseString(rewritten);
+      auto second_parse = amanuensis::json::Reader::ParseString(rewritten);
       ASSERT_TRUE(second_parse.succeeded);
       ASSERT_EQUAL(
-        amanuensis::Json::AsString(amanuensis::Json::Get(second_parse.value, "text")),
-        amanuensis::Json::AsString(amanuensis::Json::Get(first_parse.value, "text"))
+          second_parse.value.Get("text").AsString(), first_parse.value.Get("text").AsString()
       );
     });
   });
@@ -68,27 +70,27 @@ DESCRIBE("Round-trip", {
   DESCRIBE("Pretty round-trip", {
     IT("pretty-printed output parses back to the same structure", {
       std::string original_json = R"({"a":1,"b":[2,3],"c":{"d":true}})";
-      auto first_parse = amanuensis::Reader::ParseString(original_json);
+      auto first_parse = amanuensis::json::Reader::ParseString(original_json);
       REQUIRE_TRUE(first_parse.succeeded);
 
-      std::string pretty_output = amanuensis::Writer::WriteToString(first_parse.value);
+      std::string pretty_output = amanuensis::json::Writer::WriteToString(first_parse.value);
 
-      auto second_parse = amanuensis::Reader::ParseString(pretty_output);
+      auto second_parse = amanuensis::json::Reader::ParseString(pretty_output);
       ASSERT_TRUE(second_parse.succeeded);
-      ASSERT_EQUAL(amanuensis::Json::AsInteger(amanuensis::Json::Get(second_parse.value, "a")), 1LL);
-      ASSERT_EQUAL(amanuensis::Json::Size(amanuensis::Json::Get(second_parse.value, "b")), 2u);
-      ASSERT_TRUE(amanuensis::Json::AsBoolean(amanuensis::Json::Get(amanuensis::Json::Get(second_parse.value, "c"), "d")));
+      ASSERT_EQUAL(second_parse.value.Get("a").AsInteger(), 1LL);
+      ASSERT_EQUAL(second_parse.value.Get("b").Size(), 2u);
+      ASSERT_TRUE(second_parse.value.Get("c").Get("d").AsBoolean());
     });
 
     IT("second pretty write is byte-identical to first", {
       std::string original_json = R"({"a":1,"b":[2,3],"c":{"d":"hello"}})";
-      auto first_parse = amanuensis::Reader::ParseString(original_json);
+      auto first_parse = amanuensis::json::Reader::ParseString(original_json);
       REQUIRE_TRUE(first_parse.succeeded);
 
-      std::string first_write = amanuensis::Writer::WriteToString(first_parse.value);
-      auto second_parse = amanuensis::Reader::ParseString(first_write);
+      std::string first_write = amanuensis::json::Writer::WriteToString(first_parse.value);
+      auto second_parse = amanuensis::json::Reader::ParseString(first_write);
       REQUIRE_TRUE(second_parse.succeeded);
-      std::string second_write = amanuensis::Writer::WriteToString(second_parse.value);
+      std::string second_write = amanuensis::json::Writer::WriteToString(second_parse.value);
 
       ASSERT_EQUAL(first_write, second_write);
     });
@@ -97,35 +99,37 @@ DESCRIBE("Round-trip", {
   DESCRIBE("Type preservation", {
     IT("preserves integer vs double distinction through round-trip", {
       std::string original_json = R"({"intValue":42,"doubleValue":3.14})";
-      auto parsed = amanuensis::Reader::ParseString(original_json);
+      auto parsed = amanuensis::json::Reader::ParseString(original_json);
       REQUIRE_TRUE(parsed.succeeded);
 
-      ASSERT_TRUE(amanuensis::Json::IsInteger(amanuensis::Json::Get(parsed.value, "intValue")));
-      ASSERT_TRUE(amanuensis::Json::IsDouble(amanuensis::Json::Get(parsed.value, "doubleValue")));
+      ASSERT_TRUE(parsed.value.Get("intValue").IsInteger());
+      ASSERT_TRUE(parsed.value.Get("doubleValue").IsDouble());
 
-      amanuensis::WriterOptions minified_options;
+      amanuensis::json::WriterOptions minified_options;
       minified_options.pretty = false;
       minified_options.trailingNewline = false;
-      std::string rewritten = amanuensis::Writer::WriteToString(parsed.value, minified_options);
+      std::string rewritten =
+          amanuensis::json::Writer::WriteToString(parsed.value, minified_options);
 
-      auto reparsed = amanuensis::Reader::ParseString(rewritten);
+      auto reparsed = amanuensis::json::Reader::ParseString(rewritten);
       REQUIRE_TRUE(reparsed.succeeded);
-      ASSERT_TRUE(amanuensis::Json::IsInteger(amanuensis::Json::Get(reparsed.value, "intValue")));
-      ASSERT_TRUE(amanuensis::Json::IsDouble(amanuensis::Json::Get(reparsed.value, "doubleValue")));
+      ASSERT_TRUE(reparsed.value.Get("intValue").IsInteger());
+      ASSERT_TRUE(reparsed.value.Get("doubleValue").IsDouble());
     });
 
     IT("preserves null through round-trip", {
-      auto parsed = amanuensis::Reader::ParseString(R"({"v":null})");
+      auto parsed = amanuensis::json::Reader::ParseString(R"({"v":null})");
       REQUIRE_TRUE(parsed.succeeded);
 
-      amanuensis::WriterOptions minified_options;
+      amanuensis::json::WriterOptions minified_options;
       minified_options.pretty = false;
       minified_options.trailingNewline = false;
-      std::string rewritten = amanuensis::Writer::WriteToString(parsed.value, minified_options);
+      std::string rewritten =
+          amanuensis::json::Writer::WriteToString(parsed.value, minified_options);
 
-      auto reparsed = amanuensis::Reader::ParseString(rewritten);
+      auto reparsed = amanuensis::json::Reader::ParseString(rewritten);
       REQUIRE_TRUE(reparsed.succeeded);
-      ASSERT_TRUE(amanuensis::Json::IsNull(amanuensis::Json::Get(reparsed.value, "v")));
+      ASSERT_TRUE(reparsed.value.Get("v").IsNull());
     });
   });
 });

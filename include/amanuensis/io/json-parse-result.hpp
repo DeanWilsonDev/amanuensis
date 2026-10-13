@@ -1,13 +1,7 @@
 #pragma once
 
-#include <amanuensis/json-value.hpp>
-#include <amanuensis/io/json-parse-error.hpp>
+#ifdef AMANUENSIS_NO_COMPAT
+#error "amanuensis/io/json-parse-result.hpp is now amanuensis/core/parse-result.hpp"
+#endif
 
-namespace amanuensis {
-struct JsonParseResult {
-  bool succeeded;
-  JsonValue value;
-  JsonParseError error;
-};
-
-} // namespace amanuensis
+#include "amanuensis/core/parse-result.hpp"

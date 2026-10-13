@@ -1,13 +1,7 @@
 #pragma once
-#include "amanuensis/compat.hpp"
 
-#include <string>
+#ifdef AMANUENSIS_NO_COMPAT
+#error "amanuensis/io/json-parse-error.hpp is now amanuensis/core/parse-error.hpp"
+#endif
 
-namespace amanuensis {
-
-struct JsonParseError {
-  std::string message;
-  int line;
-  int column;
-};
-} // namespace amanuensis
+#include "amanuensis/core/parse-error.hpp"

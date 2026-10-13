@@ -30,7 +30,7 @@ The library is deliberately minimal. It covers the subset of JSON that real firs
 - Streaming / incremental parsing
 - Binary formats (BSON, CBOR, MessagePack)
 - Runtime-reflection-based automatic serialisation (C++ does not support it; C++26 static reflection may make this viable in the future)
-- JSON5, JSONC, or other relaxed dialects — Amanuensis is strict RFC 8259
+- JSON5, JSONC, or other relaxed dialects — the JSON reader and writer stay strict RFC 8259. Human-edited entity files get Calamus instead, a separate format (see `amanuensis-json-library/calamus-format.md`), not a looser JSON
 - Performance parity with SIMD-optimised parsers like simdjson
 
 ---
@@ -54,12 +54,18 @@ Amanuensis itself has no dependencies beyond the C++20 standard library. Its own
 
 ## Public API
 
-The entire public surface lives in a single namespace `amanuensis` and consists of four headers: the data model (`value.hpp`), the reader (`reader.hpp`), the writer (`writer.hpp`), and the user-type serialisation layer (`serialisation.hpp`).
+The public surface is split by format, so that a second format (Calamus, see `amanuensis-json-library/calamus-format.md`) can share everything that isn't JSON-specific. Each folder under `include/amanuensis/` has its own namespace:
 
-### `amanuensis/value.hpp` — the data model
+- `core/` (`amanuensis::core`): the data model, `ParseResult` and `ParseError`, and the errors.
+- `json/` (`amanuensis::json`): the reader and writer.
+- `serialization/` (`amanuensis`): the user-type serialisation layer.
+
+`<amanuensis.hpp>` at the include root pulls in all of them.
+
+### `amanuensis/core/value.hpp` — the data model
 
 ```cpp
-namespace amanuensis {
+namespace amanuensis::core {
 
 enum class ValueType {
   Null,
@@ -96,7 +102,7 @@ public:
   bool IsArray() const;
   bool IsObject() const;
 
-  // Typed accessors — throw amanuensis::TypeMismatchError on wrong type
+  // Typed accessors — throw amanuensis::core::TypeMismatchError on wrong type
   bool          AsBoolean() const;
   long long     AsInteger() const;
   double        AsDouble() const;
@@ -124,13 +130,13 @@ public:
   const std::vector<Value>& AsArray() const;
 };
 
-}  // namespace amanuensis
+}  // namespace amanuensis::core
 ```
 
-### `amanuensis/reader.hpp` — parsing
+### `amanuensis/core/parse-result.hpp` and `amanuensis/json/reader.hpp` — parsing
 
 ```cpp
-namespace amanuensis {
+namespace amanuensis::core {
 
 struct ParseError {
   std::string message;
@@ -144,21 +150,25 @@ struct ParseResult {
   ParseError error;               // meaningful only when succeeded == false
 };
 
+}  // namespace amanuensis::core
+
+namespace amanuensis::json {
+
 class Reader {
 public:
-  static ParseResult ParseString(std::string_view text);
-  static ParseResult ParseFile(const std::filesystem::path& path);
+  static core::ParseResult ParseString(std::string_view text);
+  static core::ParseResult ParseFile(const std::filesystem::path& path);
 };
 
-}  // namespace amanuensis
+}  // namespace amanuensis::json
 ```
 
 The reader returns a result struct rather than throwing so that callers like Prism, which run against large codebases where a single malformed file should not abort the whole pipeline, can continue on parse errors with a logged warning.
 
-### `amanuensis/writer.hpp` — serialisation
+### `amanuensis/json/writer.hpp` — serialisation
 
 ```cpp
-namespace amanuensis {
+namespace amanuensis::json {
 
 struct WriterOptions {
   bool pretty = true;
@@ -169,36 +179,36 @@ struct WriterOptions {
 
 class Writer {
 public:
-  static std::string WriteToString(const Value& value, const WriterOptions& options = {});
-  static bool WriteToFile(const Value& value, const std::filesystem::path& path, const WriterOptions& options = {});
+  static std::string WriteToString(const core::Value& value, const WriterOptions& options = {});
+  static bool WriteToFile(const core::Value& value, const std::filesystem::path& path, const WriterOptions& options = {});
 };
 
-}  // namespace amanuensis
+}  // namespace amanuensis::json
 ```
 
 `WriteToFile` returns a bool rather than throwing on I/O failure, matching the Reader's non-throwing convention.
 
-### `amanuensis/serialisation.hpp` — user-type serialisation
+### `amanuensis/serialization/serialization.hpp` — user-type serialisation
 
-The serialisation layer provides `ToJson<T>` and `FromJson<T>` for any user type `T` that has opted in via one of three mechanisms. All three route through the same `Archive` abstraction internally, so from the library's point of view there is one mechanism with three entry points.
+The serialisation layer provides `ToValue<T>` and `FromValue<T>` for any user type `T` that has opted in via one of three mechanisms. All three route through the same `Archive` abstraction internally, so from the library's point of view there is one mechanism with three entry points.
 
 ```cpp
 namespace amanuensis {
 
 // Top-level conversion functions — work for any T that has opted in
 // via any of the three mechanisms below.
-template <typename T> Value ToJson(const T& value);
-template <typename T> T     FromJson(const Value& value);
+template <typename T> core::Value ToValue(const T& value);
+template <typename T> T     FromValue(const core::Value& value);
 
-// FromJson variant that returns a result struct for types where
+// FromValue variant that returns a result struct for types where
 // malformed input should not throw.
 template <typename T>
-struct FromJsonResult {
+struct FromValueResult {
   bool succeeded;
   T value;
   std::string errorMessage;
 };
-template <typename T> FromJsonResult<T> TryFromJson(const Value& value);
+template <typename T> FromValueResult<T> TryFromValue(const core::Value& value);
 
 }  // namespace amanuensis
 ```
@@ -227,7 +237,7 @@ Once the macro is in place, both directions work directly:
 ```cpp
 // Serialise an object to a Value, then write to disk
 PerFunctionCoverage pfc = { "math::Add", 10, 14, 5, 5, 3 };
-amanuensis::Value v = amanuensis::ToJson(pfc);
+amanuensis::Value v = amanuensis::ToValue(pfc);
 amanuensis::Writer::WriteToFile(v, "coverage.json");
 
 // Read from disk, then deserialise into an object
@@ -238,16 +248,16 @@ if (!parseResult.succeeded) {
             << ": " << parseResult.error.message << "\n";
   return 1;
 }
-PerFunctionCoverage roundTripped = amanuensis::FromJson<PerFunctionCoverage>(parseResult.value);
+PerFunctionCoverage roundTripped = amanuensis::FromValue<PerFunctionCoverage>(parseResult.value);
 
-// For types where malformed input should not throw, use TryFromJson:
-auto tryResult = amanuensis::TryFromJson<PerFunctionCoverage>(parseResult.value);
+// For types where malformed input should not throw, use TryFromValue:
+auto tryResult = amanuensis::TryFromValue<PerFunctionCoverage>(parseResult.value);
 if (!tryResult.succeeded) {
   std::cerr << "conversion failed: " << tryResult.errorMessage << "\n";
 }
 ```
 
-Nested types work without extra effort. A `PerFileCoverage` that contains a `std::vector<PerFunctionCoverage>` will round-trip in both directions as long as `PerFileCoverage` has also opted in via `AMANUENSIS_SERIALISABLE` — the library's built-in `JsonTraits<std::vector<T>>` specialisation handles the vector, which recursively invokes `FromJson<PerFunctionCoverage>` for each element.
+Nested types work without extra effort. A `PerFileCoverage` that contains a `std::vector<PerFunctionCoverage>` will round-trip in both directions as long as `PerFileCoverage` has also opted in via `AMANUENSIS_SERIALISABLE` — the library's built-in `SerialTraits<std::vector<T>>` specialisation handles the vector, which recursively invokes `FromValue<PerFunctionCoverage>` for each element.
 
 This path is expected to cover the majority of types in first-party projects.
 
@@ -276,51 +286,51 @@ struct PerFunctionCoverage {
 };
 ```
 
-This pattern is borrowed from the `cereal` library. The cost is roughly the same as writing `ToJson`/`FromJson` by hand, but collapsed into a single function with a single list of fields.
+This pattern is borrowed from the `cereal` library. The cost is roughly the same as writing `ToValue`/`FromValue` by hand, but collapsed into a single function with a single list of fields.
 
-#### Mechanism 3 — `JsonTraits` specialisation (for types you don't own)
+#### Mechanism 3 — `SerialTraits` specialisation (for types you don't own)
 
-When the type cannot be modified — a struct from a third-party library, a type generated by another tool — serialisation is opted in from the outside by specialising `JsonTraits`.
+When the type cannot be modified — a struct from a third-party library, a type generated by another tool — serialisation is opted in from the outside by specialising `SerialTraits`.
 
 ```cpp
 namespace amanuensis {
 template <>
-struct JsonTraits<SomeExternalLib::Vec3> {
-  static Value ToJson(const SomeExternalLib::Vec3& v) {
-    auto arr = Value::MakeArray();
+struct SerialTraits<SomeExternalLib::Vec3> {
+  static core::Value ToValue(const SomeExternalLib::Vec3& v) {
+    auto arr = core::Value::MakeArray();
     arr.PushBack(v.x);
     arr.PushBack(v.y);
     arr.PushBack(v.z);
     return arr;
   }
-  static SomeExternalLib::Vec3 FromJson(const Value& v) {
+  static SomeExternalLib::Vec3 FromValue(const core::Value& v) {
     return { v.At(0).AsDouble(), v.At(1).AsDouble(), v.At(2).AsDouble() };
   }
 };
 }  // namespace amanuensis
 ```
 
-This mechanism is also what the library itself uses internally to teach `ToJson` and `FromJson` about standard library types — `std::vector<T>`, `std::optional<T>`, `std::map<std::string, T>`, and so on are all handled via built-in `JsonTraits` specialisations. Consumers never need to write conversion functions for stdlib containers.
+This mechanism is also what the library itself uses internally to teach `ToValue` and `FromValue` about standard library types — `std::vector<T>`, `std::optional<T>`, `std::map<std::string, T>`, and so on are all handled via built-in `SerialTraits` specialisations. Consumers never need to write conversion functions for stdlib containers.
 
 #### Resolution order
 
-When a consumer calls either `ToJson<T>(value)` or `FromJson<T>(value)`, the library resolves which mechanism to use in this order:
+When a consumer calls either `ToValue<T>(value)` or `FromValue<T>(value)`, the library resolves which mechanism to use in this order:
 
-1. A `JsonTraits<T>` specialisation, if one exists.
+1. A `SerialTraits<T>` specialisation, if one exists.
 2. A `Serialise` member on `T`, if one exists.
 3. A free `Serialise` function in `T`'s namespace (which is what the `AMANUENSIS_SERIALISABLE` macro generates).
 4. Compile error with a message naming the type and listing the three opt-in mechanisms.
 
-The resolution order is the same for both directions. A type that opts in via any mechanism gets serialisation *and* deserialisation from that single opt-in — you never need to register the type twice. This means a consumer can start with the macro, upgrade to the intrusive method if they hit its limits, and never touch `JsonTraits` unless they're integrating an external type.
+The resolution order is the same for both directions. A type that opts in via any mechanism gets serialisation *and* deserialisation from that single opt-in — you never need to register the type twice. This means a consumer can start with the macro, upgrade to the intrusive method if they hit its limits, and never touch `SerialTraits` unless they're integrating an external type.
 
 #### Handling missing, extra, and mistyped fields
 
 Deserialisation behaviour for common edge cases:
 
-- **Missing required field in JSON**: throws `amanuensis::MissingFieldError` (or, when using `TryFromJson`, returns `succeeded = false` with a message naming the field). A field is "required" if its C++ type is not `std::optional<T>`.
+- **Missing required field in JSON**: throws `amanuensis::core::KeyNotFoundError` (or, when using `TryFromValue`, returns `succeeded = false` with a message naming the field). A field is "required" if its C++ type is not `std::optional<T>`.
 - **Missing optional field in JSON**: a field declared as `std::optional<T>` is left empty if the JSON key is absent or the value is `null`. Present values populate the optional.
 - **Extra fields in JSON**: silently ignored. This is the correct default for schema evolution — consumers shouldn't break when the producer adds new fields. A strict mode that rejects unknown fields is listed as a future follow-up, not v1.
-- **Type mismatch** (e.g., JSON has `"startLine": "10"` but the struct expects `int`): throws `amanuensis::TypeMismatchError`, or returns a failed `TryFromJsonResult` with a message naming the field and both types.
+- **Type mismatch** (e.g., JSON has `"startLine": "10"` but the struct expects `int`): throws `amanuensis::core::TypeMismatchError`, or returns a failed `FromValueResult` with a message naming the field and both types.
 
 ---
 
@@ -358,24 +368,19 @@ This is enough context for a caller to print a useful diagnostic like `compile_c
 amanuensis/
 ├── CMakeLists.txt
 ├── include/
+│   ├── amanuensis.hpp              — umbrella header, pulls in everything below
 │   └── amanuensis/
-│       ├── amanuensis.hpp          — umbrella header, re-exports the four below
-│       ├── value.hpp
-│       ├── reader.hpp
-│       ├── writer.hpp
-│       └── serialisation.hpp      — ToJson / FromJson / JsonTraits / AMANUENSIS_SERIALISABLE
-├── src/
-│   ├── value.cpp
-│   ├── reader.cpp
-│   ├── writer.cpp
-│   └── serialisation.cpp
+│       ├── core/                   — amanuensis::core: Value, ParseResult, errors, OrderedMap
+│       ├── json/                   — amanuensis::json: Reader, Writer, WriterOptions
+│       └── serialization/          — ToValue / FromValue / SerialTraits / AMANUENSIS_SERIALISABLE
+├── src/                            — mirrors include/amanuensis/
 ├── test/
 │   ├── test-main.cpp
 │   ├── reader.test.cpp
 │   ├── writer.test.cpp
 │   ├── round-trip.test.cpp
 │   ├── insertion-order.test.cpp
-│   └── serialisation.test.cpp
+│   └── serialization.test.cpp
 └── libs/
     └── Cimmerian/                  — used by tests only
 ```
@@ -404,7 +409,7 @@ add_executable(prism ...)
 target_link_libraries(prism PRIVATE amanuensis)
 ```
 
-The library target is `amanuensis`. The umbrella header is `<amanuensis/amanuensis.hpp>`; individual headers can be included directly if preferred.
+The library target is `amanuensis`. The umbrella header is `<amanuensis.hpp>`; individual headers such as `<amanuensis/json/reader.hpp>` can be included directly if preferred.
 
 ---
 
@@ -416,7 +421,7 @@ Amanuensis is tested using Cimmerian. The test suite covers five categories, one
 - **writer.test.cpp** — output correctness for each type, pretty vs minified output, numeric precision on round-trip.
 - **round-trip.test.cpp** — for a corpus of known-good JSON files, parsing and re-emitting produces byte-identical output (modulo normalised whitespace in pretty mode).
 - **insertion-order.test.cpp** — objects built programmatically and objects parsed from source both preserve key order through any number of round trips.
-- **serialisation.test.cpp** — all three opt-in mechanisms (`AMANUENSIS_SERIALISABLE` macro, intrusive `Serialise` member, `JsonTraits` specialisation) correctly round-trip representative user types. Also verifies the resolution order and the compile-error message for types that have opted in through none of the three.
+- **serialization.test.cpp** — all three opt-in mechanisms (`AMANUENSIS_SERIALISABLE` macro, intrusive `Serialise` member, `SerialTraits` specialisation) correctly round-trip representative user types. Also verifies the resolution order and the compile-error message for types that have opted in through none of the three.
 
 Parse-error tests use Cimmerian's `ASSERT_FALSE(result.succeeded)` followed by precise checks on `result.error.line` and `result.error.column`.
 
@@ -430,9 +435,11 @@ Parse-error tests use Cimmerian's `ASSERT_FALSE(result.succeeded)` followed by p
 
 **Insertion order over lexicographic order.** Two objects that are semantically identical should produce byte-identical output if they were built the same way. This matters for git diffs, code review, and reproducible builds. The memory cost is small and the ergonomic win is large.
 
-**Three tiers of serialisation opt-in, unified by an Archive abstraction.** The library supports three ways to make a user type serialisable: a one-line `AMANUENSIS_SERIALISABLE` macro (the default), an intrusive `Serialise` member method (for flexibility), and a `JsonTraits` specialisation (for external types). All three route through the same internal `Archive` type, so adding a new tier or migrating between them does not change the underlying mechanism. The macro tier is deliberately the shortest path because it covers the common case where the JSON key can match the C++ field name — which is most cases in first-party projects. Consumers who need more control upgrade to the method tier at the cost of a few more lines per type. External types use the traits tier, which is also how the library internally teaches `ToJson`/`FromJson` about standard-library containers so consumers never need to write conversions for `std::vector`, `std::optional`, and similar.
+**Three tiers of serialisation opt-in, unified by an Archive abstraction.** The library supports three ways to make a user type serialisable: a one-line `AMANUENSIS_SERIALISABLE` macro (the default), an intrusive `Serialise` member method (for flexibility), and a `SerialTraits` specialisation (for external types). All three route through the same internal `Archive` type, so adding a new tier or migrating between them does not change the underlying mechanism. The macro tier is deliberately the shortest path because it covers the common case where the JSON key can match the C++ field name — which is most cases in first-party projects. Consumers who need more control upgrade to the method tier at the cost of a few more lines per type. External types use the traits tier, which is also how the library internally teaches `ToValue`/`FromValue` about standard-library containers so consumers never need to write conversions for `std::vector`, `std::optional`, and similar.
 
 **Strict RFC 8259.** No comments, no trailing commas, no unquoted keys. Human-edited configs that need those features are better served by YAML or TOML, not by a relaxed JSON dialect that makes the library harder to reason about.
+
+This still holds with Calamus. Calamus is a separate dialect with its own reader and writer in `amanuensis::calamus`, and it shares the `core` value model, cursor, string rules and number formatting with JSON. Nothing about Calamus loosens what `amanuensis::json::Reader` accepts. The format is specified in `calamus-spec.md`.
 
 ---
 
@@ -444,9 +451,9 @@ Parse-error tests use Cimmerian's `ASSERT_FALSE(result.succeeded)` followed by p
 - Object insertion-order backing store
 - `Writer` with pretty and minified modes
 - `Archive` abstraction and write-direction implementation
-- `ToJson<T>` entry point with resolution order (traits → method → free function → compile error)
+- `ToValue<T>` entry point with resolution order (traits → method → free function → compile error)
 - `AMANUENSIS_SERIALISABLE` macro
-- Built-in `JsonTraits` specialisations for common stdlib types (`std::vector<T>`, `std::optional<T>`, `std::map<std::string, T>`, `std::string`, arithmetic types)
+- Built-in `SerialTraits` specialisations for common stdlib types (`std::vector<T>`, `std::optional<T>`, `std::map<std::string, T>`, `std::string`, arithmetic types)
 - Tests for writer output correctness, order preservation, and all three write-direction opt-in mechanisms
 
 At the end of this phase, Amanuensis can be used by Cimmerian for the coverage JSON reporter — Cimmerian only needs the write path and will consume the library primarily through `AMANUENSIS_SERIALISABLE`.
@@ -458,8 +465,8 @@ At the end of this phase, Amanuensis can be used by Cimmerian for the coverage J
 - String escape handling including `\u` sequences
 - Numeric parsing with integer/double disambiguation
 - Precise error reporting
-- Read-direction of the `Archive` abstraction — the same `Serialise` function, macro expansion, and traits specialisations now work for `FromJson<T>` as well
-- `TryFromJson<T>` non-throwing variant for consumers like Prism that cannot abort on malformed input
+- Read-direction of the `Archive` abstraction — the same `Serialise` function, macro expansion, and traits specialisations now work for `FromValue<T>` as well
+- `TryFromValue<T>` non-throwing variant for consumers like Prism that cannot abort on malformed input
 - Tests for parsing correctness, error reporting, round-trip stability, and all three read-direction opt-in mechanisms
 
 At the end of this phase, Amanuensis is feature-complete for Prism's needs.
@@ -493,5 +500,5 @@ At the end of this phase, Amanuensis is feature-complete for Prism's needs.
 - The test suite achieves ≥ 90% line coverage of `src/` (self-dogfooded via Cimmerian's coverage feature)
 - Round-tripping `compile_commands.json` from a real project (Umbra Engine) and Cimmerian's own emitted `coverage.json` produces byte-identical output on a second write
 - Cimmerian's `coverage.json` output is produced entirely through Amanuensis, with no hand-rolled JSON code remaining in the coverage subsystem
-- Cimmerian's coverage structs (`PerFileCoverage`, `PerFunctionCoverage`, etc.) opt in via `AMANUENSIS_SERIALISABLE` — no hand-written `ToJson` functions
+- Cimmerian's coverage structs (`PerFileCoverage`, `PerFunctionCoverage`, etc.) opt in via `AMANUENSIS_SERIALISABLE` — no hand-written `ToValue` functions
 - Prism replaces its `nlohmann/json` dependency with Amanuensis without regression, using `AMANUENSIS_SERIALISABLE` for the majority of its graph and metric types and intrusive `Serialise` methods for the handful that need JSON-key renaming

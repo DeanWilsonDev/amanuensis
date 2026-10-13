@@ -1,27 +1,26 @@
 #pragma once
 
-#include <amanuensis/json-value.hpp>
-#include <amanuensis/json.hpp>
+#include <amanuensis/core/value.hpp>
 
 namespace amanuensis {
 
 // -----------------------------------------------------------------------
-// WriteArchive — handed to Serialise functions when converting T → JsonValue
+// WriteArchive — handed to Serialise functions when converting T → Value
 // -----------------------------------------------------------------------
 
 class WriteArchive {
 public:
   WriteArchive()
-      : object_(Json::MakeObject())
+      : object_(core::Value::MakeObject())
   {
   }
 
-  template <typename FieldType> void Field(const char* jsonKey, const FieldType& fieldJsonValue);
+  template <typename FieldType> void Field(const char* jsonKey, const FieldType& fieldValue);
 
-  JsonValue& GetJsonValue() { return object_; }
+  core::Value& GetValue() { return object_; }
 
 private:
-  JsonValue object_;
+  core::Value object_;
 };
 
 } // namespace amanuensis

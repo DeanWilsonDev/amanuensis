@@ -1,15 +1,7 @@
 #pragma once
 
-#include <filesystem>
-#include "amanuensis/io/json-parse-result.hpp"
+#ifdef AMANUENSIS_NO_COMPAT
+#error "amanuensis/io/reader.hpp is now amanuensis/json/reader.hpp"
+#endif
 
-namespace amanuensis {
-
-class Reader {
-public:
-  Reader();
-  static JsonParseResult ParseString(std::string_view text);
-  static JsonParseResult ParseFile(const std::filesystem::path& path);
-};
-
-} // namespace amanuensis
+#include "amanuensis/json/reader.hpp"

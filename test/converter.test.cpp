@@ -1,6 +1,6 @@
-#include <amanuensis/converter.hpp>
-#include <amanuensis/io/reader.hpp>
-#include <amanuensis/io/writer.hpp>
+#include <amanuensis/core/converter.hpp>
+#include <amanuensis/json/reader.hpp>
+#include <amanuensis/json/writer.hpp>
 #include <cimmerian/test.hpp>
 
 #include <string>
@@ -20,12 +20,12 @@ struct AdapterValue {
 
 } // namespace
 
-namespace amanuensis {
+namespace amanuensis::core {
 
 template <> struct ValueTraits<AdapterValue> {
-  static JsonValueType GetType(const AdapterValue& value)
+  static ValueType GetType(const AdapterValue& value)
   {
-    return static_cast<JsonValueType>(value.data.index());
+    return static_cast<ValueType>(value.data.index());
   }
 
   static bool AsBoolean(const AdapterValue& value) { return std::get<bool>(value.data); }
@@ -63,17 +63,17 @@ template <> struct ValueTraits<AdapterValue> {
   }
 };
 
-} // namespace amanuensis
+} // namespace amanuensis::core
 
-using ToAdapterConverter = amanuensis::
-    Converter<amanuensis::JsonValue, AdapterValue, amanuensis::ValueTraits<AdapterValue>>;
-using ToJsonConverter = amanuensis::Converter<AdapterValue, amanuensis::JsonValue>;
+using ToAdapterConverter = amanuensis::core::
+    Converter<amanuensis::core::Value, AdapterValue, amanuensis::core::ValueTraits<AdapterValue>>;
+using ToJsonConverter = amanuensis::core::Converter<AdapterValue, amanuensis::core::Value>;
 
 DESCRIBE("Value conversion", {
   IT("converts recursively to and from an adapter-owned representation", {
     const std::string input =
         R"({"null":null,"bool":true,"integer":42,"double":3.5,"string":"hello","array":[1,false],"object":{"key":"value"}})";
-    auto parsed = amanuensis::Reader::ParseString(input);
+    auto parsed = amanuensis::json::Reader::ParseString(input);
     REQUIRE_TRUE(parsed.succeeded);
 
     auto adapted = ToAdapterConverter::ConvertValue(parsed.value);
@@ -85,9 +85,9 @@ DESCRIBE("Value conversion", {
     ASSERT_EQUAL(std::get<AdapterValue::Array>(object[5].second.data).size(), 2u);
 
     auto converted_back = ToJsonConverter::ConvertValue(adapted);
-    amanuensis::WriterOptions options;
+    amanuensis::json::WriterOptions options;
     options.pretty = false;
     options.trailingNewline = false;
-    ASSERT_EQUAL(amanuensis::Writer::WriteToString(converted_back, options), input);
+    ASSERT_EQUAL(amanuensis::json::Writer::WriteToString(converted_back, options), input);
   });
 });

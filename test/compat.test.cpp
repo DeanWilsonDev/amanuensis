@@ -1,31 +1,151 @@
 #include <cimmerian/test.hpp>
 #include <amanuensis/json-value.hpp>
+#include <amanuensis/io/json-parse-result.hpp>
+#include <amanuensis/io/json-parse-error.hpp>
+#include <amanuensis/serialization/json-traits.hpp>
+#include <amanuensis/serialization/json-traits-std.hpp>
+#include <amanuensis/ordered-map.hpp>
+#include <amanuensis/object-iterator.hpp>
+#include <amanuensis/errors.hpp>
+#include <amanuensis/value-traits.hpp>
+#include <amanuensis/converter.hpp>
 #include <amanuensis/json.hpp>
+#include <amanuensis/io/reader.hpp>
 #include <amanuensis/io/writer.hpp>
+#include <amanuensis/io/writer-options.hpp>
 
 #include <string>
 #include <type_traits>
+#include <vector>
 
 static_assert(std::is_same_v<Amanuensis::JsonValue, amanuensis::JsonValue>);
+static_assert(std::is_same_v<amanuensis::JsonValue, amanuensis::core::Value>);
+static_assert(std::is_same_v<amanuensis::JsonValueType, amanuensis::core::ValueType>);
+static_assert(std::is_same_v<amanuensis::JsonParseResult, amanuensis::core::ParseResult>);
+static_assert(std::is_same_v<amanuensis::JsonParseError, amanuensis::core::ParseError>);
+static_assert(std::is_same_v<amanuensis::FromJsonResult<int>, amanuensis::FromValueResult<int>>);
 
-DESCRIBE("Compatibility namespace", {
+static_assert(std::is_same_v<amanuensis::OrderedMap<int>, amanuensis::core::OrderedMap<int>>);
+static_assert(std::is_same_v<amanuensis::ObjectIterator, amanuensis::core::ObjectIterator>);
+static_assert(std::is_same_v<amanuensis::TypeMismatchError, amanuensis::core::TypeMismatchError>);
+static_assert(std::is_same_v<amanuensis::KeyNotFoundError, amanuensis::core::KeyNotFoundError>);
+static_assert(
+    std::is_same_v<amanuensis::IndexOutOfRangeError, amanuensis::core::IndexOutOfRangeError>
+);
+static_assert(std::is_same_v<
+              amanuensis::ValueTraits<amanuensis::JsonValue>,
+              amanuensis::core::ValueTraits<amanuensis::core::Value>>);
+static_assert(std::is_same_v<
+              Amanuensis::Converter<Amanuensis::JsonValue, Amanuensis::JsonValue>,
+              amanuensis::core::Converter<amanuensis::core::Value, amanuensis::core::Value>>);
+static_assert(std::is_same_v<amanuensis::Reader, amanuensis::json::Reader>);
+static_assert(std::is_same_v<amanuensis::Writer, amanuensis::json::Writer>);
+static_assert(std::is_same_v<amanuensis::WriterOptions, amanuensis::json::WriterOptions>);
+
+struct LegacyPoint {
+  long long x, y;
+};
+
+namespace amanuensis {
+template <> struct JsonTraits<LegacyPoint> {
+  static JsonValue ToJson(const LegacyPoint& point)
+  {
+    JsonValue array_value = Json::MakeArray();
+    Json::PushBack(array_value, JsonValue{point.x});
+    Json::PushBack(array_value, JsonValue{point.y});
+    return array_value;
+  }
+  static LegacyPoint FromJson(const JsonValue& value)
+  {
+    return {Json::AsInteger(Json::At(value, 0)), Json::AsInteger(Json::At(value, 1))};
+  }
+};
+} // namespace amanuensis
+
+static_assert(amanuensis::HasJsonTraits<LegacyPoint>::value);
+static_assert(amanuensis::HasSerialTraits<LegacyPoint>::value);
+
+DESCRIBE("Compatibility names", {
   IT("lets qualified names use the old Amanuensis spelling", {
     Amanuensis::JsonValue object_value = Amanuensis::Json::MakeObject();
-    Amanuensis::Json::Insert(object_value, "name", Amanuensis::JsonValue{ std::string("Alice") });
+    Amanuensis::Json::Insert(object_value, "name", Amanuensis::JsonValue{std::string("Alice")});
 
     ASSERT_TRUE(amanuensis::Json::IsObject(object_value));
-    ASSERT_EQUAL(amanuensis::Json::AsString(amanuensis::Json::Get(object_value, "name")),
-                 std::string("Alice"));
+    ASSERT_EQUAL(
+        amanuensis::Json::AsString(amanuensis::Json::Get(object_value, "name")),
+        std::string("Alice")
+    );
   });
 
   IT("lets using-directives name the old Amanuensis namespace", {
     using namespace Amanuensis;
     JsonValue object_value = Json::MakeObject();
-    Json::Insert(object_value, "count", JsonValue{ 3LL });
+    Json::Insert(object_value, "count", JsonValue{3LL});
 
     WriterOptions options;
     options.pretty = false;
     options.trailingNewline = false;
     ASSERT_EQUAL(Writer::WriteToString(object_value, options), std::string("{\"count\":3}"));
+  });
+
+  IT("picks up an old JsonTraits specialisation through SerialTraits", {
+    LegacyPoint original{3, 4};
+    amanuensis::core::Value value = amanuensis::ToValue(original);
+    ASSERT_EQUAL(amanuensis::Json::AsInteger(amanuensis::Json::At(value, 1)), 4LL);
+
+    LegacyPoint round_tripped = amanuensis::FromValue<LegacyPoint>(value);
+    ASSERT_EQUAL(round_tripped.x, 3LL);
+    ASSERT_EQUAL(round_tripped.y, 4LL);
+  });
+
+  IT("forwards ToJson, FromJson and TryFromJson to the new names", {
+    std::vector<LegacyPoint> original{{1, 2}, {5, 6}};
+    amanuensis::core::Value value = amanuensis::ToJson(original);
+    auto round_tripped = amanuensis::FromJson<std::vector<LegacyPoint>>(value);
+    ASSERT_EQUAL(round_tripped.size(), 2u);
+    ASSERT_EQUAL(round_tripped[1].x, 5LL);
+
+    amanuensis::FromJsonResult<LegacyPoint> failed =
+        amanuensis::TryFromJson<LegacyPoint>(amanuensis::Json::MakeObject());
+    ASSERT_FALSE(failed.succeeded);
+  });
+
+  IT("forwards every Json helper to Value's member functions", {
+    using amanuensis::Json;
+    using amanuensis::JsonValue;
+    JsonValue object = Json::MakeObject();
+    JsonValue array = Json::MakeArray();
+    Json::PushBack(array, JsonValue{1.5});
+    Json::Insert(object, "list", array);
+    Json::Insert(object, "flag", JsonValue{true});
+    Json::Insert(object, "name", JsonValue{std::string("door")});
+    Json::Insert(object, "count", JsonValue{2LL});
+
+    ASSERT_TRUE(Json::GetType(object) == amanuensis::core::ValueType::Object);
+    ASSERT_TRUE(Json::IsObject(object) && Json::IsArray(array));
+    ASSERT_TRUE(Json::IsNull(JsonValue{}) && Json::IsString(Json::Get(object, "name")));
+    ASSERT_TRUE(
+        Json::IsBoolean(Json::Get(object, "flag")) && Json::AsBoolean(Json::Get(object, "flag"))
+    );
+    ASSERT_TRUE(
+        Json::IsInteger(Json::Get(object, "count")) && Json::IsNumber(Json::Get(object, "count"))
+    );
+    ASSERT_TRUE(Json::IsDouble(Json::At(array, 0)));
+    ASSERT_EQUAL(Json::AsDouble(Json::At(Json::Get(object, "list"), 0)), 1.5);
+    ASSERT_EQUAL(Json::AsString(Json::Get(object, "name")), std::string("door"));
+    ASSERT_EQUAL(Json::AsArray(array).size(), std::size_t{1});
+    ASSERT_EQUAL(Json::Size(object), std::size_t{4});
+    ASSERT_TRUE(Json::Contains(object, "name") && Json::Find(object, "missing") == nullptr);
+
+    Json::Get(object, "count") = JsonValue{3LL};
+    Json::At(array, 0) = JsonValue{2.5};
+    ASSERT_EQUAL(Json::AsInteger(Json::Get(object, "count")), 3LL);
+    ASSERT_EQUAL(Json::AsDouble(Json::At(array, 0)), 2.5);
+
+    std::size_t entries = 0;
+    for (auto entry = Json::BeginObject(object); entry != Json::EndObject(object); ++entry) {
+      ++entries;
+    }
+    ASSERT_EQUAL(entries, std::size_t{4});
   });
 });
